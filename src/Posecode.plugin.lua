@@ -1101,6 +1101,7 @@ local function normalizeV2Data(data, skeleton)
 
     local framesByTime = {}
     local seenTargets = {}
+    local optimizedKeyCount = 0
     local durationFrames = math.floor(timeline.duration * timeline.fps + 0.5)
 
     local function normalizeTime(time, sourceLabel)
@@ -1168,6 +1169,7 @@ local function normalizeV2Data(data, skeleton)
         end
 
         local seenTrackTimes = {}
+        local parsedKeys = {}
         for keyIndex, key in ipairs(keys) do
             if typeof(key) ~= "table" or typeof(key.transform) ~= "table" then
                 error("Keyframe " .. keyIndex .. " da track " .. trackIndex .. " precisa ter transform.")
@@ -1194,22 +1196,59 @@ local function normalizeV2Data(data, skeleton)
                 easingDirection = easing.direction
             end
 
-            local frame = getFrame(time)
+            table.insert(parsedKeys, {
+                time = time,
+                transform = key.transform,
+                easingStyle = easingStyle,
+                easingDirection = easingDirection,
+            })
+        end
+
+        table.sort(parsedKeys, function(a, b)
+            return a.time < b.time
+        end)
+
+        local optimizedKeys = {}
+        local keyCursor = 1
+        while keyCursor <= #parsedKeys do
+            local runEnd = keyCursor
+            local referenceTransform = transformFromData(parsedKeys[keyCursor].transform)
+
+            while runEnd < #parsedKeys
+                and transformFromData(parsedKeys[runEnd + 1].transform) == referenceTransform do
+                runEnd += 1
+            end
+
+            local runLength = runEnd - keyCursor + 1
+            if runLength >= 3 then
+                table.insert(optimizedKeys, parsedKeys[keyCursor])
+                table.insert(optimizedKeys, parsedKeys[runEnd])
+                optimizedKeyCount += runLength - 2
+            else
+                for index = keyCursor, runEnd do
+                    table.insert(optimizedKeys, parsedKeys[index])
+                end
+            end
+            keyCursor = runEnd + 1
+        end
+
+        for _, parsedKey in ipairs(optimizedKeys) do
+            local frame = getFrame(parsedKey.time)
             if frame.easingStyle ~= nil
-                and (frame.easingStyle ~= easingStyle
-                    or frame.easingDirection ~= easingDirection) then
+                and (frame.easingStyle ~= parsedKey.easingStyle
+                    or frame.easingDirection ~= parsedKey.easingDirection) then
                 error(
                     "Tracks com keyframes no mesmo instante precisam usar o mesmo easing. "
                         .. "Ajuste key.easing ou timeline.defaultEasing."
                 )
             end
-            frame.easingStyle = easingStyle
-            frame.easingDirection = easingDirection
+            frame.easingStyle = parsedKey.easingStyle
+            frame.easingDirection = parsedKey.easingDirection
 
             if frame.joints[targetName] ~= nil then
                 error('A track "' .. targetName .. '" repetiu um keyframe no mesmo instante.')
             end
-            frame.joints[targetName] = key.transform
+            frame.joints[targetName] = parsedKey.transform
         end
     end
 
@@ -1274,6 +1313,7 @@ local function normalizeV2Data(data, skeleton)
         priority = timeline.priority or "Action",
         easingStyle = defaultEasingStyle,
         easingDirection = defaultEasingDirection,
+        optimizedKeyCount = optimizedKeyCount,
         frames = frames,
     }
 end
@@ -2224,6 +2264,7 @@ importButton.Activated:Connect(function()
         end
         local data = validateData(canonicalData, rig, skeleton)
         data.sourceVersion = decoded.version
+        data.optimizedKeyCount = canonicalData.optimizedKeyCount or 0
         local clip = buildAnimationClip(data, skeleton)
         return {
             data = data,
@@ -2257,13 +2298,17 @@ importButton.Activated:Connect(function()
     showPage("preview")
 
     local sourceFormatLabel = importedData.sourceVersion == 2 and "POSECODE V2" or "POSECODE V1"
+    local optimizationNote = importedData.optimizedKeyCount > 0
+        and string.format(" %d keyframes redundantes removidos.", importedData.optimizedKeyCount)
+        or ""
     setStatus(
         importedData.hasAnimationConstraint
-            and string.format("%s: %d quadros convertidos. A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", sourceFormatLabel, #importedData.frames)
+            and string.format("%s: %d quadros convertidos.%s A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", sourceFormatLabel, #importedData.frames, optimizationNote)
             or string.format(
-                "%s: %d quadros convertidos. %s Prévia, navegação e salvamento disponíveis.",
+                "%s: %d quadros convertidos.%s %s Prévia, navegação e salvamento disponíveis.",
                 sourceFormatLabel,
                 #importedData.frames,
+                optimizationNote,
                 importedData.hasBone and "Rig com Bone compatível." or "Rig Motor6D compatível."
             ),
         C.green
