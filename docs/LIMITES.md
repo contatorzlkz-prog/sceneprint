@@ -74,7 +74,7 @@ O botão **Salvar clip no Studio** preserva o clip em `ServerStorage.RBX_ANIMSAV
 
 Para publicar, abra o clip no Editor de Animação e use **Publish to Roblox**. O ID temporário da prévia não substitui um ID de asset.
 
-## Limites da v1.7
+## Limites da v1.8
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
 - Não implementa movimento global da raiz como um canal independente.
