@@ -2,24 +2,33 @@
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
   <p>Importador de animações estruturadas para Roblox Studio.</p>
-  <p><sub>ruancr · v1.6 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v1.7 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
-![Interface do POSECODE v1.6](assets/posecode-preview.svg)
+![Interface do POSECODE v1.7](assets/posecode-preview.svg)
 
 ## Sobre
 
-O POSECODE transforma dados no formato POSECODE v1 em clips editáveis no Roblox Studio. O importador valida os quadros e as juntas do rig, organiza a timeline e permite conferir o movimento antes de salvar.
+O POSECODE converte dados no formato POSECODE v1 em clips editáveis no Roblox Studio. O importador valida a hierarquia do rig, converte keyframes, oferece prévia local e salva o resultado no fluxo de animação do Studio.
 
-O conteúdo colado nunca é executado: o plugin aceita apenas JSON estruturado, inclusive dentro de uma variável `POSECODE`.
+O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretamente ou dentro de uma variável `POSECODE`.
+
+## Compatibilidade
+
+- **Motor6D:** gera `KeyframeSequence`.
+- **Bone:** gera `CurveAnimation`, incluindo esqueletos de malhas skinned.
+- **Motor6D + Bone:** usa a hierarquia de curvas para manter os dois tipos no mesmo clip.
+- **AnimationConstraint:** possui uma rota `CurveAnimation` experimental; confira o resultado no Studio.
+- **CUSTOM:** permite descrever rigs sem `Humanoid`.
 
 ## Como usar
 
-1. Selecione um rig R6 ou R15 no Studio.
-2. Gere os dados no [formato POSECODE v1](docs/FORMATO.md).
-3. Cole o conteúdo e selecione **Importar clip**.
-4. Confira a prévia, navegue pela timeline e use os eventos quando existirem.
-5. Salve o clip no Studio e publique pelo Editor de Animação.
+1. Selecione o Model do rig no Studio.
+2. Use **Analisar rig** para conferir a estrutura e a rota de saída.
+3. Gere os dados no [formato POSECODE v1](docs/FORMATO.md).
+4. Cole o JSON e selecione **Importar clip**.
+5. Confira a prévia, navegue pela timeline e salve o clip no Studio.
+6. Publique pelo Editor de Animação.
 
 ## Instalação
 
@@ -30,22 +39,18 @@ O conteúdo colado nunca é executado: o plugin aceita apenas JSON estruturado, 
 
 Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
-## v1.6
+## v1.7
 
-Adiciona eventos de animação em clips Motor6D, repetição independente na prévia e uma revisão técnica de limites de processamento, inicialização da prévia e limpeza de conexões. A interface mantém o visual clássico.
-
-## Saída por tipo de rig
-
-- **Motor6D:** gera uma `KeyframeSequence`, incluindo event markers opcionais.
-- **AnimationConstraint:** tenta gerar uma `CurveAnimation`. Essa rota permanece experimental e não aceita markers.
+Amplia o suporte a rigs do Roblox com Bones e perfis CUSTOM, organiza a geração de curvas por hierarquia, adiciona análise prévia do rig e diferencia a rota oficial de Bone da conversão experimental de AnimationConstraint. O formato POSECODE v1 permanece compatível.
 
 ## Limites
 
 - Não interpreta scripts Luau arbitrários, TweenService ou lógica condicionada.
-- Entrada máxima de 256 KB, até 120 quadros normalizados, duração máxima de 15 segundos e 256 juntas.
-- Eventos: até 8 por quadro e 128 por animação.
-- Orçamento de saída: 18.000 poses ou 24.000 chaves de curva, conforme o formato.
-- Movimento global da raiz e edição individual de tracks ainda não fazem parte do plugin.
+- Entrada máxima de 256 KB, até 120 quadros normalizados, duração máxima de 15 segundos e 256 juntas/Bones.
+- Eventos: até 8 por quadro e 128 por animação; disponíveis apenas na saída `KeyframeSequence`.
+- Orçamento de saída: 18.000 poses ou 24.000 chaves de curva.
+- O nome de cada junta ou Bone usado no JSON precisa ser único dentro do rig.
+- Movimento global da raiz e edição independente de tracks ainda não fazem parte do plugin.
 - A prévia usa um ID temporário válido apenas no Studio. A publicação continua pelo Editor de Animação.
 
 ## Documentação
