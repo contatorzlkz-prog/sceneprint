@@ -469,7 +469,7 @@ local function getSkeleton(rig)
         error("Não foi possível identificar a raiz do rig.")
     end
 
-    local rootPart = rootCandidate.AssemblyRootPart or rootCandidate
+    local rootPart = rootCandidate
     local visitedParts = {}
     local visitedChildren = {}
 
@@ -506,6 +506,18 @@ local function getSkeleton(rig)
         hasAnimationConstraint = hasAnimationConstraint,
     }
 end
+
+local function refreshSelectionHint()
+    if importedData then
+        return
+    end
+
+    local rig = selectedRig()
+    rigInfo.Text = rig and ("SELECIONADO: " .. rig.Name) or "RIG: —"
+end
+
+Selection.SelectionChanged:Connect(refreshSelectionHint)
+refreshSelectionHint()
 
 local function isFiniteNumber(value)
     return typeof(value) == "number" and value == value and value > -math.huge and value < math.huge
@@ -682,7 +694,7 @@ local function validateData(data, rig, skeleton)
                 error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
             end
             if easingStyleName == "CubicV2" and easingDirectionName ~= "InOut" then
-                error("CurveAnimation v1.2 usa CubicV2 com direção InOut. Ajuste o easingDirection deste quadro.")
+                error("Posecode 1.3 usa CubicV2 com direção InOut. Ajuste o easingDirection deste quadro.")
             end
         end
 
@@ -762,8 +774,8 @@ local function buildKeyframeSequence(data, skeleton)
 
     local ok, result = pcall(function()
         for index, frameData in ipairs(data.frames) do
-            for jointName, jointData in pairs(frameData.joints) do
-                currentTransforms[jointName] = frameData.transforms[jointName]
+            for jointName, transform in pairs(frameData.transforms) do
+                currentTransforms[jointName] = transform
             end
 
             local keyframe = Instance.new("Keyframe")
@@ -1502,7 +1514,7 @@ clearButton.Activated:Connect(function()
     importedSequence = nil
     importedData = nil
     importedRig = nil
-    rigInfo.Text = "RIG: —"
+    refreshSelectionHint()
     clearTimeline()
     setStatus("Campo de importação limpo.")
 end)
