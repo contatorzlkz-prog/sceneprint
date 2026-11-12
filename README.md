@@ -2,7 +2,7 @@
   <img src="assets/posecode-mark.svg" width="48" alt="Posecode" />
   <h1>POSECODE</h1>
   <p>De uma animação gerada por IA para clips editáveis no Roblox Studio.</p>
-  <p><sub>ruancr · v1.2 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v1.3 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
 ![Interface do Posecode](assets/posecode-preview.svg)
@@ -30,7 +30,7 @@ Ele não tenta adivinhar o comportamento de qualquer script Luau. O texto colado
 
 A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
-## O que mudou na v1.2
+## O que mudou na v1.3
 
 - **Dois formatos de saída:** rigs somente com Motor6D geram KeyframeSequence; rigs com AnimationConstraint geram CurveAnimation (experimental; compatibilidade ainda não garantida pela documentação oficial).
 - Curvas de posição com Vector3Curve e rotação com EulerRotationCurve; essa saída é identificada como experimental.
@@ -42,7 +42,12 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Restauração de Transform sem escrita em propriedades não suportadas.
 - Salvamento com rollback de pastas e referências se a operação falhar.
 - Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
-- A interface agora identifica se o clip gerado é de keyframes ou curvas.
+- Interface reorganizada em uma janela compacta com rolagem, cabeçalho fixo, seções curtas e controles com ícones discretos.
+- Botões com estados de hover suaves e indicador de status por cor, sem depender de blocos grandes de texto.
+- Conversão mais eficiente: transformações locais são calculadas uma vez por junta/quadro e reutilizadas nos dois formatos.
+- Curvas Euler são extraídas uma vez por junta/quadro, evitando repetir a decomposição para cada eixo.
+- Validação de vetores sem criar tabelas temporárias a cada leitura.
+- A interface continua identificando se o clip gerado é de keyframes ou curvas.
 
 ## Limites atuais
 
