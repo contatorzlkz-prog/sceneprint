@@ -39,13 +39,14 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Transformações de juntas mantidas entre keyframes esparsos.
 - Easing Linear, Constant, CubicV2, Elastic e Bounce.
 - Prioridades Core, Idle, Movement e Action até Action4.
+- Suporte a rigs novos com AnimationConstraint e rigs anteriores com Motor6D.
 - Extração de JSON bruto, cercas de Markdown e string longa POSECODE.
 
 ## Limites atuais
 
 - Não converte automaticamente scripts Luau arbitrários.
 - Não executa o texto colado.
-- A versão inicial usa rigs com juntas Motor6D e formatos R6/R15.
+- A v1.1 aceita rigs R6/R15 com juntas Motor6D ou AnimationConstraint.
 - Movimento de raiz, markers, curvas avançadas e edição individual de tracks ainda não fazem parte do protótipo.
 - A publicação na nuvem continua pelo fluxo oficial do Editor de Animação do Roblox. O ID temporário da prévia só funciona localmente no Studio.
 
