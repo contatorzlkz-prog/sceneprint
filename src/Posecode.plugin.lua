@@ -793,11 +793,23 @@ local function readVector3(value, fieldName, limit)
     if value == nil then
         return 0, 0, 0
     end
-    if arrayLength(value, fieldName, 3) ~= 3 then
-        error(fieldName .. " deve conter exatamente três números [x, y, z].")
+    if typeof(value) ~= "table" then
+        error(fieldName .. " precisa ser um array [x, y, z] ou objeto {x, y, z}.")
     end
 
-    local x, y, z = value[1], value[2], value[3]
+    local x, y, z
+    if value[1] ~= nil or value[2] ~= nil or value[3] ~= nil then
+        if arrayLength(value, fieldName, 3) ~= 3 then
+            error(fieldName .. " deve conter exatamente três números [x, y, z].")
+        end
+        x, y, z = value[1], value[2], value[3]
+    else
+        x, y, z = value.x, value.y, value.z
+        if x == nil or y == nil or z == nil then
+            error(fieldName .. " precisa conter x, y e z.")
+        end
+    end
+
     if not isFiniteNumber(x) or math.abs(x) > limit
         or not isFiniteNumber(y) or math.abs(y) > limit
         or not isFiniteNumber(z) or math.abs(z) > limit then
@@ -814,8 +826,10 @@ local function transformFromData(jointData)
         error("Cada junta precisa ser um objeto com position e rotation.")
     end
 
-    local px, py, pz = readVector3(jointData.position, "position", MAX_TRANSFORM_OFFSET)
-    local rx, ry, rz = readVector3(jointData.rotation, "rotation", MAX_ROTATION)
+    local positionData = jointData.position or jointData.translation
+    local rotationData = jointData.rotation or jointData.rotationDegrees or jointData.euler
+    local px, py, pz = readVector3(positionData, "position", MAX_TRANSFORM_OFFSET)
+    local rx, ry, rz = readVector3(rotationData, "rotation", MAX_ROTATION)
 
     return CFrame.new(px, py, pz) * CFrame.fromEulerAnglesXYZ(
         math.rad(rx),
