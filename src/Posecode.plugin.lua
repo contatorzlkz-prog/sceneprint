@@ -16,7 +16,6 @@ local AnimationClipProvider = game:GetService("AnimationClipProvider")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 
 local VERSION = "1.5"
 local MAX_FRAMES = 120
@@ -102,15 +101,13 @@ local function button(parent, text, position, size, primary)
     })
     make("UICorner", object, { CornerRadius = UDim.new(0, 3) })
 
-    local enterTween = TweenService:Create(object, TweenInfo.new(0.1), { BackgroundColor3 = hoverColor })
-    local leaveTween = TweenService:Create(object, TweenInfo.new(0.1), { BackgroundColor3 = normalColor })
     object.MouseEnter:Connect(function()
-        leaveTween:Cancel()
-        enterTween:Play()
+        if object.Active then
+            object.BackgroundColor3 = hoverColor
+        end
     end)
     object.MouseLeave:Connect(function()
-        enterTween:Cancel()
-        leaveTween:Play()
+        object.BackgroundColor3 = object.Active and normalColor or C.disabled
     end)
     return object
 end
@@ -130,7 +127,7 @@ local header = make("Frame", root, {
 })
 
 label(header, "POSECODE", UDim2.fromOffset(14, 7), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
-label(header, "ANIMATION IMPORTER", UDim2.fromOffset(15, 28), UDim2.new(1, -92, 0, 11), 8, C.muted, Enum.Font.GothamMedium)
+label(header, "IMPORTADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 28), UDim2.new(1, -92, 0, 11), 8, C.muted, Enum.Font.GothamMedium)
 local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -161,7 +158,7 @@ local content = make("Frame", scroll, {
     BorderSizePixel = 0,
 })
 
-label(content, "ANIMATION DATA", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+label(content, "DADOS DA ANIMAÇÃO", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
 label(content, "POSECODE / JSON", UDim2.fromOffset(0, 24), UDim2.new(1, 0, 0, 14), 10, C.muted)
 
 local sourceBox = make("TextBox", content, {
@@ -194,9 +191,9 @@ make("UIPadding", sourceBox, {
     PaddingRight = UDim.new(0, 10),
 })
 
-local importButton = button(content, "Import clip", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
-local exampleButton = button(content, "Load example", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false)
-local clearButton = button(content, "Clear", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false)
+local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
+local exampleButton = button(content, "Exemplo", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false)
+local clearButton = button(content, "Limpar", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false)
 
 local timelinePanel = make("Frame", content, {
     Name = "Timeline",
@@ -243,7 +240,7 @@ local timelineCursor = make("Frame", timelineTrack, {
 local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.fromOffset(0, 52), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.Code)
 
 local rigInfo = label(content, "RIG: —", UDim2.fromOffset(0, 342), UDim2.new(1, 0, 0, 15), 9, C.muted, Enum.Font.GothamMedium)
-local statusLabel = label(content, "Select an R6 or R15 rig.", UDim2.fromOffset(0, 357), UDim2.new(1, 0, 0, 26), 10, C.muted)
+local statusLabel = label(content, "Selecione um rig R6 ou R15.", UDim2.fromOffset(0, 357), UDim2.new(1, 0, 0, 26), 10, C.muted)
 statusLabel.TextWrapped = true
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -254,16 +251,16 @@ make("Frame", content, {
     BorderSizePixel = 0,
 })
 
-label(content, "PREVIEW", UDim2.fromOffset(0, 408), UDim2.new(1, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
-local previewButton = button(content, "Play", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true)
-local pauseButton = button(content, "Pause", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
-local stopButton = button(content, "Stop", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+label(content, "PRÉVIA", UDim2.fromOffset(0, 408), UDim2.new(1, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
+local previewButton = button(content, "Reproduzir", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true)
+local pauseButton = button(content, "Pausar", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+local stopButton = button(content, "Parar", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
 local speedButton = button(content, "1×", UDim2.new(0.75, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
 
-local previousKeyButton = button(content, "Previous key", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
-local nextKeyButton = button(content, "Next key", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
-local saveButton = button(content, "Save clip to Studio", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true)
-label(content, "Publish through the Animation Editor.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
+local previousKeyButton = button(content, "Quadro anterior", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local nextKeyButton = button(content, "Próximo quadro", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local saveButton = button(content, "Salvar clip no Studio", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true)
+label(content, "Publique pelo Editor de Animação.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
 
 local importedData = nil
 local importedSequence = nil
@@ -282,8 +279,6 @@ local speedOptions = { 0.5, 1, 1.5, 2 }
 local speedOptionIndex = 2
 local isScrubbing = false
 local timelineInputConnections = {}
-local previewRunning = false
-
 local function setButtonState(target, enabled, primary)
     target.Active = enabled
     target.Selectable = enabled
@@ -296,8 +291,7 @@ local function setButtonState(target, enabled, primary)
 end
 
 local function setPreviewRunning(enabled)
-    previewRunning = enabled
-    pauseButton.Text = previewPaused and "Resume" or "Pause"
+    pauseButton.Text = previewPaused and "Continuar" or "Pausar"
     setButtonState(pauseButton, enabled, false)
     setButtonState(stopButton, enabled, false)
 end
@@ -367,8 +361,8 @@ local function drawTimeline(data)
         make("UICorner", marker, { CornerRadius = UDim.new(0, 2) })
     end
 
-    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS · EXPERIMENTAL" or "KEYFRAMES"
-    timelineInfo.Text = string.format("%d QUADROS  /  %.2FS  /  %s", #data.frames, data.duration, clipTypeLabel)
+    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS*" or "KEYFRAMES"
+    timelineInfo.Text = string.format("%d quadros · %.2fs · %s", #data.frames, data.duration, clipTypeLabel)
     updateTimelineCursor(0)
 end
 
@@ -528,19 +522,26 @@ local function getSkeleton(rig)
     }
 end
 
-local function refreshSelectionHint()
-    local rig = selectedRig()
-    if not importedData then
-        rigInfo.Text = rig and ("SELECTED RIG: " .. rig.Name) or "RIG: —"
-    end
+local selectedRigCache = nil
 
+local function refreshActionButtons()
     local hasSource = sourceBox.Text:match("^%s*$") == nil
-    setButtonState(importButton, rig ~= nil and hasSource, true)
-    setButtonState(exampleButton, rig ~= nil, false)
+    setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
+    setButtonState(exampleButton, selectedRigCache ~= nil, false)
+end
+
+local function refreshSelectionHint()
+    selectedRigCache = selectedRig()
+    if not importedData then
+        rigInfo.Text = selectedRigCache
+            and ("RIG SELECIONADO: " .. selectedRigCache.Name)
+            or "RIG: —"
+    end
+    refreshActionButtons()
 end
 
 Selection.SelectionChanged:Connect(refreshSelectionHint)
-sourceBox:GetPropertyChangedSignal("Text"):Connect(refreshSelectionHint)
+sourceBox:GetPropertyChangedSignal("Text"):Connect(refreshActionButtons)
 refreshSelectionHint()
 
 local function isFiniteNumber(value)
