@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.7
+    Version: 1.8
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
