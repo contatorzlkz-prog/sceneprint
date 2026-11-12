@@ -13,7 +13,7 @@ O importador aceita duas estruturas de dados:
 - **V2 (recomendado):** organiza o documento em `metadata`, `rig`, `timeline`, `tracks` e `events`. Cada track declara seu alvo e seus próprios keyframes. Keyframes de tracks diferentes são reunidos em uma timeline comum.
 - **V1 (legado):** mantém a estrutura anterior de `rig`, `fps`, `duration` e `frames`, com `joints` por quadro.
 
-O V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
+Na versão 2.0, o V2 também pode passar pelo otimizador conservador: somente keyframes intermediários de sequências de três ou mais transformações consecutivas idênticas são removidos; primeiro e último permanecem. A migração V1 → V2 valida o documento legado e o rig antes de gerar o JSON novo.\n\nO V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
 
 No V2, o easing é aplicado por instante global. Se várias tracks tiverem keyframes no mesmo instante, todas precisam usar o mesmo `style` e `direction`. Isso evita resultados ambíguos no pipeline de saída atual.
 
@@ -65,7 +65,7 @@ Durante a prévia, `Animator:StepAnimations()` avança a avaliação no contexto
 
 Consulte [Animator](https://create.roblox.com/docs/reference/engine/classes/Animator), [AnimationController](https://create.roblox.com/docs/reference/engine/classes/AnimationController) e [AnimationClipProvider](https://create.roblox.com/docs/reference/engine/classes/AnimationClipProvider).
 
-## Interface v1.8
+## Interface v2.0
 
 A janela separa as ações em três abas: **Importar**, **Prévia** e **Rig**. A aba Importar concentra o JSON e a conversão; Prévia contém a timeline e os controles do clip; Rig contém a análise estrutural. O status permanece no rodapé durante a navegação. Os ícones são desenhados com elementos GUI nativos e não exigem IDs de imagem.
 
@@ -91,7 +91,7 @@ O botão **Salvar clip no Studio** preserva o clip em `ServerStorage.RBX_ANIMSAV
 
 Para publicar, abra o clip no Editor de Animação e use **Publish to Roblox**. O ID temporário da prévia não substitui um ID de asset.
 
-## Limites da v1.8
+## Limites da v2.0
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
 - Não implementa movimento global da raiz como um canal independente.
