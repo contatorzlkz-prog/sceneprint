@@ -1,6 +1,6 @@
-# Formato POSECODE v1
+# Formato POSECODE V1 (legado)
 
-Este formato é usado pelo plugin POSECODE 1.8. O campo JSON `version` continua sendo 1: ele identifica a estrutura dos dados, não a versão do plugin.
+Este é o formato legado POSECODE V1, ainda aceito pelo plugin para compatibilidade. Para novas animações, use o [formato POSECODE V2](FORMATO_V2.md), que separa metadados, rig, timeline, tracks e eventos. O campo JSON `version` identifica a estrutura dos dados, não a versão do plugin.
 
 O plugin não executa o código colado. Ele extrai o JSON de uma variável `POSECODE` ou aceita JSON diretamente. A caixa de importação aceita até 256 KB.
 
