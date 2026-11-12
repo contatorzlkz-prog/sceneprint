@@ -17,7 +17,7 @@ Ele não tenta adivinhar o comportamento de qualquer script Luau. O texto colado
 
 1. Selecione um rig R6 ou R15 no Studio.
 2. Peça à IA uma animação no formato POSECODE v1.
-3. Cole o script ou JSON e clique em **Importar Animação**.
+3. Cole o script ou JSON e clique em **Importar Clip**.
 4. Arraste o cursor da linha do tempo, reproduza, pause, altere a velocidade ou avance quadro a quadro.
 5. Salve o clip no Studio e publique pelo Editor de Animação.
 
@@ -42,7 +42,7 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Restauração de Transform sem escrita em propriedades não suportadas.
 - Salvamento com rollback de pastas e referências se a operação falhar.
 - Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
-- Interface reorganizada em uma janela compacta com rolagem, cabeçalho fixo, seções curtas e controles com ícones discretos.
+- Interface reorganizada em uma janela compacta com rolagem, cabeçalho fixo, indicação do rig selecionado e controles com ícones discretos.
 - Botões com estados de hover suaves e indicador de status por cor, sem depender de blocos grandes de texto.
 - Conversão mais eficiente: transformações locais são calculadas uma vez por junta/quadro e reutilizadas nos dois formatos.
 - Curvas Euler são extraídas uma vez por junta/quadro, evitando repetir a decomposição para cada eixo.
