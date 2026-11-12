@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.6
+    Version: 1.7
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -17,7 +17,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "1.6"
+local VERSION = "1.7"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -197,8 +197,9 @@ make("UIPadding", sourceBox, {
 })
 
 local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
-local exampleButton = button(content, "Exemplo", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false)
-local clearButton = button(content, "Limpar", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false)
+local exampleButton = button(content, "Exemplo", UDim2.fromOffset(0, 218), UDim2.new(0.333, -4, 0, 28), false)
+local rigCheckButton = button(content, "Analisar rig", UDim2.new(0.333, 2, 0, 218), UDim2.new(0.333, -4, 0, 28), false)
+local clearButton = button(content, "Limpar", UDim2.new(0.666, 4, 0, 218), UDim2.new(0.334, -4, 0, 28), false)
 
 local timelinePanel = make("Frame", content, {
     Name = "Timeline",
@@ -391,7 +392,9 @@ local function drawTimeline(data)
 end
 
 local function isSupportedJoint(instance)
-    return instance:IsA("Motor6D") or instance:IsA("AnimationConstraint")
+    return instance:IsA("Motor6D")
+        or instance:IsA("AnimationConstraint")
+        or instance:IsA("Bone")
 end
 
 local function selectedRig()
@@ -400,15 +403,10 @@ local function selectedRig()
         local current = item
         while current and current ~= Workspace do
             if current:IsA("Model") then
-                local hasJoint = false
                 for _, descendant in ipairs(current:GetDescendants()) do
                     if isSupportedJoint(descendant) then
-                        hasJoint = true
-                        break
+                        return current
                     end
-                end
-                if hasJoint then
-                    return current
                 end
             end
             current = current.Parent
@@ -420,129 +418,243 @@ end
 local function getSkeleton(rig)
     local jointsByPart1 = {}
     local childrenByPart0 = {}
-    local incoming = {}
+    local incomingParts = {}
+    local curveChildrenByParent = {}
+    local boneChildrenByParent = {}
+    local boneRoots = {}
+
     local hasAnimationConstraint = false
+    local hasBone = false
+    local hasMotor6D = false
+    local partJointCount = 0
+    local boneCount = 0
     local discoveredJointCount = 0
 
-    for _, descendant in ipairs(rig:GetDescendants()) do
-        local part0 = nil
-        local part1 = nil
+    local function addCurveChild(parent, child)
+        curveChildrenByParent[parent] = curveChildrenByParent[parent] or {}
+        table.insert(curveChildrenByParent[parent], child)
+    end
 
-        if descendant:IsA("Motor6D") then
-            part0 = descendant.Part0
-            part1 = descendant.Part1
-            if not part0 or not part1 then
-                error("O Motor6D " .. descendant:GetFullName() .. " não possui Part0 e Part1 definidos.")
-            end
-        elseif descendant:IsA("AnimationConstraint") then
-            hasAnimationConstraint = true
-            local attachment0 = descendant.Attachment0
-            local attachment1 = descendant.Attachment1
-            part0 = attachment0 and attachment0.Parent
-            part1 = attachment1 and attachment1.Parent
-
-            if not part0 or not part1
-                or not part0:IsA("BasePart")
-                or not part1:IsA("BasePart") then
-                error("Uma AnimationConstraint não possui Attachments ligados a BaseParts.")
-            end
+    local function registerJointName(name, target)
+        if jointsByPart1[name] then
+            error(
+                'Há mais de uma junta ou Bone com o nome "'
+                    .. name
+                    .. '". Renomeie os alvos para que cada canal seja único.'
+            )
         end
+        jointsByPart1[name] = target
+    end
 
-        if isSupportedJoint(descendant) then
-            if not part0 or not part1 then
-                error("Uma junta do rig está sem as partes conectadas.")
-            end
-            if not part0:IsA("BasePart") or not part1:IsA("BasePart") then
-                error("Uma junta do rig não conecta duas BaseParts.")
-            end
-            if jointsByPart1[part1.Name] then
-                error("Há duas juntas controlando uma peça chamada " .. part1.Name .. ".")
-            end
-
+    for _, descendant in ipairs(rig:GetDescendants()) do
+        if descendant:IsA("Bone") then
+            hasBone = true
+            boneCount += 1
             discoveredJointCount += 1
-            if discoveredJointCount > MAX_JOINTS then
-                error("O rig ultrapassa o limite de " .. MAX_JOINTS .. " juntas suportadas.")
+
+            local parent = descendant.Parent
+            if not parent
+                or (not parent:IsA("Bone") and not parent:IsA("BasePart")) then
+                error(
+                    "O Bone "
+                        .. descendant:GetFullName()
+                        .. " precisa estar dentro de outro Bone ou de uma BasePart."
+                )
             end
 
-            jointsByPart1[part1.Name] = descendant
-            incoming[part1] = true
+            registerJointName(descendant.Name, descendant)
+            addCurveChild(parent, descendant)
+
+            if parent:IsA("Bone") then
+                boneChildrenByParent[parent] = boneChildrenByParent[parent] or {}
+                table.insert(boneChildrenByParent[parent], descendant)
+            else
+                table.insert(boneRoots, descendant)
+            end
+
+        elseif descendant:IsA("Motor6D") or descendant:IsA("AnimationConstraint") then
+            local part0
+            local part1
+
+            if descendant:IsA("Motor6D") then
+                hasMotor6D = true
+                part0 = descendant.Part0
+                part1 = descendant.Part1
+                if not part0 or not part1 then
+                    error(
+                        "O Motor6D "
+                            .. descendant:GetFullName()
+                            .. " não possui Part0 e Part1 definidos."
+                    )
+                end
+            else
+                hasAnimationConstraint = true
+                local attachment0 = descendant.Attachment0
+                local attachment1 = descendant.Attachment1
+                part0 = attachment0 and attachment0.Parent
+                part1 = attachment1 and attachment1.Parent
+
+                if not part0 or not part1
+                    or not part0:IsA("BasePart")
+                    or not part1:IsA("BasePart") then
+                    error(
+                        "A AnimationConstraint "
+                            .. descendant:GetFullName()
+                            .. " não possui Attachments ligados a BaseParts."
+                    )
+                end
+            end
+
+            if not part0:IsA("BasePart")
+                or not part1:IsA("BasePart")
+                or not part0:IsDescendantOf(rig)
+                or not part1:IsDescendantOf(rig) then
+                error("Uma junta do rig conecta partes fora do Model selecionado.")
+            end
+
+            partJointCount += 1
+            discoveredJointCount += 1
+            registerJointName(part1.Name, part1)
+
             childrenByPart0[part0] = childrenByPart0[part0] or {}
             table.insert(childrenByPart0[part0], part1)
+            incomingParts[part1] = true
+            addCurveChild(part0, part1)
+        end
+
+        if discoveredJointCount > MAX_JOINTS then
+            error("O rig ultrapassa o limite de " .. MAX_JOINTS .. " juntas e Bones suportados.")
         end
     end
 
-    local jointCount = 0
-    for _, children in pairs(childrenByPart0) do
-        table.sort(children, function(a, b)
-            return a.Name < b.Name
-        end)
-        jointCount += #children
-    end
-    if jointCount == 0 then
-        error("O rig não possui Motor6D ou AnimationConstraint válidas.")
+    if discoveredJointCount == 0 then
+        error("O Model não possui Motor6D, AnimationConstraint ou Bone suportado.")
     end
 
-    local rootCandidate = rig:FindFirstChild("HumanoidRootPart", true)
-    if not rootCandidate or not rootCandidate:IsA("BasePart") then
-        rootCandidate = rig.PrimaryPart
-    end
-
-    if not rootCandidate then
-        local rootCandidates = {}
-        for part in pairs(childrenByPart0) do
-            if not incoming[part] then
-                table.insert(rootCandidates, part)
-            end
-        end
-        table.sort(rootCandidates, function(a, b)
-            return a:GetFullName() < b:GetFullName()
-        end)
-        if #rootCandidates == 1 then
-            rootCandidate = rootCandidates[1]
-        elseif #rootCandidates > 1 then
-            error("O rig possui mais de uma raiz possível. Defina PrimaryPart ou HumanoidRootPart.")
+    local function sortChildren(map)
+        for _, children in pairs(map) do
+            table.sort(children, function(a, b)
+                if a.Name == b.Name then
+                    return a:GetFullName() < b:GetFullName()
+                end
+                return a.Name < b.Name
+            end)
         end
     end
 
-    if not rootCandidate or not rootCandidate:IsA("BasePart") then
-        error("Não foi possível identificar a raiz do rig.")
-    end
+    sortChildren(childrenByPart0)
+    sortChildren(curveChildrenByParent)
+    sortChildren(boneChildrenByParent)
+    table.sort(boneRoots, function(a, b)
+        return a:GetFullName() < b:GetFullName()
+    end)
 
-    local rootPart = rootCandidate
+    local rootPart = nil
     local visitedParts = {}
-    local visitedChildren = {}
+    local visitedBones = {}
 
-    local function walk(part)
-        if visitedParts[part] then
-            error("A hierarquia de juntas contém um ciclo.")
+    if partJointCount > 0 then
+        rootPart = rig:FindFirstChild("HumanoidRootPart", true)
+        if not rootPart or not rootPart:IsA("BasePart") then
+            rootPart = rig.PrimaryPart
         end
-        visitedParts[part] = true
 
-        for _, childPart in ipairs(childrenByPart0[part] or {}) do
-            if visitedChildren[childPart] then
-                error("Uma peça conectada foi encontrada em mais de uma junta.")
+        if not rootPart then
+            local rootCandidates = {}
+            for part in pairs(childrenByPart0) do
+                if not incomingParts[part] then
+                    table.insert(rootCandidates, part)
+                end
             end
-            visitedChildren[childPart] = true
-            walk(childPart)
+            table.sort(rootCandidates, function(a, b)
+                return a:GetFullName() < b:GetFullName()
+            end)
+
+            if #rootCandidates == 1 then
+                rootPart = rootCandidates[1]
+            elseif #rootCandidates > 1 then
+                error("O rig possui mais de uma raiz possível. Defina PrimaryPart ou HumanoidRootPart.")
+            end
+        end
+
+        if not rootPart
+            or not rootPart:IsA("BasePart")
+            or not rootPart:IsDescendantOf(rig) then
+            error("Não foi possível identificar uma raiz válida dentro do Model.")
+        end
+
+        local function walkParts(part)
+            if visitedParts[part] then
+                error("A hierarquia de juntas contém um ciclo.")
+            end
+            visitedParts[part] = true
+
+            for _, childPart in ipairs(childrenByPart0[part] or {}) do
+                if visitedParts[childPart] then
+                    error("Uma peça conectada foi encontrada em mais de uma junta ou em um ciclo.")
+                end
+                walkParts(childPart)
+            end
+        end
+
+        walkParts(rootPart)
+
+        local reachableParts = 0
+        for _ in pairs(visitedParts) do
+            reachableParts += 1
+        end
+        if reachableParts ~= partJointCount + 1 then
+            error("A hierarquia de juntas não parte da raiz do rig. Confira Attachments, PrimaryPart e AssemblyRootPart.")
         end
     end
 
-    walk(rootPart)
+    local function walkBones(bone)
+        if visitedBones[bone] then
+            error("A hierarquia de Bones contém uma referência repetida.")
+        end
+        visitedBones[bone] = true
 
-    local reachable = 0
-    for _ in pairs(visitedChildren) do
-        reachable += 1
+        for _, childBone in ipairs(boneChildrenByParent[bone] or {}) do
+            walkBones(childBone)
+        end
     end
-    if reachable ~= jointCount then
-        error("A hierarquia de juntas não parte da raiz do rig. Confira Attachments e AssemblyRootPart.")
+
+    for _, rootBone in ipairs(boneRoots) do
+        if partJointCount > 0 and not visitedParts[rootBone.Parent] then
+            error(
+                "O Bone raiz "
+                    .. rootBone:GetFullName()
+                    .. " está em uma BasePart fora da hierarquia principal do rig."
+            )
+        end
+        walkBones(rootBone)
+    end
+
+    local reachableBones = 0
+    for _ in pairs(visitedBones) do
+        reachableBones += 1
+    end
+    if reachableBones ~= boneCount then
+        error("A hierarquia de Bones possui elementos sem uma raiz válida.")
+    end
+    if hasBone and #boneRoots == 0 then
+        error("O rig possui Bones, mas nenhum Bone raiz ligado diretamente a uma BasePart.")
     end
 
     return {
         rootPart = rootPart,
         jointsByPart1 = jointsByPart1,
         childrenByPart0 = childrenByPart0,
-        jointCount = jointCount,
+        curveChildrenByParent = curveChildrenByParent,
+        boneChildrenByParent = boneChildrenByParent,
+        boneRoots = boneRoots,
+        jointCount = discoveredJointCount,
+        partJointCount = partJointCount,
+        boneCount = boneCount,
+        hasMotor6D = hasMotor6D,
         hasAnimationConstraint = hasAnimationConstraint,
+        hasBone = hasBone,
+        hasCurveAnimation = hasAnimationConstraint or hasBone,
     }
 end
 
