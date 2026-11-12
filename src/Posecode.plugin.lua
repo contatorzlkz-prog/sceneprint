@@ -536,7 +536,7 @@ local function validateData(data, rig, skeleton)
 
         for jointName, jointData in pairs(frameData.joints) do
             if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
-                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada por Motor6D.')
+                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
             end
             transformFromData(jointData)
         end
@@ -860,10 +860,15 @@ local function saveSequence()
 
         local baseName = importedData.name
         local finalName = baseName
-        local suffix = 2
-        while saveFolder:FindFirstChild(finalName) do
-            finalName = baseName .. "_" .. suffix
-            suffix += 1
+
+        if importedSequence.Parent ~= saveFolder then
+            local suffix = 2
+            while saveFolder:FindFirstChild(finalName) do
+                finalName = baseName .. "_" .. suffix
+                suffix += 1
+            end
+        else
+            finalName = importedSequence.Name
         end
 
         importedSequence.Name = finalName
