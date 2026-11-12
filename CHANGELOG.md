@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3 · Interface compacta e conversão eficiente
+
+- Reorganiza a janela em cabeçalho fixo e conteúdo com rolagem, com tamanho mínimo menor.
+- Reduz a altura do editor de entrada e elimina painéis grandes desnecessários.
+- Substitui rótulos longos nos controles de prévia por símbolos de reprodução, pausa e parada.
+- Adiciona identidade visual mais clara, estado do plugin por indicador de cor e hover discreto nos botões.
+- Calcula cada transformação local uma vez por junta/quadro e reutiliza o cache na geração dos clips.
+- Calcula Euler XYZ uma vez por junta/quadro nas curvas, em vez de decompor a rotação novamente para cada eixo.
+- Valida os três componentes dos vetores sem criar tabelas temporárias.
+- Mantém o formato de dados POSECODE v1 compatível; a versão 1.3 é a versão do plugin, não do JSON.
+
 ## 1.2 · Clips, curva e controles de prévia
 
 - Gera KeyframeSequence para rigs somente com Motor6D.
