@@ -1,6 +1,6 @@
 # Formato Posecode v1
 
-Este formato é usado pelo plugin Posecode 0.1.1. O campo version dentro do JSON continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
+Este formato é usado pelo plugin Posecode 1.1. O campo version dentro do JSON continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
 
 O plugin não executa o código colado. Ele extrai apenas o JSON de uma variável POSECODE ou aceita o JSON diretamente.
 
