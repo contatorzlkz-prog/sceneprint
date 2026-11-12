@@ -821,8 +821,8 @@ local function buildCurveAnimation(data, skeleton)
     local currentTransforms = {}
 
     for index, frameData in ipairs(data.frames) do
-        for jointName, jointData in pairs(frameData.joints) do
-            currentTransforms[jointName] = transformFromData(jointData)
+        for jointName, transform in pairs(frameData.transforms) do
+            currentTransforms[jointName] = transform
         end
 
         local snapshot = {}
@@ -1094,7 +1094,7 @@ local function pausePreview()
     if previewPaused then
         previewTrack:AdjustSpeed(previewSpeed)
         previewPaused = false
-        pauseButton.Text = "PAUSAR"
+        pauseButton.Text = "Ⅱ"
         setStatus("Prévia reproduzindo.", C.green)
     else
         previewTrack:AdjustSpeed(0)
