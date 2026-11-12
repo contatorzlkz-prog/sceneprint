@@ -1,11 +1,13 @@
 # Changelog
 
-## 0.1.0 · Estudo inicial
+## 0.1.0 · Nova direção: Posecode
 
-- Nova direção: escultura de superfícies com Parts.
-- Base inicial em grade de 16 × 16 tiles.
-- Ferramentas de subir, baixar e suavizar.
-- Raio de pincel ajustável.
-- Prévia visual do pincel.
-- Registro das pinceladas no histórico de desfazer/refazer do Studio.
-- Interface reduzida e alinhada à identidade do perfil.
+- Projeto reorientado de escultura de terreno para importação de animações geradas por IA.
+- Formato declarativo POSECODE v1 com tempos e transformações por junta.
+- Validação de rig, duração, keyframes e nomes das juntas.
+- Conversão para KeyframeSequence e hierarquia de Pose.
+- Prévia local usando AnimationClipProvider.
+- Salvamento local em ServerStorage com referência AnimSaves.
+- Documentação dos limites de conversão e do fluxo de publicação do Roblox.
+
+> Protótipo em desenvolvimento; ainda precisa ser validado no Roblox Studio.
