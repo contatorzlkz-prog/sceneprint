@@ -55,7 +55,8 @@
         "name": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 64
+          "maxLength": 64,
+          "pattern": "\\S"
         },
         "author": {
           "type": "string",
@@ -186,7 +187,8 @@
         },
         "name": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "pattern": "\\S"
         }
       },
       "additionalProperties": false
@@ -308,7 +310,8 @@
         "name": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 64
+          "maxLength": 64,
+          "pattern": "\\S"
         },
         "value": {
           "type": "string",
