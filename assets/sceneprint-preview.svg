@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="690" viewBox="0 0 1100 690" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1100" y2="690" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#17151D"/><stop offset="1" stop-color="#0F1015"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#C0B0FF"/><stop offset="1" stop-color="#8F7CE0"/>
+    </linearGradient>
+  </defs>
+  <rect width="1100" height="690" rx="18" fill="url(#bg)"/>
+  <rect x="1" y="1" width="1098" height="688" rx="17" stroke="#393541"/>
+  <rect x="1" y="1" width="1098" height="64" rx="17" fill="#191820"/>
+  <path d="M1 64H1099" stroke="#34313D"/>
+  <rect x="25" y="17" width="31" height="31" rx="9" fill="#443B5F"/>
+  <path d="M45 24H34L29 30L39 35L34 42H22" stroke="#C1B2FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="70" y="34" fill="#F1EFF8" font-family="Arial, sans-serif" font-size="19" font-weight="700">sceneprint</text>
+  <text x="71" y="49" fill="#888495" font-family="Arial, sans-serif" font-size="9" letter-spacing="1.6">AUDITORIA DE CENA</text>
+  <text x="1055" y="37" text-anchor="end" fill="#888495" font-family="Arial, sans-serif" font-size="11">0.1.0</text>
+  <rect x="25" y="85" width="785" height="44" rx="8" fill="url(#accent)"/>
+  <text x="417" y="112" text-anchor="middle" fill="#1C1925" font-family="Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.3">ANALISAR CENA</text>
+  <rect x="824" y="85" width="251" height="44" rx="8" fill="#25232D" stroke="#403D4B"/>
+  <text x="949" y="112" text-anchor="middle" fill="#E9E6F1" font-family="Arial, sans-serif" font-size="11" font-weight="700" letter-spacing="1">WORKSPACE</text>
+  <g font-family="Arial, sans-serif">
+    <rect x="25" y="148" width="337" height="77" rx="9" fill="#191920" stroke="#373441"/>
+    <text x="43" y="174" fill="#8F8A9D" font-size="10" font-weight="700" letter-spacing="1.3">REVISAR</text>
+    <text x="43" y="207" fill="#EAB875" font-size="28" font-weight="700">08</text>
+    <rect x="381" y="148" width="337" height="77" rx="9" fill="#191920" stroke="#373441"/>
+    <text x="399" y="174" fill="#8F8A9D" font-size="10" font-weight="700" letter-spacing="1.3">NOTAS</text>
+    <text x="399" y="207" fill="#A4AEC8" font-size="28" font-weight="700">03</text>
+    <rect x="737" y="148" width="338" height="77" rx="9" fill="#191920" stroke="#373441"/>
+    <text x="755" y="174" fill="#8F8A9D" font-size="10" font-weight="700" letter-spacing="1.3">OBJETOS</text>
+    <text x="755" y="207" fill="#EFEDF5" font-size="28" font-weight="700">1,284</text>
+  </g>
+  <rect x="25" y="242" width="1050" height="3" rx="2" fill="#B5A4FF"/>
+  <g font-family="Arial, sans-serif" font-size="10" font-weight="700" letter-spacing=".7">
+    <rect x="25" y="265" width="88" height="31" rx="6" fill="#443B5F"/><text x="69" y="285" fill="#C8BBFF" text-anchor="middle">TUDO 11</text>
+    <rect x="121" y="265" width="110" height="31" rx="6" fill="#24222C"/><text x="176" y="285" fill="#9A94A9" text-anchor="middle">REVISAR 08</text>
+    <rect x="239" y="265" width="87" height="31" rx="6" fill="#24222C"/><text x="282" y="285" fill="#9A94A9" text-anchor="middle">NOTAS 03</text>
+  </g>
+  <g font-family="Arial, sans-serif">
+    <rect x="25" y="312" width="1050" height="103" rx="8" fill="#191920" stroke="#373441"/>
+    <rect x="25" y="322" width="3" height="83" rx="2" fill="#EAB875"/>
+    <text x="45" y="337" fill="#EAB875" font-size="10" font-weight="700" letter-spacing="1">COL-01  /  REVISAR</text>
+    <text x="45" y="361" fill="#F0EDF6" font-size="15" font-weight="700">Colisão em peça invisível</text>
+    <text x="45" y="381" fill="#8F8A9D" font-size="11">Workspace.Level.Wall_Collider</text>
+    <text x="45" y="400" fill="#C9C5D2" font-size="11">Quase invisível e ainda bloqueia movimento. Confirme se a barreira é intencional.</text>
+    <rect x="25" y="427" width="1050" height="103" rx="8" fill="#191920" stroke="#373441"/>
+    <rect x="25" y="437" width="3" height="83" rx="2" fill="#EAB875"/>
+    <text x="45" y="452" fill="#EAB875" font-size="10" font-weight="700" letter-spacing="1">PHY-01  /  REVISAR</text>
+    <text x="45" y="476" fill="#F0EDF6" font-size="15" font-weight="700">Conjunto físico não ancorado</text>
+    <text x="45" y="496" fill="#8F8A9D" font-size="11">Workspace.Props.Cart</text>
+    <text x="45" y="515" fill="#C9C5D2" font-size="11">Pode se mover pela física. Confira se este objeto deveria permanecer no lugar.</text>
+    <rect x="25" y="542" width="1050" height="103" rx="8" fill="#191920" stroke="#373441"/>
+    <rect x="25" y="552" width="3" height="83" rx="2" fill="#9EA9C6"/>
+    <text x="45" y="567" fill="#A4AEC8" font-size="10" font-weight="700" letter-spacing="1">ORG-01  /  NOTA</text>
+    <text x="45" y="591" fill="#F0EDF6" font-size="15" font-weight="700">Pasta vazia</text>
+    <text x="45" y="611" fill="#8F8A9D" font-size="11">Workspace.Archive.Temp</text>
+    <text x="45" y="630" fill="#C9C5D2" font-size="11">Esta pasta não contém objetos. Pode ser uma estrutura reservada.</text>
+  </g>
+  <text x="25" y="671" fill="#777383" font-family="Arial, sans-serif" font-size="10">LEITURA SOMENTE • RESULTADOS EXPLICÁVEIS • SEM ALTERAÇÕES AUTOMÁTICAS</text>
+</svg>
