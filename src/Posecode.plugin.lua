@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.5
+    Version: 1.6
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -17,13 +17,17 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "1.5"
+local VERSION = "1.6"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
 local MAX_TRANSFORM_OFFSET = 5
 local MAX_ROTATION = 720
 local MAX_JOINTS = 256
+local MAX_MARKERS = 128
+local MAX_MARKERS_PER_FRAME = 8
+local MAX_POSE_INSTANCES = 18000
+local MAX_CURVE_KEYS = 24000
 
 local C = {
     background = Color3.fromRGB(30, 31, 33),
@@ -36,6 +40,7 @@ local C = {
     muted = Color3.fromRGB(157, 160, 165),
     accent = Color3.fromRGB(83, 119, 158),
     accentHover = Color3.fromRGB(96, 132, 171),
+    event = Color3.fromRGB(202, 164, 91),
     disabled = Color3.fromRGB(39, 40, 42),
     disabledText = Color3.fromRGB(106, 108, 112),
     green = Color3.fromRGB(133, 172, 139),
@@ -259,7 +264,8 @@ local speedButton = button(content, "1×", UDim2.new(0.75, 5, 0, 430), UDim2.new
 
 local previousKeyButton = button(content, "Quadro anterior", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
 local nextKeyButton = button(content, "Próximo quadro", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
-local saveButton = button(content, "Salvar clip no Studio", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true)
+local loopButton = button(content, "Repetir: OFF", UDim2.fromOffset(0, 510), UDim2.new(0.34, -4, 0, 34), false)
+local saveButton = button(content, "Salvar clip no Studio", UDim2.new(0.34, 4, 0, 510), UDim2.new(0.66, -4, 0, 34), true)
 label(content, "Publique pelo Editor de Animação.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
 
 local importedData = nil
@@ -275,10 +281,12 @@ local previewStepConnection = nil
 local previewJointSnapshot = {}
 local previewPaused = false
 local previewSpeed = 1
+local previewLooped = false
 local speedOptions = { 0.5, 1, 1.5, 2 }
 local speedOptionIndex = 2
 local isScrubbing = false
 local timelineInputConnections = {}
+local previewMarkerConnections = {}
 local function setButtonState(target, enabled, primary)
     target.Active = enabled
     target.Selectable = enabled
@@ -301,6 +309,7 @@ local function setClipControlsEnabled(enabled)
     setButtonState(speedButton, enabled, false)
     setButtonState(previousKeyButton, enabled, false)
     setButtonState(nextKeyButton, enabled, false)
+    setButtonState(loopButton, enabled, false)
     setButtonState(saveButton, enabled, true)
     timelineHitbox.Active = enabled
     timelineHitbox.Selectable = enabled
@@ -318,7 +327,7 @@ setButtonState(exampleButton, false, false)
 
 local function clearTimeline()
     for _, child in ipairs(timelineTrack:GetChildren()) do
-        if child.Name == "KeyMarker" then
+        if child.Name == "KeyMarker" or child.Name == "EventMarker" then
             child:Destroy()
         end
     end
@@ -348,6 +357,7 @@ local function drawTimeline(data)
     end
 
     local duration = math.max(data.duration, 0.001)
+    local totalMarkers = 0
     for _, frameData in ipairs(data.frames) do
         local marker = make("Frame", timelineTrack, {
             Name = "KeyMarker",
@@ -359,10 +369,24 @@ local function drawTimeline(data)
             ZIndex = 2,
         })
         make("UICorner", marker, { CornerRadius = UDim.new(0, 2) })
+
+        for markerIndex, markerData in ipairs(frameData.markers or {}) do
+            totalMarkers += 1
+            local eventMarker = make("Frame", timelineTrack, {
+                Name = "EventMarker",
+                AnchorPoint = Vector2.new(0.5, 0.5),
+                Position = UDim2.new(math.clamp(frameData.time / duration, 0, 1), 0, 0.5, -8 - ((markerIndex - 1) * 2)),
+                Size = UDim2.fromOffset(7, 7),
+                BackgroundColor3 = C.event,
+                BorderSizePixel = 0,
+                ZIndex = 3,
+            })
+            make("UICorner", eventMarker, { CornerRadius = UDim.new(0, 1) })
+        end
     end
 
     local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS*" or "KEYFRAMES"
-    timelineInfo.Text = string.format("%d quadros · %.2fs · %s", #data.frames, data.duration, clipTypeLabel)
+    timelineInfo.Text = string.format("%d quadros · %d eventos · %.2fs · %s", #data.frames, totalMarkers, data.duration, clipTypeLabel)
     updateTimelineCursor(0)
 end
 
@@ -681,6 +705,7 @@ local function validateData(data, rig, skeleton)
 
     local frames = {}
     local seenFrames = {}
+    local totalMarkerCount = 0
 
     for index, frameData in ipairs(data.frames) do
         if typeof(frameData) ~= "table" or not isFiniteNumber(frameData.time) then
@@ -691,6 +716,37 @@ local function validateData(data, rig, skeleton)
         end
         if typeof(frameData.joints) ~= "table" then
             error("Keyframe " .. index .. " precisa ter um objeto joints.")
+        end
+
+        local markers = {}
+        if frameData.markers ~= nil then
+            local markerCount = arrayLength(frameData.markers, "markers do quadro " .. index, MAX_MARKERS_PER_FRAME)
+            if markerCount > 0 and skeleton.hasAnimationConstraint then
+                error("Eventos KeyframeMarker exigem saída KeyframeSequence. Remova os markers deste rig CurveAnimation experimental.")
+            end
+
+            for markerIndex, markerData in ipairs(frameData.markers) do
+                if typeof(markerData) ~= "table" then
+                    error("Evento " .. markerIndex .. " do quadro " .. index .. " precisa ser um objeto.")
+                end
+                if typeof(markerData.name) ~= "string" or markerData.name:match("^%s*$") or #markerData.name > 64 then
+                    error("O nome de cada evento precisa ter entre 1 e 64 caracteres.")
+                end
+                local markerValue = markerData.value or ""
+                if typeof(markerValue) ~= "string" or #markerValue > 256 then
+                    error("O valor do evento precisa ser texto com até 256 caracteres.")
+                end
+
+                totalMarkerCount += 1
+                if totalMarkerCount > MAX_MARKERS then
+                    error("A animação ultrapassa o limite de " .. MAX_MARKERS .. " eventos.")
+                end
+
+                table.insert(markers, {
+                    name = markerData.name,
+                    value = markerValue,
+                })
+            end
         end
 
         local frameNumber = math.floor(frameData.time * data.fps + 0.5)
@@ -738,6 +794,7 @@ local function validateData(data, rig, skeleton)
             time = frameNumber / data.fps,
             joints = frameData.joints,
             transforms = transforms,
+            markers = markers,
             easingStyle = easingStyle,
             easingDirection = easingDirection,
         })
@@ -752,6 +809,7 @@ local function validateData(data, rig, skeleton)
             time = 0,
             joints = {},
             transforms = {},
+            markers = {},
             easingStyle = frames[1].easingStyle,
             easingDirection = frames[1].easingDirection,
         })
@@ -763,6 +821,7 @@ local function validateData(data, rig, skeleton)
             time = normalizedDuration,
             joints = table.clone(lastFrame.joints),
             transforms = table.clone(lastFrame.transforms),
+            markers = {},
             easingStyle = lastFrame.easingStyle,
             easingDirection = lastFrame.easingDirection,
         })
@@ -770,6 +829,24 @@ local function validateData(data, rig, skeleton)
 
     if #frames > MAX_FRAMES then
         error("A normalização adicionou keyframes e ultrapassou o limite de " .. MAX_FRAMES .. ". Reduza a quantidade de quadros.")
+    end
+
+    local estimatedJointFrames = skeleton.jointCount * #frames
+    if skeleton.hasAnimationConstraint then
+        local estimatedCurveKeys = estimatedJointFrames * 6
+        if estimatedCurveKeys > MAX_CURVE_KEYS then
+            error(string.format(
+                "A saída CurveAnimation exigiria %d chaves de curva; o limite seguro é %d. Reduza quadros ou juntas.",
+                estimatedCurveKeys,
+                MAX_CURVE_KEYS
+            ))
+        end
+    elseif estimatedJointFrames > MAX_POSE_INSTANCES then
+        error(string.format(
+            "A saída KeyframeSequence exigiria %d poses; o limite seguro é %d. Reduza quadros ou juntas.",
+            estimatedJointFrames,
+            MAX_POSE_INSTANCES
+        ))
     end
 
     local cleanName = typeof(data.name) == "string" and data.name or "Posecode_Animation"
@@ -809,6 +886,13 @@ local function buildKeyframeSequence(data, skeleton)
             keyframe.Name = string.format("Keyframe_%03d", index)
             keyframe.Time = frameData.time
             sequence:AddKeyframe(keyframe)
+
+            for _, markerData in ipairs(frameData.markers or {}) do
+                local marker = Instance.new("KeyframeMarker")
+                marker.Name = markerData.name
+                marker.Value = markerData.value
+                keyframe:AddMarker(marker)
+            end
 
             local rootPose = Instance.new("Pose")
             rootPose.Name = skeleton.rootPart.Name
@@ -980,6 +1064,13 @@ local function stopPreview()
         previewStepConnection = nil
     end
 
+    for _, connection in ipairs(previewMarkerConnections) do
+        pcall(function()
+            connection:Disconnect()
+        end)
+    end
+    table.clear(previewMarkerConnections)
+
     if previewTrack then
         pcall(function()
             previewTrack:Stop(0)
@@ -1047,34 +1138,34 @@ local function beginPreview()
 
     stopPreview()
 
-    local host = importedRig:FindFirstChildOfClass("Humanoid")
-        or importedRig:FindFirstChildOfClass("AnimationController")
-
-    if not host then
-        host = Instance.new("AnimationController")
-        host.Name = "PosecodePreviewController"
-        host.Parent = importedRig
-        temporaryHost = true
-    end
-    previewHost = host
-
-    local animator = host:FindFirstChildOfClass("Animator")
-    if not animator then
-        animator = Instance.new("Animator")
-        animator.Parent = host
-        temporaryAnimator = true
-    end
-    previewAnimator = animator
-
-    for _, descendant in ipairs(importedRig:GetDescendants()) do
-        if isSupportedJoint(descendant) then
-            previewJointSnapshot[descendant] = {
-                transform = descendant.Transform,
-            }
-        end
-    end
-
     local ok, result = pcall(function()
+        local host = importedRig:FindFirstChildOfClass("Humanoid")
+            or importedRig:FindFirstChildOfClass("AnimationController")
+
+        if not host then
+            host = Instance.new("AnimationController")
+            host.Name = "PosecodePreviewController"
+            host.Parent = importedRig
+            temporaryHost = true
+        end
+        previewHost = host
+
+        local animator = host:FindFirstChildOfClass("Animator")
+        if not animator then
+            animator = Instance.new("Animator")
+            animator.Parent = host
+            temporaryAnimator = true
+        end
+        previewAnimator = animator
+
+        for _, descendant in ipairs(importedRig:GetDescendants()) do
+            if isSupportedJoint(descendant) then
+                previewJointSnapshot[descendant] = {
+                    transform = descendant.Transform,
+                }
+            end
+        end
+
         local temporaryId = AnimationClipProvider:RegisterActiveAnimationClip(importedSequence)
         local animation = Instance.new("Animation")
         previewAnimation = animation
@@ -1083,11 +1174,31 @@ local function beginPreview()
 
         local track = animator:LoadAnimation(animation)
         previewTrack = track
-        track.Looped = importedData.looped
+        track.Looped = previewLooped
         track.Priority = importedData.priority
         track:Play(0, 1, previewSpeed)
         previewPaused = false
         setPreviewRunning(true)
+
+        local markerNames = {}
+        for _, frameData in ipairs(importedData.frames) do
+            for _, markerData in ipairs(frameData.markers or {}) do
+                markerNames[markerData.name] = true
+            end
+        end
+
+        for markerName in pairs(markerNames) do
+            local capturedName = markerName
+            local connection = track:GetMarkerReachedSignal(capturedName):Connect(function(value)
+                if previewTrack ~= track then
+                    return
+                end
+
+                local suffix = typeof(value) == "string" and value ~= "" and (" · " .. value) or ""
+                setStatus("Evento: " .. capturedName .. suffix, C.event)
+            end)
+            table.insert(previewMarkerConnections, connection)
+        end
 
         local timelineRefreshElapsed = 0
         previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
@@ -1245,6 +1356,23 @@ local function cyclePreviewSpeed()
     end
 
     setStatus("Velocidade da prévia: " .. tostring(previewSpeed) .. "×.", C.muted)
+end
+
+local function togglePreviewLoop()
+    previewLooped = not previewLooped
+    loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
+
+    if previewTrack then
+        local ok, loopError = pcall(function()
+            previewTrack.Looped = previewLooped
+        end)
+        if not ok then
+            setStatus("Não foi possível alterar a repetição: " .. tostring(loopError), C.red)
+            return
+        end
+    end
+
+    setStatus(previewLooped and "Repetição da prévia ativada." or "Repetição da prévia desativada.", C.muted)
 end
 
 local function saveSequence()
@@ -1465,6 +1593,8 @@ importButton.Activated:Connect(function()
     importedData = result.data
     importedSequence = result.clip
     importedRig = rig
+    previewLooped = importedData.looped
+    loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
     setClipControlsEnabled(true)
 
     local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE (EXPERIMENTAL)" or "KEYFRAME"
@@ -1528,6 +1658,9 @@ exampleButton.Activated:Connect(function()
                             rotation = { 0, 0, 22 },
                         },
                     },
+                    markers = not skeleton.hasAnimationConstraint and {
+                        { name = "PosecodeSampleEvent", value = "middle" },
+                    } or nil,
                 },
                 {
                     time = 0.6,
@@ -1563,6 +1696,8 @@ clearButton.Activated:Connect(function()
     importedSequence = nil
     importedData = nil
     importedRig = nil
+    previewLooped = false
+    loopButton.Text = "Repetir: OFF"
     setClipControlsEnabled(false)
     refreshSelectionHint()
     clearTimeline()
@@ -1605,6 +1740,7 @@ stopButton.Activated:Connect(function()
 end)
 
 speedButton.Activated:Connect(cyclePreviewSpeed)
+loopButton.Activated:Connect(togglePreviewLoop)
 
 previousKeyButton.Activated:Connect(function()
     stepKeyframe(-1)
