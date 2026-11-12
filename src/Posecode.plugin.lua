@@ -1362,12 +1362,11 @@ local function cyclePreviewSpeed()
 end
 
 local function togglePreviewLoop()
-    previewLooped = not previewLooped
-    loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
+    local nextLooped = not previewLooped
 
     if previewTrack then
         local ok, loopError = pcall(function()
-            previewTrack.Looped = previewLooped
+            previewTrack.Looped = nextLooped
         end)
         if not ok then
             setStatus("Não foi possível alterar a repetição: " .. tostring(loopError), C.red)
@@ -1375,6 +1374,8 @@ local function togglePreviewLoop()
         end
     end
 
+    previewLooped = nextLooped
+    loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
     setStatus(previewLooped and "Repetição da prévia ativada." or "Repetição da prévia desativada.", C.muted)
 end
 
