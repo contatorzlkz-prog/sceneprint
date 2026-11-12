@@ -94,8 +94,8 @@ As transformações são esparsas: quando uma junta não aparece em um quadro, e
 
 A seleção é automática:
 
-- Se o rig usa apenas Motor6D, o plugin cria uma KeyframeSequence com poses hierárquicas.
-- Se o rig contém AnimationConstraint, o plugin cria uma CurveAnimation com pastas hierárquicas e canais Position (Vector3Curve) e Rotation (EulerRotationCurve).
+- Se o rig usa apenas Motor6D, o plugin cria uma KeyframeSequence com poses hierárquicas. O gerador usa os valores padrão de peso das Pose, sem escrever propriedades depreciadas.
+- Se o rig contém AnimationConstraint, o plugin tenta criar uma CurveAnimation com pastas hierárquicas e canais Position (Vector3Curve) e Rotation (EulerRotationCurve). Essa saída é experimental: a documentação pública do CurveAnimation descreve explicitamente os canais para Motor6D e Bone, sem garantir todas as configurações com AnimationConstraint. Confira a prévia no Studio antes de usar o clip.
 
 ## Tempo e normalização
 
