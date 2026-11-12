@@ -773,6 +773,8 @@ local function saveSequence()
     local createdRoot = nil
     local createdFolder = nil
     local createdReference = nil
+    local existingReference = nil
+    local originalReferenceValue = nil
 
     local ok, result = pcall(function()
         local animSaves = importedRig:FindFirstChild("AnimSaves")
@@ -783,6 +785,8 @@ local function saveSequence()
                 -- Compatibilidade com rigs que ainda usam o formato antigo.
                 saveFolder = animSaves
             elseif animSaves:IsA("ObjectValue") then
+                existingReference = animSaves
+                originalReferenceValue = animSaves.Value
                 if animSaves.Value then
                     if not animSaves.Value:IsA("Folder") then
                         error("A referência AnimSaves não aponta para uma Folder.")
@@ -866,6 +870,8 @@ local function saveSequence()
 
         if createdReference then
             createdReference:Destroy()
+        elseif existingReference then
+            existingReference.Value = originalReferenceValue
         end
         if createdFolder and #createdFolder:GetChildren() == 0 then
             createdFolder:Destroy()
