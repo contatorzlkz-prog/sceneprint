@@ -2,7 +2,7 @@
 
 O **POSECODE V2** é o formato recomendado para novas animações e o formato principal do POSECODE 2.0. Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
 
-O plugin POSECODE v1.8 importa V2 e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
+O plugin POSECODE 2.0 importa V2 como formato principal e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
 
 ## Exemplo completo
 
