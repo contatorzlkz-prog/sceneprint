@@ -1,74 +1,59 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" fill="none">
-  <rect width="960" height="700" rx="12" fill="#0D0D10"/>
-  <rect x="1" y="1" width="958" height="698" rx="11" stroke="#34313D"/>
-  <path d="M20 68H940" stroke="#34313D"/>
-  <rect x="28" y="20" width="30" height="30" rx="6" fill="#302944"/>
-  <g stroke="#B3A0FF" stroke-width="2" stroke-linecap="round"><path d="M34 35h18M38 30v10M47 27v16"/></g>
-  <text x="70" y="36" fill="#F0EDF6" font-family="Arial,sans-serif" font-size="17" font-weight="700">POSECODE</text>
-  <text x="71" y="51" fill="#827C8F" font-family="Arial,sans-serif" font-size="8" letter-spacing="1.1">ANIMATION IMPORTER</text>
-  <rect x="884" y="24" width="46" height="22" rx="5" fill="#24222B"/>
-  <text x="907" y="39" text-anchor="middle" fill="#B3A0FF" font-family="Arial,sans-serif" font-size="9" font-weight="700">v1.4</text>
+  <rect width="960" height="700" rx="8" fill="#1E1F21"/>
+  <rect x="1" y="1" width="958" height="698" rx="7" stroke="#4A4D51"/>
+  <path d="M18 58H942" stroke="#44474B"/>
+  <text x="30" y="31" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="17" font-weight="700">POSECODE</text>
+  <text x="31" y="45" fill="#A8ABB0" font-family="Arial,sans-serif" font-size="8" letter-spacing=".8">IMPORTADOR DE ANIMAÇÕES</text>
+  <text x="930" y="34" text-anchor="end" fill="#A8ABB0" font-family="Arial,sans-serif" font-size="10">v1.5</text>
 
-  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M31 86h7l3 3v8H31zM38 86v3h3"/>
-    <path d="M52 89h10"/>
+  <text x="30" y="91" fill="#E7E8EA" font-family="Arial,sans-serif" font-size="11" font-weight="700">DADOS DA ANIMAÇÃO</text>
+  <text x="30" y="113" fill="#A8ABB0" font-family="Arial,sans-serif" font-size="10">POSECODE / JSON</text>
+  <rect x="30" y="126" width="900" height="128" rx="3" fill="#18191B" stroke="#4A4D51"/>
+  <text x="48" y="154" fill="#A9C3DF" font-family="monospace" font-size="11">{ "format": "POSECODE",</text>
+  <text x="48" y="176" fill="#D3D5D8" font-family="monospace" font-size="10">  "rig": "R15", "fps": 30,</text>
+  <text x="48" y="198" fill="#D3D5D8" font-family="monospace" font-size="10">  "duration": 0.8, "frames": [...]</text>
+  <text x="48" y="229" fill="#85898F" font-family="monospace" font-size="9">...</text>
+
+  <rect x="30" y="267" width="900" height="36" rx="3" fill="#53779E"/>
+  <text x="480" y="290" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="11" font-weight="700">IMPORTAR CLIP</text>
+  <rect x="30" y="312" width="442" height="30" rx="3" fill="#383B3F"/>
+  <text x="251" y="332" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="10">EXEMPLO</text>
+  <rect x="482" y="312" width="448" height="30" rx="3" fill="#383B3F"/>
+  <text x="706" y="332" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="10">LIMPAR</text>
+
+  <text x="30" y="378" fill="#E7E8EA" font-family="Arial,sans-serif" font-size="11" font-weight="700">TIMELINE</text>
+  <text x="930" y="378" text-anchor="end" fill="#A8ABB0" font-family="Arial,sans-serif" font-size="9">12 quadros · 0,80s · KEYFRAMES</text>
+  <path d="M30 407H930" stroke="#55595E" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#8FA7C0">
+    <rect x="30" y="400" width="5" height="16" rx="1"/><rect x="111" y="400" width="5" height="16" rx="1"/>
+    <rect x="193" y="400" width="5" height="16" rx="1"/><rect x="275" y="400" width="5" height="16" rx="1"/>
+    <rect x="356" y="400" width="5" height="16" rx="1"/><rect x="438" y="400" width="5" height="16" rx="1"/>
+    <rect x="520" y="400" width="5" height="16" rx="1"/><rect x="601" y="400" width="5" height="16" rx="1"/>
+    <rect x="683" y="400" width="5" height="16" rx="1"/><rect x="765" y="400" width="5" height="16" rx="1"/>
+    <rect x="846" y="400" width="5" height="16" rx="1"/><rect x="925" y="400" width="5" height="16" rx="1"/>
   </g>
-  <text x="62" y="101" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">01 / SOURCE</text>
-  <text x="30" y="120" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="11">POSECODE / JSON</text>
-  <rect x="30" y="135" width="900" height="124" rx="5" fill="#101014" stroke="#383541"/>
-  <text x="48" y="162" fill="#B3A0FF" font-family="monospace" font-size="11">{ "format": "POSECODE",</text>
-  <text x="48" y="183" fill="#C8C3D0" font-family="monospace" font-size="10">  "rig": "R15", "fps": 30,</text>
-  <text x="48" y="204" fill="#C8C3D0" font-family="monospace" font-size="10">  "duration": 0.8, "frames": [...]</text>
-  <text x="48" y="235" fill="#827C8F" font-family="monospace" font-size="9">...</text>
+  <path d="M438 392V423" stroke="#E3E5E8" stroke-width="2"/>
+  <text x="30" y="438" fill="#E7E8EA" font-family="monospace" font-size="9">00:00.36 / 00:00.80</text>
 
-  <rect x="30" y="270" width="900" height="36" rx="5" fill="#B3A0FF"/>
-  <g stroke="#17151D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M480 278v13m-5-5 5 5 5-5M470 296h20"/></g>
-  <text x="506" y="293" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">IMPORTAR CLIP</text>
-  <rect x="30" y="316" width="442" height="29" rx="5" fill="#24222B"/>
-  <g stroke="#D7D2E2" stroke-width="1.7" stroke-linecap="round"><path d="M251 324v13m-6.5-6.5h13"/></g>
-  <text x="266" y="335" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9" font-weight="700">EXEMPLO</text>
-  <rect x="482" y="316" width="448" height="29" rx="5" fill="#24222B"/>
-  <g stroke="#D7D2E2" stroke-width="1.7" stroke-linecap="round"><path d="m697 325 9 9m0-9-9 9"/></g>
-  <text x="715" y="335" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9" font-weight="700">LIMPAR</text>
+  <text x="30" y="475" fill="#A8ABB0" font-family="Arial,sans-serif" font-size="9">RIG SELECIONADO: Dummy_R15 · KEYFRAME</text>
+  <circle cx="33" cy="497" r="3" fill="#85AC8B"/>
+  <text x="44" y="501" fill="#C5C8CC" font-family="Arial,sans-serif" font-size="10">12 quadros convertidos. Prévia e salvamento disponíveis.</text>
+  <path d="M30 523H930" stroke="#44474B"/>
 
-  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round"><path d="M31 365h14m-10-4v8m7-10v12"/></g>
-  <text x="52" y="379" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">02 / TIMELINE</text>
-  <text x="930" y="379" text-anchor="end" fill="#8A8596" font-family="Arial,sans-serif" font-size="8">12 QUADROS / 0.80S / KEYFRAMES</text>
-  <path d="M30 410H930" stroke="#3B3747" stroke-width="2" stroke-linecap="round"/>
-  <g fill="#B3A0FF">
-    <rect x="30" y="402" width="5" height="16" rx="2"/><rect x="111" y="402" width="5" height="16" rx="2"/>
-    <rect x="193" y="402" width="5" height="16" rx="2"/><rect x="275" y="402" width="5" height="16" rx="2"/>
-    <rect x="356" y="402" width="5" height="16" rx="2"/><rect x="438" y="402" width="5" height="16" rx="2"/>
-    <rect x="520" y="402" width="5" height="16" rx="2"/><rect x="601" y="402" width="5" height="16" rx="2"/>
-    <rect x="683" y="402" width="5" height="16" rx="2"/><rect x="765" y="402" width="5" height="16" rx="2"/>
-    <rect x="846" y="402" width="5" height="16" rx="2"/><rect x="925" y="402" width="5" height="16" rx="2"/>
-  </g>
-  <path d="M438 394V426" stroke="#F0EDF6" stroke-width="2"/>
-  <text x="30" y="440" fill="#F0EDF6" font-family="monospace" font-size="9">00:00.36 / 00:00.80</text>
+  <text x="30" y="550" fill="#E7E8EA" font-family="Arial,sans-serif" font-size="11" font-weight="700">PRÉVIA</text>
+  <rect x="30" y="565" width="214" height="34" rx="3" fill="#53779E"/>
+  <text x="137" y="587" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="10" font-weight="700">REPRODUZIR</text>
+  <rect x="254" y="565" width="214" height="34" rx="3" fill="#383B3F"/>
+  <text x="361" y="587" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="10">PAUSAR</text>
+  <rect x="478" y="565" width="214" height="34" rx="3" fill="#383B3F"/>
+  <text x="585" y="587" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="10">PARAR</text>
+  <rect x="702" y="565" width="228" height="34" rx="3" fill="#383B3F"/>
+  <text x="816" y="587" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="10">1×</text>
 
-  <text x="30" y="479" fill="#8A8596" font-family="Arial,sans-serif" font-size="9">RIG: R15 / SelectedRig / KEYFRAME</text>
-  <circle cx="33" cy="499" r="3" fill="#94C29E"/>
-  <text x="44" y="503" fill="#A9A4B4" font-family="Arial,sans-serif" font-size="10">12 quadros convertidos. Prévia e salvamento disponíveis.</text>
-  <path d="M30 527H930" stroke="#34313D"/>
-
-  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m33 540 9 7-9 7v-14Z"/></g>
-  <text x="52" y="551" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">03 / PREVIEW</text>
-  <rect x="30" y="565" width="214" height="34" rx="5" fill="#B3A0FF"/>
-  <path d="m130 573 12 9-12 9v-18Z" fill="none" stroke="#17151D" stroke-width="1.8" stroke-linejoin="round"/>
-  <rect x="254" y="565" width="214" height="34" rx="5" fill="#24222B"/>
-  <path d="M354 574v16m8-16v16" stroke="#EDEAF2" stroke-width="2" stroke-linecap="round"/>
-  <rect x="478" y="565" width="214" height="34" rx="5" fill="#24222B"/>
-  <rect x="578" y="575" width="14" height="14" rx="1.5" stroke="#EDEAF2" stroke-width="1.8"/>
-  <rect x="702" y="565" width="228" height="34" rx="5" fill="#24222B"/>
-  <text x="816" y="587" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="10" font-weight="700">1×</text>
-
-  <rect x="30" y="610" width="442" height="30" rx="5" fill="#24222B"/>
-  <path d="M242 618v14m-7-7 7-7 7 7" stroke="#EDEAF2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="259" y="630" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9" font-weight="700">ANTERIOR</text>
-  <rect x="482" y="610" width="448" height="30" rx="5" fill="#24222B"/>
-  <path d="M704 618v14m-7-7 7 7 7-7" stroke="#EDEAF2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="721" y="630" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9" font-weight="700">PRÓXIMO</text>
-  <rect x="30" y="651" width="900" height="34" rx="5" fill="#B3A0FF"/>
-  <path d="M450 659v13m-5-5 5 5 5-5M440 677h20" stroke="#17151D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <text x="474" y="673" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">SALVAR CLIP NO STUDIO</text>
+  <rect x="30" y="610" width="442" height="30" rx="3" fill="#383B3F"/>
+  <text x="251" y="630" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="9">QUADRO ANTERIOR</text>
+  <rect x="482" y="610" width="448" height="30" rx="3" fill="#383B3F"/>
+  <text x="706" y="630" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="9">PRÓXIMO QUADRO</text>
+  <rect x="30" y="651" width="900" height="34" rx="3" fill="#53779E"/>
+  <text x="480" y="673" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="11" font-weight="700">SALVAR CLIP NO STUDIO</text>
 </svg>
