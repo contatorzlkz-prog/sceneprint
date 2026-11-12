@@ -616,6 +616,15 @@ local function validateData(data, rig, skeleton)
             error('EasingDirection inválido no keyframe ' .. index .. '. Use In, Out ou InOut.')
         end
 
+        if skeleton.hasAnimationConstraint then
+            if easingStyleName == "Elastic" or easingStyleName == "Bounce" then
+                error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
+            end
+            if easingStyleName == "CubicV2" and easingDirectionName ~= "InOut" then
+                error("CurveAnimation v1.2 usa CubicV2 com direção InOut. Ajuste o easingDirection deste quadro.")
+            end
+        end
+
         for jointName, jointData in pairs(frameData.joints) do
             if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
                 error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
@@ -673,6 +682,7 @@ local function validateData(data, rig, skeleton)
         looped = data.looped,
         duration = normalizedDuration,
         priority = Enum.AnimationPriority[priorityName],
+        clipType = skeleton.hasAnimationConstraint and "CurveAnimation" or "KeyframeSequence",
         frames = frames,
     }
 end
@@ -1207,7 +1217,7 @@ local function saveSequence()
         return
     end
 
-    setStatus('Keyframes salvos em AnimSaves. Nome: "' .. result .. '".', C.green)
+    setStatus('Clip salvo em AnimSaves. Nome: "' .. result .. '".', C.green)
 end
 
 importButton.Activated:Connect(function()
@@ -1223,16 +1233,21 @@ importButton.Activated:Connect(function()
         setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
         return
     end
+    if sourceBox.Text:match("^%s*$") then
+        setStatus("Cole um script ou JSON de animação antes de importar.", C.red)
+        return
+    end
 
     local ok, result = pcall(function()
         local skeleton = getSkeleton(rig)
         local payload = extractPayload(sourceBox.Text)
         local decoded = HttpService:JSONDecode(payload)
         local data = validateData(decoded, rig, skeleton)
-        local sequence = buildSequence(data, skeleton)
+        local clip = buildAnimationClip(data, skeleton)
         return {
             data = data,
-            sequence = sequence,
+            clip = clip,
+            skeleton = skeleton,
         }
     end)
 
@@ -1246,42 +1261,106 @@ importButton.Activated:Connect(function()
     end
 
     importedData = result.data
-    importedSequence = result.sequence
+    importedSequence = result.clip
     importedRig = rig
 
-    rigInfo.Text = string.format("RIG: %s  /  %s", importedData.rig, rig.Name)
+    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
+    rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
     drawTimeline(importedData)
 
     setStatus(
-        string.format("%d keyframes preparados. Prévia e salvamento liberados.", #importedData.frames),
+        string.format("%d quadros convertidos. Prévia, navegação e salvamento disponíveis.", #importedData.frames),
         C.green
     )
 end)
 
-timelineHitbox.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        isScrubbing = true
-        seekFromScreenX(input.Position.X)
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if not isScrubbing then
+exampleButton.Activated:Connect(function()
+    local rig = selectedRig()
+    if not rig then
+        setStatus("Selecione um rig antes de carregar o exemplo.", C.red)
         return
     end
 
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-        seekFromScreenX(input.Position.X)
+    local ok, result = pcall(function()
+        local humanoid = rig:FindFirstChildOfClass("Humanoid")
+        if not humanoid then
+            error("O rig selecionado precisa ter um Humanoid para identificar R6 ou R15.")
+        end
+
+        local skeleton = getSkeleton(rig)
+        local rootChildren = skeleton.childrenByPart0[skeleton.rootPart] or {}
+        if #rootChildren == 0 then
+            error("Não encontrei uma junta conectada à raiz desse rig.")
+        end
+
+        local jointName = rootChildren[1].Name
+        local sample = {
+            format = "POSECODE",
+            version = 1,
+            name = "Posecode_Sample",
+            rig = humanoid.RigType.Name,
+            fps = 30,
+            duration = 0.6,
+            looped = false,
+            priority = "Action",
+            easingStyle = "CubicV2",
+            easingDirection = "InOut",
+            frames = {
+                {
+                    time = 0,
+                    joints = {
+                        [jointName] = {
+                            position = { 0, 0, 0 },
+                            rotation = { 0, 0, 0 },
+                        },
+                    },
+                },
+                {
+                    time = 0.3,
+                    joints = {
+                        [jointName] = {
+                            position = { 0, 0, 0 },
+                            rotation = { 0, 0, 22 },
+                        },
+                    },
+                },
+                {
+                    time = 0.6,
+                    joints = {
+                        [jointName] = {
+                            position = { 0, 0, 0 },
+                            rotation = { 0, 0, 0 },
+                        },
+                    },
+                },
+            },
+        }
+        return HttpService:JSONEncode(sample)
+    end)
+
+    if not ok then
+        setStatus("Não consegui criar o exemplo: " .. tostring(result), C.red)
+        return
     end
+
+    sourceBox.Text = result
+    setStatus("Exemplo carregado. Clique em Importar Animação.", C.green)
 end)
 
-UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        isScrubbing = false
+clearButton.Activated:Connect(function()
+    stopPreview()
+    sourceBox.Text = ""
+
+    if importedSequence and importedSequence.Parent == nil then
+        importedSequence:Destroy()
     end
+
+    importedSequence = nil
+    importedData = nil
+    importedRig = nil
+    rigInfo.Text = "RIG: —"
+    clearTimeline()
+    setStatus("Campo de importação limpo.")
 end)
 
 previewButton.Activated:Connect(playPreview)
