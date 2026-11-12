@@ -37,27 +37,29 @@
     </symbol>
   </defs>
   <g stroke="#B3A0FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <use href="#icon-document" x="25" y="20" width="24" height="24"/>
-    <use href="#icon-import" x="125" y="20" width="24" height="24"/>
-    <use href="#icon-plus" x="225" y="20" width="24" height="24"/>
-    <use href="#icon-close" x="325" y="20" width="24" height="24"/>
-    <use href="#icon-play" x="425" y="20" width="24" height="24"/>
-    <use href="#icon-pause" x="25" y="96" width="24" height="24"/>
-    <use href="#icon-stop" x="125" y="96" width="24" height="24"/>
-    <use href="#icon-previous" x="225" y="96" width="24" height="24"/>
-    <use href="#icon-next" x="325" y="96" width="24" height="24"/>
-    <use href="#icon-save" x="425" y="96" width="24" height="24"/>
+    <use href="#icon-document" x="18" y="15" width="24" height="24"/>
+    <use href="#icon-import" x="100" y="15" width="24" height="24"/>
+    <use href="#icon-plus" x="182" y="15" width="24" height="24"/>
+    <use href="#icon-close" x="264" y="15" width="24" height="24"/>
+    <use href="#icon-play" x="346" y="15" width="24" height="24"/>
+    <use href="#icon-pause" x="428" y="15" width="24" height="24"/>
+    <use href="#icon-stop" x="18" y="94" width="24" height="24"/>
+    <use href="#icon-previous" x="100" y="94" width="24" height="24"/>
+    <use href="#icon-next" x="182" y="94" width="24" height="24"/>
+    <use href="#icon-save" x="264" y="94" width="24" height="24"/>
+    <use href="#icon-timeline" x="346" y="94" width="24" height="24"/>
   </g>
   <g fill="#8A8596" font-family="Arial,sans-serif" font-size="9" text-anchor="middle">
-    <text x="37" y="61">document</text>
-    <text x="137" y="61">import</text>
-    <text x="237" y="61">plus</text>
-    <text x="337" y="61">close</text>
-    <text x="437" y="61">play</text>
-    <text x="37" y="137">pause</text>
-    <text x="137" y="137">stop</text>
-    <text x="237" y="137">previous</text>
-    <text x="337" y="137">next</text>
-    <text x="437" y="137">save</text>
+    <text x="30" y="57">document</text>
+    <text x="112" y="57">import</text>
+    <text x="194" y="57">plus</text>
+    <text x="276" y="57">close</text>
+    <text x="358" y="57">play</text>
+    <text x="440" y="57">pause</text>
+    <text x="30" y="136">stop</text>
+    <text x="112" y="136">previous</text>
+    <text x="194" y="136">next</text>
+    <text x="276" y="136">save</text>
+    <text x="358" y="136">timeline</text>
   </g>
 </svg>
