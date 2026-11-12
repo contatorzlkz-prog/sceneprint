@@ -200,10 +200,6 @@ local function button(parent, text, position, size, primary, iconName)
         local iconObject = drawIcon(object, iconName,
             hasText and UDim2.fromOffset(10, iconY) or UDim2.new(0.5, -iconSize * 0.5, 0, iconY),
             iconSize, primary and C.background or C.text)
-        if not hasText then
-            iconObject.AnchorPoint = Vector2.new(0.5, 0)
-        end
-
         if hasText then
             label(object, text, UDim2.fromOffset(34, 0), UDim2.new(1, -40, 1, 0),
                 10, primary and C.background or C.text, Enum.Font.GothamBold)
