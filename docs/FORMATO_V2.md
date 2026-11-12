@@ -2,7 +2,7 @@
 
 O **POSECODE V2** é o formato recomendado para novas animações. Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
 
-O plugin POSECODE v1.8 importa V2 e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin.
+O plugin POSECODE v1.8 importa V2 e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
 
 ## Exemplo completo
 
@@ -116,7 +116,7 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
 
 `metadata.name` é obrigatório e deve ter de 1 a 64 caracteres.
 
-`metadata.author` é opcional e aceita até 64 caracteres. `metadata.description` também é opcional e aceita até 256 caracteres. Esses campos são descritivos; não alteram a conversão da animação.
+`metadata.author` é opcional e aceita até 64 caracteres. `metadata.description` também é opcional e aceita até 256 caracteres. Esses campos são descritivos e não alteram a conversão. Na versão atual, o plugin usa `metadata.name` para nomear o clip; author e description não são gravados no asset de animação.
 
 ## Rig
 
@@ -169,7 +169,7 @@ Cada keyframe contém:
 - `transform`: objeto com `position` e/ou `rotation`.
 - `easing`: opcional; substitui o easing global daquele keyframe.
 
-`position` é um vetor local em studs: `[x, y, z]`. `rotation` é um vetor de ângulos locais em graus, na ordem XYZ. Se um dos campos não aparecer, seu valor será zero naquele keyframe. Cada componente de posição tem limite de 5 studs e cada componente de rotação tem limite de 720 graus.
+`position` é um vetor local em studs: `[x, y, z]`. `rotation` é um vetor de ângulos locais em graus, na ordem XYZ. Informe pelo menos um dos dois campos; se um deles for omitido, seu valor será zero naquele keyframe. Quando uma track não possui keyframe num determinado instante, ela mantém a transformação anterior. Cada componente de posição tem limite de 5 studs e cada componente de rotação tem limite de 720 graus.
 
 O objeto `easing`, quando informado, precisa conter os dois campos:
 
@@ -194,7 +194,7 @@ São aceitos até 128 eventos no total e 8 eventos por quadro normalizado. Os ev
 
 ## Tempo, combinação e normalização
 
-Os tempos são ajustados para o quadro mais próximo de acordo com `fps`. Keyframes de tracks diferentes que resultem no mesmo quadro são combinados. Dois keyframes da mesma track que resultem no mesmo quadro são recusados. Eventos também são associados ao quadro normalizado correspondente.
+Os tempos são ajustados para o quadro mais próximo de acordo com `fps`. A duração também precisa representar ao menos um quadro depois dessa normalização. Keyframes de tracks diferentes que resultem no mesmo quadro são combinados. Dois keyframes da mesma track que resultem no mesmo quadro são recusados. Eventos também são associados ao quadro normalizado correspondente.
 
 Se o primeiro instante estiver depois de zero, o plugin insere um quadro neutro no início. Se o último keyframe estiver antes do fim, a última pose é mantida até `duration`. Quadros automáticos também contam no limite de 120 instantes normalizados.
 
