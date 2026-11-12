@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.8
+    Version: 2.0
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -17,7 +17,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "1.8"
+local VERSION = "2.0"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -281,7 +281,7 @@ local sourceBox = make("TextBox", content, {
     ClearTextOnFocus = false,
     Font = Enum.Font.Code,
     Text = "",
-    PlaceholderText = '{ "format": "POSECODE", "version": 1, ... }',
+    PlaceholderText = '{ "format": "POSECODE", "version": 2, ... }',
     PlaceholderColor3 = C.muted,
     TextColor3 = C.text,
     TextSize = 10,
@@ -306,7 +306,8 @@ make("UIPadding", sourceBox, {
 local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 244), UDim2.new(1, 0, 0, 36), true)
 local exampleButton = button(content, "Carregar exemplo", UDim2.fromOffset(0, 289), UDim2.new(0.5, -4, 0, 30), false)
 local clearButton = button(content, "Limpar", UDim2.new(0.5, 4, 0, 289), UDim2.new(0.5, -4, 0, 30), false)
-label(content, "O conteúdo colado é validado como JSON e nunca executado.", UDim2.fromOffset(0, 328), UDim2.new(1, 0, 0, 15), 8, C.muted)
+local migrateButton = button(content, "Converter V1 para V2", UDim2.fromOffset(0, 329), UDim2.new(1, 0, 0, 30), false)
+label(content, "Entrada validada como JSON; nenhum código colado é executado.", UDim2.fromOffset(0, 366), UDim2.new(1, 0, 0, 15), 8, C.muted)
 
 label(previewPage, "PRÉVIA DO CLIP", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
 
@@ -431,7 +432,7 @@ showPage = function(pageName)
     rigPage.Visible = pageName == "rig"
 
     local pageHeights = {
-        import = 350,
+        import = 390,
         preview = 270,
         rig = 220,
     }
@@ -632,6 +633,8 @@ local function getSkeleton(rig)
     local hasBone = false
     local hasMotor6D = false
     local partJointCount = 0
+    local motor6DCount = 0
+    local animationConstraintCount = 0
     local boneCount = 0
     local discoveredJointCount = 0
 
@@ -686,6 +689,7 @@ local function getSkeleton(rig)
             if descendant:IsA("Motor6D") then
                 jointKind = "Motor6D"
                 hasMotor6D = true
+                motor6DCount += 1
                 part0 = descendant.Part0
                 part1 = descendant.Part1
                 if not part0 or not part1 then
@@ -698,6 +702,7 @@ local function getSkeleton(rig)
             else
                 jointKind = "AnimationConstraint"
                 hasAnimationConstraint = true
+                animationConstraintCount += 1
                 local attachment0 = descendant.Attachment0
                 local attachment1 = descendant.Attachment1
                 part0 = attachment0 and attachment0.Parent
@@ -861,6 +866,8 @@ local function getSkeleton(rig)
         boneRoots = boneRoots,
         jointCount = discoveredJointCount,
         partJointCount = partJointCount,
+        motor6DCount = motor6DCount,
+        animationConstraintCount = animationConstraintCount,
         boneCount = boneCount,
         hasMotor6D = hasMotor6D,
         hasAnimationConstraint = hasAnimationConstraint,
@@ -875,6 +882,7 @@ local function refreshActionButtons()
     local hasSource = sourceBox.Text:match("^%s*$") == nil
     setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
     setButtonState(exampleButton, selectedRigCache ~= nil, false)
+    setButtonState(migrateButton, selectedRigCache ~= nil and hasSource, false)
     setButtonState(rigCheckButton, selectedRigCache ~= nil, false)
 end
 
@@ -910,8 +918,11 @@ local function analyzeSelectedRig()
     local humanoid = rig:FindFirstChildOfClass("Humanoid")
     local profile = humanoid and humanoid.RigType.Name or "CUSTOM"
     local details = {}
-    if skeleton.partJointCount > 0 then
-        table.insert(details, string.format("%d juntas", skeleton.partJointCount))
+    if skeleton.motor6DCount > 0 then
+        table.insert(details, string.format("%d Motor6D", skeleton.motor6DCount))
+    end
+    if skeleton.animationConstraintCount > 0 then
+        table.insert(details, string.format("%d AnimationConstraint", skeleton.animationConstraintCount))
     end
     if skeleton.boneCount > 0 then
         table.insert(details, string.format("%d Bones", skeleton.boneCount))
@@ -926,7 +937,7 @@ local function analyzeSelectedRig()
     end
 
     rigInfo.Text = string.format("RIG: %s  /  %d ELEMENTOS  /  %s", profile, skeleton.jointCount, outputType)
-    setStatus("Rig compatível: " .. table.concat(details, " + ") .. ". Saída: " .. outputType .. ".", C.green)
+    setStatus("Rig compatível: " .. (#details > 0 and table.concat(details, " + ") or "sem canais") .. ". Saída: " .. outputType .. ".", C.green)
 end
 
 rigCheckButton.Activated:Connect(analyzeSelectedRig)
