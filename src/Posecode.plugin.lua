@@ -1068,7 +1068,10 @@ local function normalizeV2Data(data, skeleton)
         error("timeline.priority precisa ser texto.")
     end
 
-    local defaultEasing = timeline.defaultEasing or {}
+    local defaultEasing = timeline.defaultEasing
+    if defaultEasing == nil then
+        defaultEasing = {}
+    end
     if typeof(defaultEasing) ~= "table" then
         error("timeline.defaultEasing precisa ser um objeto.")
     end
@@ -1087,11 +1090,20 @@ local function normalizeV2Data(data, skeleton)
 
     local framesByTime = {}
     local seenTargets = {}
+    local durationFrames = math.floor(timeline.duration * timeline.fps + 0.5)
+
+    local function normalizeTime(time, sourceLabel)
+        if not isFiniteNumber(time) or time < 0 or time > timeline.duration then
+            error(sourceLabel .. " precisa estar dentro de timeline.duration.")
+        end
+        local frameNumber = math.floor(time * timeline.fps + 0.5)
+        if frameNumber > durationFrames then
+            error(sourceLabel .. " ultrapassa o último quadro depois do ajuste ao FPS.")
+        end
+        return frameNumber / timeline.fps
+    end
 
     local function getFrame(time)
-        if not isFiniteNumber(time) or time < 0 or time > timeline.duration then
-            error("Todo keyframe precisa ter um time válido dentro de timeline.duration.")
-        end
         local frame = framesByTime[time]
         if not frame then
             frame = {
@@ -1152,12 +1164,9 @@ local function normalizeV2Data(data, skeleton)
             if typeof(key) ~= "table" or typeof(key.transform) ~= "table" then
                 error("Keyframe " .. keyIndex .. " da track " .. trackIndex .. " precisa ter transform.")
             end
-            local time = key.time
-            if not isFiniteNumber(time) or time < 0 or time > timeline.duration then
-                error("O time de um keyframe está fora de timeline.duration.")
-            end
+            local time = normalizeTime(key.time, "O time de um keyframe")
             if seenTrackTimes[time] then
-                error('A track "' .. targetName .. '" possui dois keyframes no mesmo instante.')
+                error('A track "' .. targetName .. '" possui dois keyframes no mesmo quadro após o ajuste ao FPS.')
             end
             seenTrackTimes[time] = true
 
@@ -1189,7 +1198,10 @@ local function normalizeV2Data(data, skeleton)
         end
     end
 
-    local events = data.events or {}
+    local events = data.events
+    if events == nil then
+        events = {}
+    end
     local eventCount = arrayLength(events, "events", MAX_MARKERS)
     local eventCountsByTime = {}
 
@@ -1197,11 +1209,7 @@ local function normalizeV2Data(data, skeleton)
         if typeof(event) ~= "table" then
             error("Event " .. eventIndex .. " precisa ser um objeto.")
         end
-        if not isFiniteNumber(event.time)
-            or event.time < 0
-            or event.time > timeline.duration then
-            error("O time de um evento está fora de timeline.duration.")
-        end
+        local eventTime = normalizeTime(event.time, "O time de um evento")
         if typeof(event.name) ~= "string"
             or event.name:match("^%s*$")
             or #event.name > 64 then
@@ -1212,12 +1220,12 @@ local function normalizeV2Data(data, skeleton)
             error("event.value precisa ser texto com até 256 caracteres.")
         end
 
-        eventCountsByTime[event.time] = (eventCountsByTime[event.time] or 0) + 1
-        if eventCountsByTime[event.time] > MAX_MARKERS_PER_FRAME then
-            error("Há mais de " .. MAX_MARKERS_PER_FRAME .. " eventos no mesmo instante.")
+        eventCountsByTime[eventTime] = (eventCountsByTime[eventTime] or 0) + 1
+        if eventCountsByTime[eventTime] > MAX_MARKERS_PER_FRAME then
+            error("Há mais de " .. MAX_MARKERS_PER_FRAME .. " eventos no mesmo quadro.")
         end
 
-        local frame = getFrame(event.time)
+        local frame = getFrame(eventTime)
         frame.markers = frame.markers or {}
         table.insert(frame.markers, {
             name = event.name,
