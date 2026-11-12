@@ -621,6 +621,7 @@ end
 
 local function getSkeleton(rig)
     local jointsByPart1 = {}
+    local jointKindsByName = {}
     local childrenByPart0 = {}
     local incomingParts = {}
     local curveChildrenByParent = {}
@@ -667,6 +668,7 @@ local function getSkeleton(rig)
             end
 
             registerJointName(descendant.Name, descendant)
+            jointKindsByName[descendant.Name] = "Bone"
             addCurveChild(parent, descendant)
 
             if parent:IsA("Bone") then
@@ -679,8 +681,10 @@ local function getSkeleton(rig)
         elseif descendant:IsA("Motor6D") or descendant:IsA("AnimationConstraint") then
             local part0
             local part1
+            local jointKind
 
             if descendant:IsA("Motor6D") then
+                jointKind = "Motor6D"
                 hasMotor6D = true
                 part0 = descendant.Part0
                 part1 = descendant.Part1
@@ -692,6 +696,7 @@ local function getSkeleton(rig)
                     )
                 end
             else
+                jointKind = "AnimationConstraint"
                 hasAnimationConstraint = true
                 local attachment0 = descendant.Attachment0
                 local attachment1 = descendant.Attachment1
@@ -719,6 +724,7 @@ local function getSkeleton(rig)
             partJointCount += 1
             discoveredJointCount += 1
             registerJointName(part1.Name, part1)
+            jointKindsByName[part1.Name] = jointKind
 
             childrenByPart0[part0] = childrenByPart0[part0] or {}
             table.insert(childrenByPart0[part0], part1)
@@ -848,6 +854,7 @@ local function getSkeleton(rig)
     return {
         rootPart = rootPart,
         jointsByPart1 = jointsByPart1,
+        jointKindsByName = jointKindsByName,
         childrenByPart0 = childrenByPart0,
         curveChildrenByParent = curveChildrenByParent,
         boneChildrenByParent = boneChildrenByParent,
@@ -1004,6 +1011,245 @@ local function extractPayload(source)
     end
 
     return source
+end
+
+
+local function normalizeV2Data(data, skeleton)
+    if typeof(data) ~= "table" or data.format ~= "POSECODE" or data.version ~= 2 then
+        error("O normalizador recebeu um documento que não é POSECODE V2.")
+    end
+
+    local metadata = data.metadata
+    local rigData = data.rig
+    local timeline = data.timeline
+    if typeof(metadata) ~= "table" then
+        error('V2 precisa de um objeto "metadata".')
+    end
+    if typeof(rigData) ~= "table" then
+        error('V2 precisa de um objeto "rig".')
+    end
+    if typeof(timeline) ~= "table" then
+        error('V2 precisa de um objeto "timeline".')
+    end
+
+    local name = metadata.name
+    if typeof(name) ~= "string" or name:match("^%s*$") or #name > 64 then
+        error('metadata.name precisa ter entre 1 e 64 caracteres.')
+    end
+    if metadata.author ~= nil
+        and (typeof(metadata.author) ~= "string" or #metadata.author > 64) then
+        error('metadata.author precisa ser texto com até 64 caracteres.')
+    end
+    if metadata.description ~= nil
+        and (typeof(metadata.description) ~= "string" or #metadata.description > 256) then
+        error('metadata.description precisa ser texto com até 256 caracteres.')
+    end
+
+    local rigProfile = rigData.profile
+    if rigProfile ~= "R6" and rigProfile ~= "R15" and rigProfile ~= "CUSTOM" then
+        error('rig.profile precisa ser "R6", "R15" ou "CUSTOM".')
+    end
+
+    if not isFiniteNumber(timeline.fps)
+        or timeline.fps < 1
+        or timeline.fps > 60
+        or timeline.fps % 1 ~= 0 then
+        error("timeline.fps precisa ser um inteiro entre 1 e 60.")
+    end
+    if not isFiniteNumber(timeline.duration)
+        or timeline.duration <= 0
+        or timeline.duration > MAX_DURATION then
+        error("timeline.duration precisa estar entre 0 e 15 segundos.")
+    end
+    if timeline.looped ~= nil and typeof(timeline.looped) ~= "boolean" then
+        error("timeline.looped precisa ser true ou false.")
+    end
+    if timeline.priority ~= nil and typeof(timeline.priority) ~= "string" then
+        error("timeline.priority precisa ser texto.")
+    end
+
+    local defaultEasing = timeline.defaultEasing or {}
+    if typeof(defaultEasing) ~= "table" then
+        error("timeline.defaultEasing precisa ser um objeto.")
+    end
+    local defaultEasingStyle = defaultEasing.style or "Linear"
+    local defaultEasingDirection = defaultEasing.direction or "InOut"
+    if typeof(defaultEasingStyle) ~= "string"
+        or typeof(defaultEasingDirection) ~= "string" then
+        error("O easing padrão precisa conter style e direction como texto.")
+    end
+
+    local tracks = data.tracks
+    local trackCount = arrayLength(tracks, "tracks", MAX_JOINTS)
+    if trackCount < 1 then
+        error("V2 precisa ter pelo menos uma track.")
+    end
+
+    local framesByTime = {}
+    local seenTargets = {}
+
+    local function getFrame(time)
+        if not isFiniteNumber(time) or time < 0 or time > timeline.duration then
+            error("Todo keyframe precisa ter um time válido dentro de timeline.duration.")
+        end
+        local frame = framesByTime[time]
+        if not frame then
+            frame = {
+                time = time,
+                joints = {},
+                easingStyle = defaultEasingStyle,
+                easingDirection = defaultEasingDirection,
+            }
+            framesByTime[time] = frame
+        end
+        return frame
+    end
+
+    for trackIndex, track in ipairs(tracks) do
+        if typeof(track) ~= "table" or typeof(track.target) ~= "table" then
+            error("Track " .. trackIndex .. " precisa ter um objeto target.")
+        end
+
+        local targetType = track.target.type
+        local targetName = track.target.name
+        if targetType ~= "Motor6D"
+            and targetType ~= "AnimationConstraint"
+            and targetType ~= "Bone" then
+            error('Track ' .. trackIndex .. ' tem target.type inválido. Use "Motor6D", "AnimationConstraint" ou "Bone".')
+        end
+        if typeof(targetName) ~= "string" or targetName:match("^%s*$") then
+            error("Track " .. trackIndex .. " precisa informar target.name.")
+        end
+        if seenTargets[targetName] then
+            error('O alvo "' .. targetName .. '" aparece em mais de uma track. Cada canal deve ter apenas uma track.')
+        end
+        seenTargets[targetName] = true
+
+        local resolvedTarget = skeleton.jointsByPart1[targetName]
+        if not resolvedTarget then
+            error('O alvo "' .. targetName .. '" não existe no rig selecionado.')
+        end
+        if skeleton.jointKindsByName[targetName] ~= targetType then
+            error(
+                'O alvo "'
+                    .. targetName
+                    .. '" não é do tipo '
+                    .. targetType
+                    .. ". Tipo encontrado: "
+                    .. tostring(skeleton.jointKindsByName[targetName])
+                    .. "."
+            )
+        end
+
+        local keys = track.keys
+        local keyCount = arrayLength(keys, "keys da track " .. trackIndex, MAX_FRAMES)
+        if keyCount < 1 then
+            error("Cada track precisa ter pelo menos um keyframe.")
+        end
+
+        local seenTrackTimes = {}
+        for keyIndex, key in ipairs(keys) do
+            if typeof(key) ~= "table" or typeof(key.transform) ~= "table" then
+                error("Keyframe " .. keyIndex .. " da track " .. trackIndex .. " precisa ter transform.")
+            end
+            local time = key.time
+            if not isFiniteNumber(time) or time < 0 or time > timeline.duration then
+                error("O time de um keyframe está fora de timeline.duration.")
+            end
+            if seenTrackTimes[time] then
+                error('A track "' .. targetName .. '" possui dois keyframes no mesmo instante.')
+            end
+            seenTrackTimes[time] = true
+
+            local easing = key.easing
+            local easingStyle = defaultEasingStyle
+            local easingDirection = defaultEasingDirection
+            if easing ~= nil then
+                if typeof(easing) ~= "table"
+                    or typeof(easing.style) ~= "string"
+                    or typeof(easing.direction) ~= "string" then
+                    error("key.easing precisa conter style e direction como texto.")
+                end
+                easingStyle = easing.style
+                easingDirection = easing.direction
+            end
+
+            local frame = getFrame(time)
+            if frame.easingStyle ~= easingStyle
+                or frame.easingDirection ~= easingDirection then
+                error(
+                    "Tracks com keyframes no mesmo instante precisam usar o mesmo easing. "
+                        .. "Ajuste key.easing ou timeline.defaultEasing."
+                )
+            end
+            if frame.joints[targetName] ~= nil then
+                error('A track "' .. targetName .. '" repetiu um keyframe no mesmo instante.')
+            end
+            frame.joints[targetName] = key.transform
+        end
+    end
+
+    local events = data.events or {}
+    local eventCount = arrayLength(events, "events", MAX_MARKERS)
+    local eventCountsByTime = {}
+
+    for eventIndex, event in ipairs(events) do
+        if typeof(event) ~= "table" then
+            error("Event " .. eventIndex .. " precisa ser um objeto.")
+        end
+        if not isFiniteNumber(event.time)
+            or event.time < 0
+            or event.time > timeline.duration then
+            error("O time de um evento está fora de timeline.duration.")
+        end
+        if typeof(event.name) ~= "string"
+            or event.name:match("^%s*$")
+            or #event.name > 64 then
+            error("O nome de cada evento precisa ter entre 1 e 64 caracteres.")
+        end
+        local value = event.value or ""
+        if typeof(value) ~= "string" or #value > 256 then
+            error("event.value precisa ser texto com até 256 caracteres.")
+        end
+
+        eventCountsByTime[event.time] = (eventCountsByTime[event.time] or 0) + 1
+        if eventCountsByTime[event.time] > MAX_MARKERS_PER_FRAME then
+            error("Há mais de " .. MAX_MARKERS_PER_FRAME .. " eventos no mesmo instante.")
+        end
+
+        local frame = getFrame(event.time)
+        frame.markers = frame.markers or {}
+        table.insert(frame.markers, {
+            name = event.name,
+            value = value,
+        })
+    end
+
+    local frames = {}
+    for _, frame in pairs(framesByTime) do
+        table.insert(frames, frame)
+    end
+    table.sort(frames, function(a, b)
+        return a.time < b.time
+    end)
+
+    if #frames > MAX_FRAMES then
+        error("V2 ultrapassa o limite de " .. MAX_FRAMES .. " instantes de keyframe.")
+    end
+
+    return {
+        format = "POSECODE",
+        version = 1,
+        name = name,
+        rig = rigProfile,
+        fps = timeline.fps,
+        duration = timeline.duration,
+        looped = timeline.looped == true,
+        priority = timeline.priority or "Action",
+        easingStyle = defaultEasingStyle,
+        easingDirection = defaultEasingDirection,
+        frames = frames,
+    }
 end
 
 local function validateData(data, rig, skeleton)
@@ -1946,7 +2192,12 @@ importButton.Activated:Connect(function()
         local skeleton = getSkeleton(rig)
         local payload = extractPayload(sourceBox.Text)
         local decoded = HttpService:JSONDecode(payload)
-        local data = validateData(decoded, rig, skeleton)
+        local canonicalData = decoded
+        if typeof(decoded) == "table" and decoded.version == 2 then
+            canonicalData = normalizeV2Data(decoded, skeleton)
+        end
+        local data = validateData(canonicalData, rig, skeleton)
+        data.sourceVersion = decoded.version
         local clip = buildAnimationClip(data, skeleton)
         return {
             data = data,
@@ -1979,11 +2230,13 @@ importButton.Activated:Connect(function()
     drawTimeline(importedData)
     showPage("preview")
 
+    local sourceFormatLabel = importedData.sourceVersion == 2 and "POSECODE V2" or "POSECODE V1"
     setStatus(
         importedData.hasAnimationConstraint
-            and string.format("%d quadros convertidos. A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", #importedData.frames)
+            and string.format("%s: %d quadros convertidos. A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", sourceFormatLabel, #importedData.frames)
             or string.format(
-                "%d quadros convertidos. %s Prévia, navegação e salvamento disponíveis.",
+                "%s: %d quadros convertidos. %s Prévia, navegação e salvamento disponíveis.",
+                sourceFormatLabel,
                 #importedData.frames,
                 importedData.hasBone and "Rig com Bone compatível." or "Rig Motor6D compatível."
             ),
