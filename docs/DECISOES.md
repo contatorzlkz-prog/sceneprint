@@ -1,23 +1,26 @@
-# Decisões do Sceneprint
+# Decisões de implementação
 
-## Uma tarefa, não um painel de métricas
+## Parts em vez de Terrain
 
-A primeira versão tentava observar iluminação, áudio, partículas, streaming, organização e física ao mesmo tempo. O resultado era uma lista grande, cheia de situações que dependiam demais do contexto do jogo.
+Cada tile é uma Part ancorada. A altura é aplicada alterando Size.Y e mantendo sua base na mesma posição. Isso permite uma grade de terreno que continua editável no Explorer e no Studio.
 
-A versão 0.2.0 fica em dois sinais simples: colisão quase invisível e conjunto físico sem ancoragem.
+## Grade pequena primeiro
 
-## Por que analisar a seleção?
+O protótipo começa com 16 × 16 tiles de 4 studs. O tamanho é intencionalmente limitado enquanto o fluxo de escultura está sendo avaliado.
 
-Um mapa inteiro pode ter milhares de peças. Na prática, muitas vezes a dúvida está em uma construção específica que acabou de ser montada. A seleção deixa claro o que será lido e evita que o plugin pareça estar julgando a experiência toda.
+## Ferramentas
 
-## Por que não corrigir?
+- **Subir:** aumenta a altura das Parts dentro do raio.
+- **Baixar:** reduz a altura sem deixar o tile atravessar a base.
+- **Suavizar:** aproxima a altura de cada tile à média de seus vizinhos.
+- **Raio:** altera o alcance da pincelada.
 
-O mesmo valor de propriedade pode ser correto em um jogo e incorreto em outro. O Sceneprint encontra o objeto e explica o motivo do aviso. A decisão continua com quem está construindo o mapa.
+A queda gradual do pincel evita que todos os tiles recebam o mesmo deslocamento.
 
-## Interface
+## Undo e redo
 
-A interface usa fundo quase preto, texto claro e roxo discreto, seguindo a identidade visual do perfil do autor. Não há cards de pontuação, gráficos ou filtros: o fluxo tem uma ação principal e uma lista curta de resultados.
+Cada criação de base e cada pincelada usa ChangeHistoryService para registrar uma ação que o Studio pode desfazer ou refazer.
 
-## Autoria
+## Limites
 
-Criado por Ruan Carlos, usuário ruancr. O código é Luau e o projeto é distribuído sob a licença MIT.
+Uma grade de Parts não tem a mesma continuidade de uma malha. Bordas entre tiles continuarão visíveis e áreas muito grandes podem gerar muitas instâncias. A prioridade é descobrir se essa abordagem tem uma boa sensação de edição antes de investir em recursos mais complexos.
