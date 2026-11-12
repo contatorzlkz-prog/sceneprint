@@ -1543,6 +1543,112 @@ local function validateData(data, rig, skeleton)
     }
 end
 
+local function convertV1ToV2(legacyData, validatedData, skeleton)
+    if typeof(legacyData) ~= "table" or legacyData.version ~= 1 then
+        error("O conversor aceita somente documentos POSECODE V1.")
+    end
+
+    local tracksByTarget = {}
+    local events = {}
+    local defaultStyle = validatedData.frames[1].easingStyle.Name
+    local defaultDirection = validatedData.frames[1].easingDirection.Name
+
+    for _, frameData in ipairs(validatedData.frames) do
+        local time = frameData.time
+        local easingStyle = frameData.easingStyle.Name
+        local easingDirection = frameData.easingDirection.Name
+
+        for targetName, jointData in pairs(frameData.joints) do
+            local targetType = skeleton.jointKindsByName[targetName]
+            if not targetType then
+                error('Não foi possível determinar o tipo do alvo "' .. tostring(targetName) .. '".')
+            end
+
+            local track = tracksByTarget[targetName]
+            if not track then
+                track = {
+                    target = {
+                        type = targetType,
+                        name = targetName,
+                    },
+                    keys = {},
+                }
+                tracksByTarget[targetName] = track
+            end
+
+            local key = {
+                time = time,
+                transform = {
+                    position = jointData.position or { 0, 0, 0 },
+                    rotation = jointData.rotation or { 0, 0, 0 },
+                },
+            }
+
+            if easingStyle ~= defaultStyle or easingDirection ~= defaultDirection then
+                key.easing = {
+                    style = easingStyle,
+                    direction = easingDirection,
+                }
+            end
+
+            table.insert(track.keys, key)
+        end
+
+        for _, markerData in ipairs(frameData.markers or {}) do
+            table.insert(events, {
+                time = time,
+                name = markerData.name,
+                value = markerData.value,
+            })
+        end
+    end
+
+    local targetNames = {}
+    for targetName in pairs(tracksByTarget) do
+        table.insert(targetNames, targetName)
+    end
+    table.sort(targetNames)
+
+    local tracks = {}
+    for _, targetName in ipairs(targetNames) do
+        table.insert(tracks, tracksByTarget[targetName])
+    end
+
+    if #tracks == 0 then
+        error("O documento V1 não possui canais de junta para migrar.")
+    end
+
+    local migrated = {
+        format = "POSECODE",
+        version = 2,
+        metadata = {
+            name = validatedData.name,
+            author = "POSECODE V1 migration",
+            description = "Converted from a validated POSECODE V1 document.",
+        },
+        rig = {
+            profile = validatedData.rig,
+        },
+        timeline = {
+            fps = validatedData.fps,
+            duration = validatedData.duration,
+            looped = validatedData.looped,
+            priority = validatedData.priority.Name,
+            defaultEasing = {
+                style = defaultStyle,
+                direction = defaultDirection,
+            },
+        },
+        tracks = tracks,
+    }
+
+    if #events > 0 then
+        migrated.events = events
+    end
+
+    return migrated
+end
+
 local function buildKeyframeSequence(data, skeleton)
     local sequence = Instance.new("KeyframeSequence")
     local ok, result = pcall(function()
@@ -2409,6 +2515,61 @@ exampleButton.Activated:Connect(function()
 
     sourceBox.Text = result
     setStatus("Exemplo POSECODE V2 carregado. Clique em Importar clip.", C.green)
+end)
+
+
+migrateButton.Activated:Connect(function()
+    local rig = selectedRig()
+    if not rig then
+        setStatus("Selecione o rig de destino antes de converter o V1.", C.red)
+        return
+    end
+    if #sourceBox.Text > MAX_SOURCE_LENGTH then
+        setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
+        return
+    end
+    if sourceBox.Text:match("^%s*$") then
+        setStatus("Cole um documento POSECODE V1 antes de converter.", C.red)
+        return
+    end
+
+    local ok, result = pcall(function()
+        local payload = extractPayload(sourceBox.Text)
+        local decoded = HttpService:JSONDecode(payload)
+        if typeof(decoded) ~= "table" or decoded.version ~= 1 then
+            error("A conversão exige um documento com format POSECODE e version 1.")
+        end
+
+        local skeleton = getSkeleton(rig)
+        local validated = validateData(decoded, rig, skeleton)
+        local migrated = convertV1ToV2(decoded, validated, skeleton)
+        local encoded = HttpService:JSONEncode(migrated)
+
+        if #encoded > MAX_SOURCE_LENGTH then
+            error("O documento convertido ultrapassa 256 KB. Reduza os canais ou keyframes antes de migrar.")
+        end
+
+        return {
+            json = encoded,
+            trackCount = #migrated.tracks,
+            eventCount = #migrated.events,
+        }
+    end)
+
+    if not ok then
+        setStatus("Migração recusada: " .. tostring(result), C.red)
+        return
+    end
+
+    sourceBox.Text = result.json
+    setStatus(
+        string.format(
+            "V1 convertido para V2: %d tracks e %d eventos. Revise o JSON e importe quando estiver pronto.",
+            result.trackCount,
+            result.eventCount
+        ),
+        C.green
+    )
 end)
 
 clearButton.Activated:Connect(function()
