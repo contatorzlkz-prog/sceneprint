@@ -677,7 +677,7 @@ local function validateData(data, rig, skeleton)
     }
 end
 
-local function buildSequence(data, skeleton)
+local function buildKeyframeSequence(data, skeleton)
     local sequence = Instance.new("KeyframeSequence")
     sequence.Name = data.name
     sequence.Loop = data.looped
@@ -725,6 +725,115 @@ local function buildSequence(data, skeleton)
     end
 
     return result
+end
+
+local function curveInterpolation(frameData)
+    local name = frameData.easingStyle.Name
+    if name == "Constant" then
+        return Enum.KeyInterpolationMode.Constant
+    end
+    if name == "Linear" then
+        return Enum.KeyInterpolationMode.Linear
+    end
+    return Enum.KeyInterpolationMode.Cubic
+end
+
+local function buildCurveAnimation(data, skeleton)
+    local animation = Instance.new("CurveAnimation")
+    animation.Name = data.name
+    animation.Loop = data.looped
+    animation.Priority = data.priority
+
+    local snapshots = {}
+    local currentTransforms = {}
+
+    for index, frameData in ipairs(data.frames) do
+        for jointName, jointData in pairs(frameData.joints) do
+            currentTransforms[jointName] = transformFromData(jointData)
+        end
+
+        local snapshot = {}
+        for jointName in pairs(skeleton.jointsByPart1) do
+            snapshot[jointName] = currentTransforms[jointName] or CFrame.identity
+        end
+        snapshots[index] = snapshot
+    end
+
+    local ok, result = pcall(function()
+        local rootFolder = Instance.new("Folder")
+        rootFolder.Name = skeleton.rootPart.Name
+        rootFolder.Parent = animation
+
+        local function addCurveKeys(floatCurve, axisGetter, partName, axisKind)
+            local keys = {}
+            for index, frameData in ipairs(data.frames) do
+                local transform = snapshots[index][partName]
+                local value
+
+                if axisKind == "position" then
+                    value = transform.Position[axisGetter]
+                else
+                    local rx, ry, rz = transform:ToOrientation()
+                    local rotationValues = { X = rx, Y = ry, Z = rz }
+                    value = rotationValues[axisGetter]
+                end
+
+                table.insert(keys, FloatCurveKey.new(
+                    frameData.time,
+                    value,
+                    curveInterpolation(frameData)
+                ))
+            end
+            floatCurve:SetKeys(keys)
+        end
+
+        local function addJointFolders(part, parentFolder)
+            for _, part1 in ipairs(skeleton.childrenByPart0[part] or {}) do
+                local jointFolder = Instance.new("Folder")
+                jointFolder.Name = part1.Name
+                jointFolder.Parent = parentFolder
+
+                local positionCurve = Instance.new("Vector3Curve")
+                positionCurve.Name = "Position"
+                positionCurve.Parent = jointFolder
+
+                local rotationCurve = Instance.new("EulerRotationCurve")
+                rotationCurve.Name = "Rotation"
+                rotationCurve.RotationOrder = Enum.RotationOrder.XYZ
+                rotationCurve.Parent = jointFolder
+
+                addCurveKeys(positionCurve:X(), "X", part1.Name, "position")
+                addCurveKeys(positionCurve:Y(), "Y", part1.Name, "position")
+                addCurveKeys(positionCurve:Z(), "Z", part1.Name, "position")
+
+                addCurveKeys(rotationCurve:X(), "X", part1.Name, "rotation")
+                addCurveKeys(rotationCurve:Y(), "Y", part1.Name, "rotation")
+                addCurveKeys(rotationCurve:Z(), "Z", part1.Name, "rotation")
+
+                addJointFolders(part1, jointFolder)
+            end
+        end
+
+        addJointFolders(skeleton.rootPart, rootFolder)
+        return animation
+    end)
+
+    if not ok then
+        animation:Destroy()
+        error(result)
+    end
+
+    return result
+end
+
+local function buildAnimationClip(data, skeleton)
+    if skeleton.hasAnimationConstraint then
+        data.clipType = "CurveAnimation"
+        return buildCurveAnimation(data, skeleton)
+    end
+
+    data.clipType = "KeyframeSequence"
+    return buildKeyframeSequence(data, skeleton)
 end
 
 local function stopPreview()
