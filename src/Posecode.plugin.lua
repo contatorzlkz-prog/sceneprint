@@ -202,7 +202,7 @@ local timelinePanel = make("Frame", content, {
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-label(timelinePanel, "TIMELINE", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
+label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
 local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
