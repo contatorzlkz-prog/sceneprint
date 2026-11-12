@@ -5,7 +5,8 @@
 - Prévia agora avança a avaliação do Animator no Studio.
 - Restaura Transform e CurrentAngle das juntas ao encerrar a prévia.
 - Usa RegisterActiveAnimationClip para criar o ID temporário.
-- Identifica a raiz pela AssemblyRootPart e valida a árvore Motor6D.
+- Identifica a raiz pela AssemblyRootPart e valida a árvore Motor6D/AnimationConstraint.
+- Reconhece AnimationConstraint em rigs novos e continua aceitando Motor6D em rigs anteriores.
 - Alinha tempos ao FPS declarado e rejeita colisões após o arredondamento.
 - Insere quadro neutro no início e mantém a última pose até a duração final.
 - Suporta transformações esparsas e easing global ou por keyframe.
