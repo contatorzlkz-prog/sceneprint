@@ -17,7 +17,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "1.7"
+local VERSION = "1.8"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -131,8 +131,8 @@ local header = make("Frame", root, {
     Size = UDim2.new(1, 0, 0, 50),
 })
 
-label(header, "POSECODE", UDim2.fromOffset(14, 7), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
-label(header, "IMPORTADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 28), UDim2.new(1, -92, 0, 11), 8, C.muted, Enum.Font.GothamMedium)
+label(header, "POSECODE", UDim2.fromOffset(14, 8), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
+label(header, "ANIMATION TOOL", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
 local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -143,32 +143,138 @@ make("Frame", root, {
     BorderSizePixel = 0,
 })
 
-local scroll = make("ScrollingFrame", root, {
-    Name = "ContentScroll",
-    Position = UDim2.fromOffset(0, 54),
-    Size = UDim2.new(1, 0, 1, -54),
+local function vectorIcon(parent, kind, color, position)
+    local canvas = make("Frame", parent, {
+        Name = "VectorIcon",
+        Position = position,
+        Size = UDim2.fromOffset(16, 16),
+        BackgroundTransparency = 1,
+        BorderSizePixel = 0,
+    })
+
+    local function line(x, y, width, height)
+        make("Frame", canvas, {
+            Position = UDim2.fromOffset(x, y),
+            Size = UDim2.fromOffset(width, height),
+            BackgroundColor3 = color,
+            BorderSizePixel = 0,
+        })
+    end
+
+    if kind == "file" then
+        line(3, 1, 8, 1)
+        line(2, 2, 1, 12)
+        line(3, 14, 11, 1)
+        line(13, 6, 1, 8)
+        line(11, 2, 1, 4)
+        line(12, 5, 2, 1)
+        line(5, 8, 6, 1)
+        line(5, 11, 6, 1)
+    elseif kind == "timeline" then
+        line(1, 8, 14, 1)
+        line(2, 5, 1, 7)
+        line(5, 3, 1, 11)
+        line(8, 6, 1, 5)
+        line(11, 2, 1, 13)
+        line(14, 5, 1, 7)
+    elseif kind == "rig" then
+        line(2, 2, 5, 1)
+        line(2, 2, 1, 5)
+        line(9, 2, 5, 1)
+        line(13, 2, 1, 5)
+        line(2, 13, 5, 1)
+        line(2, 9, 1, 5)
+        line(9, 13, 5, 1)
+        line(13, 9, 1, 5)
+    end
+
+    return canvas
+end
+
+local function recolorIcon(icon, color)
+    for _, child in ipairs(icon:GetChildren()) do
+        if child:IsA("Frame") then
+            child.BackgroundColor3 = color
+        end
+    end
+end
+
+local navBar = make("Frame", root, {
+    Name = "Navigation",
+    Position = UDim2.fromOffset(14, 55),
+    Size = UDim2.new(1, -28, 0, 34),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
-    CanvasSize = UDim2.fromOffset(0, 590),
+})
+
+local scroll = make("ScrollingFrame", root, {
+    Name = "PageScroll",
+    Position = UDim2.fromOffset(0, 96),
+    Size = UDim2.new(1, 0, 1, -136),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    CanvasSize = UDim2.fromOffset(0, 350),
     ScrollBarThickness = 3,
     ScrollBarImageColor3 = C.muted,
     ScrollingDirection = Enum.ScrollingDirection.Y,
     Active = true,
 })
+
 local content = make("Frame", scroll, {
-    Name = "Content",
+    Name = "ImportPage",
     Position = UDim2.fromOffset(16, 0),
-    Size = UDim2.new(1, -32, 0, 590),
+    Size = UDim2.new(1, -32, 0, 350),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 
-label(content, "DADOS DA ANIMAÇÃO", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
-label(content, "POSECODE / JSON", UDim2.fromOffset(0, 24), UDim2.new(1, 0, 0, 14), 10, C.muted)
+local previewPage = make("Frame", scroll, {
+    Name = "PreviewPage",
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.new(1, -32, 0, 270),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Visible = false,
+})
+
+local rigPage = make("Frame", scroll, {
+    Name = "RigPage",
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.new(1, -32, 0, 220),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Visible = false,
+})
+
+local footer = make("Frame", root, {
+    Name = "StatusFooter",
+    Position = UDim2.new(0, 0, 1, -40),
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = C.background,
+    BorderSizePixel = 0,
+})
+make("Frame", footer, {
+    Position = UDim2.fromOffset(14, 0),
+    Size = UDim2.new(1, -28, 0, 1),
+    BackgroundColor3 = C.line,
+    BorderSizePixel = 0,
+})
+local statusDot = make("Frame", footer, {
+    Position = UDim2.fromOffset(16, 16),
+    Size = UDim2.fromOffset(6, 6),
+    BackgroundColor3 = C.muted,
+    BorderSizePixel = 0,
+})
+make("UICorner", statusDot, { CornerRadius = UDim.new(1, 0) })
+local statusLabel = label(footer, "Selecione um rig R6 ou R15.", UDim2.fromOffset(29, 6), UDim2.new(1, -43, 0, 27), 9, C.muted)
+statusLabel.TextWrapped = false
+
+label(content, "ENTRADA", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+label(content, "Cole o JSON ou a variável POSECODE.", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 14), 9, C.muted)
 
 local sourceBox = make("TextBox", content, {
     Position = UDim2.fromOffset(0, 43),
-    Size = UDim2.new(1, 0, 0, 124),
+    Size = UDim2.new(1, 0, 0, 190),
     BackgroundColor3 = C.field,
     BorderSizePixel = 0,
     ClearTextOnFocus = false,
@@ -183,7 +289,7 @@ local sourceBox = make("TextBox", content, {
     TextYAlignment = Enum.TextYAlignment.Top,
     MultiLine = true,
 })
-make("UICorner", sourceBox, { CornerRadius = UDim.new(0, 5) })
+make("UICorner", sourceBox, { CornerRadius = UDim.new(0, 4) })
 make("UIStroke", sourceBox, {
     Color = C.line,
     Thickness = 1,
@@ -196,19 +302,21 @@ make("UIPadding", sourceBox, {
     PaddingRight = UDim.new(0, 10),
 })
 
-local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
-local exampleButton = button(content, "Exemplo", UDim2.fromOffset(0, 218), UDim2.new(0.333, -4, 0, 28), false)
-local rigCheckButton = button(content, "Analisar rig", UDim2.new(0.333, 2, 0, 218), UDim2.new(0.333, -4, 0, 28), false)
-local clearButton = button(content, "Limpar", UDim2.new(0.666, 4, 0, 218), UDim2.new(0.334, -4, 0, 28), false)
+local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 244), UDim2.new(1, 0, 0, 36), true)
+local exampleButton = button(content, "Carregar exemplo", UDim2.fromOffset(0, 289), UDim2.new(0.5, -4, 0, 30), false)
+local clearButton = button(content, "Limpar", UDim2.new(0.5, 4, 0, 289), UDim2.new(0.5, -4, 0, 30), false)
+label(content, "O conteúdo colado é validado como JSON e nunca executado.", UDim2.fromOffset(0, 328), UDim2.new(1, 0, 0, 15), 8, C.muted)
 
-local timelinePanel = make("Frame", content, {
+label(previewPage, "PRÉVIA DO CLIP", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+
+local timelinePanel = make("Frame", previewPage, {
     Name = "Timeline",
-    Position = UDim2.fromOffset(0, 260),
+    Position = UDim2.fromOffset(0, 27),
     Size = UDim2.new(1, 0, 0, 76),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
+label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 9, C.text, Enum.Font.GothamMedium)
 local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -245,30 +353,120 @@ local timelineCursor = make("Frame", timelineTrack, {
 })
 local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.fromOffset(0, 52), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.Code)
 
-local rigInfo = label(content, "RIG: —", UDim2.fromOffset(0, 342), UDim2.new(1, 0, 0, 15), 9, C.muted, Enum.Font.GothamMedium)
-local statusLabel = label(content, "Selecione um rig R6 ou R15.", UDim2.fromOffset(0, 357), UDim2.new(1, 0, 0, 26), 10, C.muted)
-statusLabel.TextWrapped = true
-statusLabel.TextYAlignment = Enum.TextYAlignment.Top
+local previewButton = button(previewPage, "Reproduzir", UDim2.fromOffset(0, 115), UDim2.new(0.25, -4, 0, 32), true)
+local pauseButton = button(previewPage, "Pausar", UDim2.new(0.25, 2, 0, 115), UDim2.new(0.25, -4, 0, 32), false)
+local stopButton = button(previewPage, "Parar", UDim2.new(0.5, 2, 0, 115), UDim2.new(0.25, -4, 0, 32), false)
+local speedButton = button(previewPage, "1×", UDim2.new(0.75, 2, 0, 115), UDim2.new(0.25, -2, 0, 32), false)
 
-make("Frame", content, {
-    Position = UDim2.fromOffset(0, 396),
-    Size = UDim2.new(1, 0, 0, 1),
-    BackgroundColor3 = C.line,
-    BorderSizePixel = 0,
-})
+local previousKeyButton = button(previewPage, "Anterior", UDim2.fromOffset(0, 154), UDim2.new(0.5, -4, 0, 28), false)
+local nextKeyButton = button(previewPage, "Próximo", UDim2.new(0.5, 4, 0, 154), UDim2.new(0.5, -4, 0, 28), false)
+local loopButton = button(previewPage, "Repetir: OFF", UDim2.fromOffset(0, 191), UDim2.new(0.34, -4, 0, 34), false)
+local saveButton = button(previewPage, "Salvar clip no Studio", UDim2.new(0.34, 4, 0, 191), UDim2.new(0.66, -4, 0, 34), true)
+label(previewPage, "A publicação é feita pelo Editor de Animação.", UDim2.fromOffset(0, 234), UDim2.new(1, 0, 0, 15), 8, C.muted)
 
-label(content, "PRÉVIA", UDim2.fromOffset(0, 408), UDim2.new(1, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
-local previewButton = button(content, "Reproduzir", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true)
-local pauseButton = button(content, "Pausar", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
-local stopButton = button(content, "Parar", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
-local speedButton = button(content, "1×", UDim2.new(0.75, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+label(rigPage, "RIG SELECIONADO", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+local rigInfo = label(rigPage, "RIG: —", UDim2.fromOffset(0, 30), UDim2.new(1, 0, 0, 36), 10, C.muted, Enum.Font.GothamMedium)
+rigInfo.TextWrapped = true
+rigInfo.TextYAlignment = Enum.TextYAlignment.Top
+local rigCheckButton = button(rigPage, "Analisar estrutura do rig", UDim2.fromOffset(0, 78), UDim2.new(1, 0, 0, 36), true)
+label(rigPage, "Confere conexões, quantidade de juntas e Bones e a rota de saída prevista.", UDim2.fromOffset(0, 124), UDim2.new(1, 0, 0, 38), 9, C.muted).TextWrapped = true
 
-local previousKeyButton = button(content, "Quadro anterior", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
-local nextKeyButton = button(content, "Próximo quadro", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
-local loopButton = button(content, "Repetir: OFF", UDim2.fromOffset(0, 510), UDim2.new(0.34, -4, 0, 34), false)
-local saveButton = button(content, "Salvar clip no Studio", UDim2.new(0.34, 4, 0, 510), UDim2.new(0.66, -4, 0, 34), true)
-label(content, "Publique pelo Editor de Animação.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
+local pageTabs = {}
+local activePage = "import"
+local showPage
 
+local function createTab(name, title, iconKind, position, size)
+    local tab = make("TextButton", navBar, {
+        Name = name .. "Tab",
+        Position = position,
+        Size = size,
+        BackgroundColor3 = C.background,
+        BorderSizePixel = 0,
+        AutoButtonColor = false,
+        Text = "",
+        Selectable = true,
+    })
+    local icon = vectorIcon(tab, iconKind, C.muted, UDim2.fromOffset(10, 9))
+    local tabLabel = label(tab, title, UDim2.fromOffset(31, 0), UDim2.new(1, -35, 1, 0), 9, C.muted, Enum.Font.GothamMedium)
+    local indicator = make("Frame", tab, {
+        Name = "SelectedIndicator",
+        Position = UDim2.new(0, 8, 1, -2),
+        Size = UDim2.new(1, -16, 0, 2),
+        BackgroundColor3 = C.accent,
+        BorderSizePixel = 0,
+        Visible = false,
+    })
+
+    tab.MouseEnter:Connect(function()
+        if activePage ~= name then
+            tab.BackgroundColor3 = C.surface
+        end
+    end)
+    tab.MouseLeave:Connect(function()
+        if activePage ~= name then
+            tab.BackgroundColor3 = C.background
+        end
+    end)
+    tab.Activated:Connect(function()
+        showPage(name)
+    end)
+
+    pageTabs[name] = {
+        button = tab,
+        icon = icon,
+        label = tabLabel,
+        indicator = indicator,
+    }
+end
+
+createTab("import", "Importar", "file", UDim2.fromScale(0, 0), UDim2.new(0.333, -3, 1, 0))
+createTab("preview", "Prévia", "timeline", UDim2.new(0.333, 2, 0, 0), UDim2.new(0.334, -4, 1, 0))
+createTab("rig", "Rig", "rig", UDim2.new(0.667, 2, 0, 0), UDim2.new(0.333, -2, 1, 0))
+
+showPage = function(pageName)
+    activePage = pageName
+    content.Visible = pageName == "import"
+    previewPage.Visible = pageName == "preview"
+    rigPage.Visible = pageName == "rig"
+
+    local pageHeights = {
+        import = 350,
+        preview = 270,
+        rig = 220,
+    }
+    scroll.CanvasSize = UDim2.fromOffset(0, pageHeights[pageName] or 350)
+    scroll.CanvasPosition = Vector2.zero
+
+    for name, tab in pairs(pageTabs) do
+        local selected = name == pageName
+        tab.button.BackgroundColor3 = selected and C.surface or C.background
+        tab.label.TextColor3 = selected and C.text or C.muted
+        tab.indicator.Visible = selected
+        recolorIcon(tab.icon, selected and C.text or C.muted)
+    end
+end
+
+showPage("import")
+
+local importedData = nil
+local importedSequence = nil
+local importedRig = nil
+local previewTrack = nil
+local previewAnimation = nil
+local previewHost = nil
+local previewAnimator = nil
+local temporaryHost = false
+local temporaryAnimator = false
+local previewStepConnection = nil
+local previewJointSnapshot = {}
+local previewPaused = false
+local previewSpeed = 1
+local previewLooped = false
+local speedOptions = { 0.5, 1, 1.5, 2 }
+local speedOptionIndex = 2
+local isScrubbing = false
+local timelineInputConnections = {}
+local previewMarkerConnections = {}
 local importedData = nil
 local importedSequence = nil
 local importedRig = nil
@@ -318,8 +516,10 @@ local function setClipControlsEnabled(enabled)
 end
 
 local function setStatus(message, color)
+    local statusColor = color or C.muted
     statusLabel.Text = message
-    statusLabel.TextColor3 = color or C.muted
+    statusLabel.TextColor3 = statusColor
+    statusDot.BackgroundColor3 = statusColor
 end
 
 setClipControlsEnabled(false)
@@ -1776,6 +1976,7 @@ importButton.Activated:Connect(function()
     end
     rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
     drawTimeline(importedData)
+    showPage("preview")
 
     setStatus(
         importedData.hasAnimationConstraint
