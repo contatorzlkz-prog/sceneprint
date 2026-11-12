@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="174" viewBox="0 0 520 174" fill="none">
+  <rect width="520" height="174" rx="10" fill="#0D0D10"/>
+  <rect x="0.5" y="0.5" width="519" height="173" rx="9.5" stroke="#34313D"/>
+  <defs>
+    <symbol id="icon-document" viewBox="0 0 24 24">
+      <path d="M6 3h9l4 4v14H6V3Zm9 0v4h4M9 12h7M9 16h7" />
+    </symbol>
+    <symbol id="icon-import" viewBox="0 0 24 24">
+      <path d="M12 3v12m-5-5 5 5 5-5M4 18v3h16v-3" />
+    </symbol>
+    <symbol id="icon-plus" viewBox="0 0 24 24">
+      <path d="M12 5v14M5 12h14" />
+    </symbol>
+    <symbol id="icon-close" viewBox="0 0 24 24">
+      <path d="m6 6 12 12M18 6 6 18" />
+    </symbol>
+    <symbol id="icon-play" viewBox="0 0 24 24">
+      <path d="m7 4 11 8-11 8V4Z" />
+    </symbol>
+    <symbol id="icon-pause" viewBox="0 0 24 24">
+      <path d="M8 5v14M16 5v14" />
+    </symbol>
+    <symbol id="icon-stop" viewBox="0 0 24 24">
+      <path d="M7 7h10v10H7z" />
+    </symbol>
+    <symbol id="icon-previous" viewBox="0 0 24 24">
+      <path d="M6 5v14m12-13-7 6 7 6" />
+    </symbol>
+    <symbol id="icon-next" viewBox="0 0 24 24">
+      <path d="M18 5v14M6 6l7 6-7 6" />
+    </symbol>
+    <symbol id="icon-save" viewBox="0 0 24 24">
+      <path d="M12 3v12m-5-5 5 5 5-5M4 18v3h16v-3" />
+    </symbol>
+    <symbol id="icon-timeline" viewBox="0 0 24 24">
+      <path d="M3 12h18M7 7v10M16 5v14" />
+    </symbol>
+  </defs>
+  <g stroke="#B3A0FF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <use href="#icon-document" x="25" y="20" width="24" height="24"/>
+    <use href="#icon-import" x="125" y="20" width="24" height="24"/>
+    <use href="#icon-plus" x="225" y="20" width="24" height="24"/>
+    <use href="#icon-close" x="325" y="20" width="24" height="24"/>
+    <use href="#icon-play" x="425" y="20" width="24" height="24"/>
+    <use href="#icon-pause" x="25" y="96" width="24" height="24"/>
+    <use href="#icon-stop" x="125" y="96" width="24" height="24"/>
+    <use href="#icon-previous" x="225" y="96" width="24" height="24"/>
+    <use href="#icon-next" x="325" y="96" width="24" height="24"/>
+    <use href="#icon-save" x="425" y="96" width="24" height="24"/>
+  </g>
+  <g fill="#8A8596" font-family="Arial,sans-serif" font-size="9" text-anchor="middle">
+    <text x="37" y="61">document</text>
+    <text x="137" y="61">import</text>
+    <text x="237" y="61">plus</text>
+    <text x="337" y="61">close</text>
+    <text x="437" y="61">play</text>
+    <text x="37" y="137">pause</text>
+    <text x="137" y="137">stop</text>
+    <text x="237" y="137">previous</text>
+    <text x="337" y="137">next</text>
+    <text x="437" y="137">save</text>
+  </g>
+</svg>
