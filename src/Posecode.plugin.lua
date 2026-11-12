@@ -267,6 +267,22 @@ local function clearTimeline()
         end
     end
     timelineInfo.Text = "SEM DADOS"
+    timelineTime.Text = "00:00.00"
+    timelineCursor.Position = UDim2.new(0, 0, 0.5, 0)
+end
+
+local function formatTime(seconds)
+    seconds = math.max(0, seconds)
+    local minutes = math.floor(seconds / 60)
+    local remainder = seconds - minutes * 60
+    return string.format("%02d:%05.2f", minutes, remainder)
+end
+
+local function updateTimelineCursor(seconds)
+    local duration = importedData and importedData.duration or 0
+    local alpha = duration > 0 and math.clamp(seconds / duration, 0, 1) or 0
+    timelineCursor.Position = UDim2.new(alpha, 0, 0.5, 0)
+    timelineTime.Text = formatTime(seconds) .. " / " .. formatTime(duration)
 end
 
 local function drawTimeline(data)
@@ -284,11 +300,14 @@ local function drawTimeline(data)
             Size = UDim2.fromOffset(5, 16),
             BackgroundColor3 = C.accent,
             BorderSizePixel = 0,
+            ZIndex = 2,
         })
         make("UICorner", marker, { CornerRadius = UDim.new(0, 2) })
     end
 
-    timelineInfo.Text = string.format("%d CHAVES  /  %.2FS", #data.frames, data.duration)
+    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS" or "KEYFRAMES"
+    timelineInfo.Text = string.format("%d QUADROS  /  %.2FS  /  %s", #data.frames, data.duration, clipTypeLabel)
+    updateTimelineCursor(0)
 end
 
 local function isSupportedJoint(instance)
@@ -322,6 +341,7 @@ local function getSkeleton(rig)
     local jointsByPart1 = {}
     local childrenByPart0 = {}
     local incoming = {}
+    local hasAnimationConstraint = false
 
     for _, descendant in ipairs(rig:GetDescendants()) do
         local part0 = nil
@@ -331,6 +351,7 @@ local function getSkeleton(rig)
             part0 = descendant.Part0
             part1 = descendant.Part1
         elseif descendant:IsA("AnimationConstraint") then
+            hasAnimationConstraint = true
             local attachment0 = descendant.Attachment0
             local attachment1 = descendant.Attachment1
             part0 = attachment0 and attachment0.Parent
@@ -421,6 +442,7 @@ local function getSkeleton(rig)
         jointsByPart1 = jointsByPart1,
         childrenByPart0 = childrenByPart0,
         jointCount = jointCount,
+        hasAnimationConstraint = hasAnimationConstraint,
     }
 end
 
