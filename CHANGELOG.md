@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.6 · Eventos e robustez técnica
+
+- Adiciona event markers opcionais em KeyframeSequence, com nome e valor por quadro.
+- Exibe os eventos na timeline e informa quando um marker é alcançado durante a prévia.
+- Adiciona controle de repetição independente para a prévia.
+- Protege toda a inicialização da prévia, incluindo Animator, captura de pose e registro temporário.
+- Desconecta os listeners de eventos ao parar ou reiniciar a prévia.
+- Faz pré-verificação do volume de saída: 18.000 poses ou 24.000 chaves de curva.
+- Mantém o formato POSECODE v1 e a interface clássica da versão anterior.
+
 ## 1.5 · Ajustes técnicos e experiência de uso
 
 - Reorganiza a interface para um painel clássico, discreto e consistente.
@@ -7,7 +17,6 @@
 - Valida juntas incompletas, limita o tamanho do esqueleto e escolhe a raiz de forma determinística.
 - Atualiza a seleção do rig somente quando a seleção muda, sem reexaminar o modelo a cada caractere digitado.
 - Reduz as atualizações visuais da timeline durante a prévia sem reduzir a avaliação da animação.
-- Mantém o formato POSECODE v1.
 
 ## 1.4 · Ajustes de interface e prévia
 
