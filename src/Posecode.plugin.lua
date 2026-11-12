@@ -1140,6 +1140,47 @@ local function saveSequence()
         return
     end
 
+    local originalParent = importedSequence.Parent
+    local originalName = importedSequence.Name
+    local createdRootFolder = nil
+    local createdRigFolder = nil
+    local createdReference = nil
+    local existingReference = nil
+    local originalReferenceValue = nil
+
+    local function rollback()
+        pcall(function()
+            importedSequence.Parent = originalParent
+            importedSequence.Name = originalName
+        end)
+
+        if createdReference then
+            pcall(function()
+                createdReference:Destroy()
+            end)
+        elseif existingReference then
+            pcall(function()
+                existingReference.Value = originalReferenceValue
+            end)
+        end
+
+        if createdRigFolder then
+            pcall(function()
+                if #createdRigFolder:GetChildren() == 0 then
+                    createdRigFolder:Destroy()
+                end
+            end)
+        end
+
+        if createdRootFolder then
+            pcall(function()
+                if #createdRootFolder:GetChildren() == 0 then
+                    createdRootFolder:Destroy()
+                end
+            end)
+        end
+    end
+
     local ok, result = pcall(function()
         local animSaves = importedRig:FindFirstChild("AnimSaves")
         local saveFolder = nil
@@ -1149,6 +1190,9 @@ local function saveSequence()
                 -- Compatibilidade com rigs que ainda usam o formato antigo.
                 saveFolder = animSaves
             elseif animSaves:IsA("ObjectValue") then
+                existingReference = animSaves
+                originalReferenceValue = animSaves.Value
+
                 if animSaves.Value then
                     if not animSaves.Value:IsA("Folder") then
                         error("A referência AnimSaves não aponta para uma Folder.")
@@ -1170,6 +1214,7 @@ local function saveSequence()
                 rootFolder = Instance.new("Folder")
                 rootFolder.Name = "RBX_ANIMSAVES"
                 rootFolder.Parent = ServerStorage
+                createdRootFolder = rootFolder
             end
 
             local folderName = importedRig.Name:gsub("[^%w_%-]", "_")
@@ -1187,12 +1232,15 @@ local function saveSequence()
             saveFolder = Instance.new("Folder")
             saveFolder.Name = finalFolderName
             saveFolder.Parent = rootFolder
+            createdRigFolder = saveFolder
 
             if not animSaves then
                 animSaves = Instance.new("ObjectValue")
                 animSaves.Name = "AnimSaves"
                 animSaves.Parent = importedRig
+                createdReference = animSaves
             end
+
             animSaves.Value = saveFolder
         end
 
@@ -1222,6 +1270,7 @@ local function saveSequence()
                 Enum.FinishRecordingOperation.Cancel
             )
         end)
+        rollback()
         setStatus("Falha ao salvar: " .. tostring(result), C.red)
         return
     end
@@ -1240,6 +1289,7 @@ local function saveSequence()
                 Enum.FinishRecordingOperation.Cancel
             )
         end)
+        rollback()
         setStatus("O Studio não conseguiu concluir o registro de Undo: " .. tostring(finishError), C.red)
         return
     end
