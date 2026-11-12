@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox KeyframeSequences.
     Handle: ruancr
-    Version: 1.1
+    Version: 1.2
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -15,8 +15,9 @@ local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local AnimationClipProvider = game:GetService("AnimationClipProvider")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "1.1"
+local VERSION = "1.2"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -46,9 +47,9 @@ local widgetInfo = DockWidgetPluginGuiInfo.new(
     false,
     false,
     440,
-    690,
+    760,
     360,
-    540
+    650
 )
 
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Posecode.Main", widgetInfo)
@@ -167,22 +168,24 @@ make("UIPadding", sourceBox, {
     PaddingRight = UDim.new(0, 10),
 })
 
-local importButton = button(root, "IMPORTAR E GERAR KEYFRAMES", UDim2.fromOffset(18, 311), UDim2.new(1, -36, 0, 34), true)
+local importButton = button(root, "IMPORTAR ANIMAÇÃO", UDim2.fromOffset(18, 311), UDim2.new(1, -36, 0, 34), true)
+local exampleButton = button(root, "CARREGAR EXEMPLO", UDim2.fromOffset(18, 352), UDim2.new(0.5, -23, 0, 28), false)
+local clearButton = button(root, "LIMPAR", UDim2.new(0.5, 5, 0, 352), UDim2.new(0.5, -23, 0, 28), false)
 
 local timelinePanel = make("Frame", root, {
-    Position = UDim2.fromOffset(18, 363),
-    Size = UDim2.new(1, -36, 0, 78),
+    Position = UDim2.fromOffset(18, 392),
+    Size = UDim2.new(1, -36, 0, 100),
     BackgroundColor3 = C.panel,
     BorderSizePixel = 0,
 })
 make("UICorner", timelinePanel, { CornerRadius = UDim.new(0, 5) })
-label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(12, 8), UDim2.new(0.55, -12, 0, 14), 8, C.muted, Enum.Font.GothamBold)
-local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.55, 0, 0, 8), UDim2.new(0.45, -12, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
+label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(12, 9), UDim2.new(0.45, -12, 0, 14), 8, C.muted, Enum.Font.GothamBold)
+local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.45, 0, 0, 9), UDim2.new(0.55, -12, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
 local timelineTrack = make("Frame", timelinePanel, {
-    Position = UDim2.fromOffset(12, 34),
-    Size = UDim2.new(1, -24, 0, 22),
+    Position = UDim2.fromOffset(12, 38),
+    Size = UDim2.new(1, -24, 0, 26),
     BackgroundTransparency = 1,
 })
 make("Frame", timelineTrack, {
@@ -190,25 +193,50 @@ make("Frame", timelineTrack, {
     Size = UDim2.new(1, 0, 0, 2),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
+    ZIndex = 1,
 })
+local timelineHitbox = make("TextButton", timelineTrack, {
+    Name = "TimelineInput",
+    Size = UDim2.fromScale(1, 1),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Text = "",
+    AutoButtonColor = false,
+    ZIndex = 4,
+})
+local timelineCursor = make("Frame", timelineTrack, {
+    Name = "Playhead",
+    AnchorPoint = Vector2.new(0.5, 0.5),
+    Position = UDim2.new(0, 0, 0.5, 0),
+    Size = UDim2.fromOffset(2, 24),
+    BackgroundColor3 = C.text,
+    BorderSizePixel = 0,
+    ZIndex = 5,
+})
+local timelineTime = label(timelinePanel, "00:00.00", UDim2.fromOffset(12, 72), UDim2.new(1, -24, 0, 16), 9, C.text, Enum.Font.Code)
 
-local rigInfo = label(root, "RIG: —", UDim2.fromOffset(18, 451), UDim2.new(1, -36, 0, 16), 9, C.muted, Enum.Font.GothamMedium)
-local statusLabel = label(root, "Selecione um rig R6 ou R15 antes de importar.", UDim2.fromOffset(18, 472), UDim2.new(1, -36, 0, 33), 10, C.muted)
+local rigInfo = label(root, "RIG: —", UDim2.fromOffset(18, 502), UDim2.new(1, -36, 0, 16), 9, C.muted, Enum.Font.GothamMedium)
+local statusLabel = label(root, "Selecione um rig R6 ou R15 antes de importar.", UDim2.fromOffset(18, 522), UDim2.new(1, -36, 0, 30), 10, C.muted)
 statusLabel.TextWrapped = true
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
 make("Frame", root, {
-    Position = UDim2.fromOffset(18, 516),
+    Position = UDim2.fromOffset(18, 560),
     Size = UDim2.new(1, -36, 0, 1),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
 })
 
-label(root, "PRÉVIA", UDim2.fromOffset(18, 529), UDim2.new(1, -36, 0, 14), 8, C.muted, Enum.Font.GothamBold)
-local previewButton = button(root, "REPRODUZIR", UDim2.fromOffset(18, 550), UDim2.new(0.5, -23, 0, 32), false)
-local stopButton = button(root, "PARAR", UDim2.new(0.5, 5, 0, 550), UDim2.new(0.5, -23, 0, 32), false)
-local saveButton = button(root, "SALVAR KEYFRAMES NO STUDIO", UDim2.fromOffset(18, 592), UDim2.new(1, -36, 0, 34), true)
-label(root, "Publicação: use o Editor de Animação do Studio.", UDim2.fromOffset(18, 638), UDim2.new(1, -36, 0, 18), 9, C.muted)
+label(root, "PRÉVIA", UDim2.fromOffset(18, 572), UDim2.new(1, -36, 0, 14), 8, C.muted, Enum.Font.GothamBold)
+local previewButton = button(root, "REPRODUZIR", UDim2.fromOffset(18, 592), UDim2.new(0.25, -8, 0, 32), true)
+local pauseButton = button(root, "PAUSAR", UDim2.new(0.25, 14, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
+local stopButton = button(root, "PARAR", UDim2.new(0.5, 2, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
+local speedButton = button(root, "1×", UDim2.new(0.75, -10, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
+
+local previousKeyButton = button(root, "◀ QUADRO", UDim2.fromOffset(18, 632), UDim2.new(0.5, -23, 0, 28), false)
+local nextKeyButton = button(root, "QUADRO ▶", UDim2.new(0.5, 5, 0, 632), UDim2.new(0.5, -23, 0, 28), false)
+local saveButton = button(root, "SALVAR CLIP NO STUDIO", UDim2.fromOffset(18, 668), UDim2.new(1, -36, 0, 34), true)
+label(root, "Publicação: use o Editor de Animação do Studio.", UDim2.fromOffset(18, 710), UDim2.new(1, -36, 0, 18), 9, C.muted)
 
 local importedData = nil
 local importedSequence = nil
@@ -221,6 +249,11 @@ local temporaryHost = false
 local temporaryAnimator = false
 local previewStepConnection = nil
 local previewJointSnapshot = {}
+local previewPaused = false
+local previewSpeed = 1
+local speedOptions = { 0.5, 1, 1.5, 2 }
+local speedOptionIndex = 2
+local isScrubbing = false
 
 local function setStatus(message, color)
     statusLabel.Text = message
