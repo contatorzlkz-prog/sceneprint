@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.4
+    Version: 1.5
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -18,25 +18,29 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
-local VERSION = "1.4"
+local VERSION = "1.5"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
 local MAX_TRANSFORM_OFFSET = 5
 local MAX_ROTATION = 720
+local MAX_JOINTS = 256
 
 local C = {
-    background = Color3.fromRGB(13, 13, 16),
-    panel = Color3.fromRGB(20, 20, 25),
-    field = Color3.fromRGB(16, 16, 20),
-    surface = Color3.fromRGB(28, 27, 34),
-    line = Color3.fromRGB(48, 46, 57),
-    text = Color3.fromRGB(239, 237, 245),
-    muted = Color3.fromRGB(137, 133, 148),
-    accent = Color3.fromRGB(179, 160, 255),
-    accentDark = Color3.fromRGB(47, 40, 67),
-    green = Color3.fromRGB(148, 194, 158),
-    red = Color3.fromRGB(220, 135, 135),
+    background = Color3.fromRGB(30, 31, 33),
+    panel = Color3.fromRGB(34, 35, 38),
+    field = Color3.fromRGB(24, 25, 27),
+    surface = Color3.fromRGB(48, 50, 53),
+    surfaceHover = Color3.fromRGB(57, 59, 63),
+    line = Color3.fromRGB(61, 63, 67),
+    text = Color3.fromRGB(232, 233, 235),
+    muted = Color3.fromRGB(157, 160, 165),
+    accent = Color3.fromRGB(83, 119, 158),
+    accentHover = Color3.fromRGB(96, 132, 171),
+    disabled = Color3.fromRGB(39, 40, 42),
+    disabledText = Color3.fromRGB(106, 108, 112),
+    green = Color3.fromRGB(133, 172, 139),
+    red = Color3.fromRGB(193, 126, 126),
 }
 
 local toolbar = plugin:CreateToolbar("POSECODE")
@@ -80,134 +84,26 @@ local function label(parent, text, position, size, fontSize, color, font)
     })
 end
 
-local function iconLine(parent, x1, y1, x2, y2, color, scale)
-    local dx = (x2 - x1) * scale
-    local dy = (y2 - y1) * scale
-    local segment = make("Frame", parent, {
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.fromOffset((x1 + x2) * 0.5 * scale, (y1 + y2) * 0.5 * scale),
-        Size = UDim2.fromOffset(math.max(1, math.sqrt(dx * dx + dy * dy)), math.max(1.5, 1.7 * scale)),
-        Rotation = math.deg(math.atan2(dy, dx)),
-        BackgroundColor3 = color,
-        BorderSizePixel = 0,
-    })
-    make("UICorner", segment, { CornerRadius = UDim.new(1, 0) })
-    return segment
-end
-
-local function drawIcon(parent, iconName, position, size, color)
-    local canvas = make("Frame", parent, {
-        Name = "Icon_" .. iconName,
-        Position = position,
-        Size = UDim2.fromOffset(size, size),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-    })
-    local scale = size / 24
-    local function line(x1, y1, x2, y2)
-        iconLine(canvas, x1, y1, x2, y2, color, scale)
-    end
-
-    if iconName == "play" then
-        line(7, 4, 18, 12)
-        line(18, 12, 7, 20)
-        line(7, 20, 7, 4)
-    elseif iconName == "pause" then
-        line(8, 5, 8, 19)
-        line(16, 5, 16, 19)
-    elseif iconName == "stop" then
-        line(7, 7, 17, 7)
-        line(17, 7, 17, 17)
-        line(17, 17, 7, 17)
-        line(7, 17, 7, 7)
-    elseif iconName == "import" then
-        line(12, 3, 12, 15)
-        line(7, 10, 12, 15)
-        line(12, 15, 17, 10)
-        line(4, 18, 20, 18)
-        line(4, 18, 4, 21)
-        line(20, 18, 20, 21)
-        line(4, 21, 20, 21)
-    elseif iconName == "plus" then
-        line(12, 5, 12, 19)
-        line(5, 12, 19, 12)
-    elseif iconName == "close" then
-        line(6, 6, 18, 18)
-        line(18, 6, 6, 18)
-    elseif iconName == "save" then
-        line(12, 3, 12, 15)
-        line(7, 10, 12, 15)
-        line(12, 15, 17, 10)
-        line(4, 18, 20, 18)
-        line(4, 18, 4, 21)
-        line(20, 18, 20, 21)
-    elseif iconName == "previous" then
-        line(6, 5, 6, 19)
-        line(18, 6, 11, 12)
-        line(11, 12, 18, 18)
-    elseif iconName == "next" then
-        line(18, 5, 18, 19)
-        line(6, 6, 13, 12)
-        line(13, 12, 6, 18)
-    elseif iconName == "timeline" then
-        line(3, 12, 21, 12)
-        line(7, 7, 7, 17)
-        line(16, 5, 16, 19)
-    elseif iconName == "document" then
-        line(6, 3, 15, 3)
-        line(15, 3, 19, 7)
-        line(19, 7, 19, 21)
-        line(19, 21, 6, 21)
-        line(6, 21, 6, 3)
-        line(15, 3, 15, 7)
-        line(15, 7, 19, 7)
-        line(9, 12, 16, 12)
-        line(9, 16, 16, 16)
-    end
-
-    return canvas
-end
-
-local function sectionHeader(parent, number, title, iconName, position, textSize)
-    drawIcon(parent, iconName, position, 14, C.muted)
-    label(parent, number .. "  /  " .. title,
-        position + UDim2.fromOffset(20, 0),
-        textSize or UDim2.new(1, -20, 0, 15), 9, C.muted, Enum.Font.GothamBold)
-end
-
-local function button(parent, text, position, size, primary, iconName)
+local function button(parent, text, position, size, primary)
     local normalColor = primary and C.accent or C.surface
-    local hoverColor = primary and Color3.fromRGB(198, 184, 255) or Color3.fromRGB(39, 37, 47)
+    local hoverColor = primary and C.accentHover or C.surfaceHover
     local object = make("TextButton", parent, {
         Position = position,
         Size = size,
         BackgroundColor3 = normalColor,
         BorderSizePixel = 0,
         AutoButtonColor = false,
-        Font = Enum.Font.GothamBold,
-        Text = iconName and "" or text,
-        TextColor3 = primary and C.background or C.text,
-        TextSize = 10,
+        Font = Enum.Font.GothamMedium,
+        Text = text,
+        TextColor3 = C.text,
+        TextSize = 11,
         TextTruncate = Enum.TextTruncate.AtEnd,
         Selectable = true,
     })
-    make("UICorner", object, { CornerRadius = UDim.new(0, 5) })
+    make("UICorner", object, { CornerRadius = UDim.new(0, 3) })
 
-    if iconName then
-        local iconSize = math.min(16, math.max(12, size.Y.Offset - 12))
-        local hasText = text ~= nil and text ~= ""
-        local iconY = math.floor((size.Y.Offset - iconSize) * 0.5)
-        drawIcon(object, iconName,
-            hasText and UDim2.fromOffset(10, iconY) or UDim2.new(0.5, -iconSize * 0.5, 0, iconY),
-            iconSize, primary and C.background or C.text)
-        if hasText then
-            label(object, text, UDim2.fromOffset(34, 0), UDim2.new(1, -40, 1, 0),
-                10, primary and C.background or C.text, Enum.Font.GothamBold)
-        end
-    end
-
-    local enterTween = TweenService:Create(object, TweenInfo.new(0.12), { BackgroundColor3 = hoverColor })
-    local leaveTween = TweenService:Create(object, TweenInfo.new(0.12), { BackgroundColor3 = normalColor })
+    local enterTween = TweenService:Create(object, TweenInfo.new(0.1), { BackgroundColor3 = hoverColor })
+    local leaveTween = TweenService:Create(object, TweenInfo.new(0.1), { BackgroundColor3 = normalColor })
     object.MouseEnter:Connect(function()
         leaveTween:Cancel()
         enterTween:Play()
@@ -230,33 +126,16 @@ local header = make("Frame", root, {
     Name = "Header",
     BackgroundColor3 = C.background,
     BorderSizePixel = 0,
-    Size = UDim2.new(1, 0, 0, 58),
+    Size = UDim2.new(1, 0, 0, 50),
 })
 
-local headerMark = make("Frame", header, {
-    Position = UDim2.fromOffset(14, 13),
-    Size = UDim2.fromOffset(30, 30),
-    BackgroundColor3 = C.accentDark,
-    BorderSizePixel = 0,
-})
-make("UICorner", headerMark, { CornerRadius = UDim.new(0, 6) })
-drawIcon(headerMark, "timeline", UDim2.fromOffset(4, 4), 22, C.accent)
-
-label(header, "POSECODE", UDim2.fromOffset(54, 11), UDim2.new(1, -142, 0, 21), 15, C.text, Enum.Font.GothamBold)
-label(header, "ANIMATION IMPORTER", UDim2.fromOffset(55, 31), UDim2.new(1, -142, 0, 12), 8, C.muted, Enum.Font.GothamMedium)
-
-local versionChip = make("Frame", header, {
-    Position = UDim2.new(1, -62, 0, 19),
-    Size = UDim2.fromOffset(46, 22),
-    BackgroundColor3 = C.surface,
-    BorderSizePixel = 0,
-})
-make("UICorner", versionChip, { CornerRadius = UDim.new(0, 5) })
-local versionLabel = label(versionChip, "v" .. VERSION, UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), 9, C.accent, Enum.Font.GothamBold)
-versionLabel.TextXAlignment = Enum.TextXAlignment.Center
+label(header, "POSECODE", UDim2.fromOffset(14, 7), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
+label(header, "ANIMATION IMPORTER", UDim2.fromOffset(15, 28), UDim2.new(1, -92, 0, 11), 8, C.muted, Enum.Font.GothamMedium)
+local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
+versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
 make("Frame", root, {
-    Position = UDim2.fromOffset(14, 57),
+    Position = UDim2.fromOffset(14, 49),
     Size = UDim2.new(1, -28, 0, 1),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
@@ -264,26 +143,26 @@ make("Frame", root, {
 
 local scroll = make("ScrollingFrame", root, {
     Name = "ContentScroll",
-    Position = UDim2.fromOffset(0, 62),
-    Size = UDim2.new(1, 0, 1, -62),
+    Position = UDim2.fromOffset(0, 54),
+    Size = UDim2.new(1, 0, 1, -54),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
     CanvasSize = UDim2.fromOffset(0, 590),
     ScrollBarThickness = 3,
-    ScrollBarImageColor3 = C.accent,
+    ScrollBarImageColor3 = C.muted,
     ScrollingDirection = Enum.ScrollingDirection.Y,
     Active = true,
 })
 local content = make("Frame", scroll, {
     Name = "Content",
-    Position = UDim2.fromOffset(14, 0),
-    Size = UDim2.new(1, -28, 0, 590),
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.new(1, -32, 0, 590),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 
-sectionHeader(content, "01", "SOURCE", "document", UDim2.fromOffset(0, 7))
-label(content, "POSECODE / JSON", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 14), 10, C.text)
+label(content, "ANIMATION DATA", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+label(content, "POSECODE / JSON", UDim2.fromOffset(0, 24), UDim2.new(1, 0, 0, 14), 10, C.muted)
 
 local sourceBox = make("TextBox", content, {
     Position = UDim2.fromOffset(0, 43),
@@ -315,9 +194,9 @@ make("UIPadding", sourceBox, {
     PaddingRight = UDim.new(0, 10),
 })
 
-local importButton = button(content, "IMPORTAR CLIP", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true, "import")
-local exampleButton = button(content, "EXEMPLO", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false, "plus")
-local clearButton = button(content, "LIMPAR", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false, "close")
+local importButton = button(content, "Import clip", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
+local exampleButton = button(content, "Load example", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false)
+local clearButton = button(content, "Clear", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false)
 
 local timelinePanel = make("Frame", content, {
     Name = "Timeline",
@@ -326,7 +205,7 @@ local timelinePanel = make("Frame", content, {
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-sectionHeader(timelinePanel, "02", "TIMELINE", "timeline", UDim2.fromOffset(0, 0), UDim2.new(0.38, -20, 0, 15))
+label(timelinePanel, "TIMELINE", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
 local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -364,14 +243,7 @@ local timelineCursor = make("Frame", timelineTrack, {
 local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.fromOffset(0, 52), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.Code)
 
 local rigInfo = label(content, "RIG: —", UDim2.fromOffset(0, 342), UDim2.new(1, 0, 0, 15), 9, C.muted, Enum.Font.GothamMedium)
-local statusIndicator = make("Frame", content, {
-    Position = UDim2.fromOffset(1, 366),
-    Size = UDim2.fromOffset(6, 6),
-    BackgroundColor3 = C.muted,
-    BorderSizePixel = 0,
-})
-make("UICorner", statusIndicator, { CornerRadius = UDim.new(1, 0) })
-local statusLabel = label(content, "Selecione um rig R6 ou R15.", UDim2.fromOffset(14, 357), UDim2.new(1, -14, 0, 26), 10, C.muted)
+local statusLabel = label(content, "Select an R6 or R15 rig.", UDim2.fromOffset(0, 357), UDim2.new(1, 0, 0, 26), 10, C.muted)
 statusLabel.TextWrapped = true
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -382,16 +254,16 @@ make("Frame", content, {
     BorderSizePixel = 0,
 })
 
-sectionHeader(content, "03", "PREVIEW", "play", UDim2.fromOffset(0, 408))
-local previewButton = button(content, "", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true, "play")
-local pauseButton = button(content, "", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false, "pause")
-local stopButton = button(content, "", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false, "stop")
+label(content, "PREVIEW", UDim2.fromOffset(0, 408), UDim2.new(1, 0, 0, 14), 10, C.text, Enum.Font.GothamMedium)
+local previewButton = button(content, "Play", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true)
+local pauseButton = button(content, "Pause", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+local stopButton = button(content, "Stop", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
 local speedButton = button(content, "1×", UDim2.new(0.75, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
 
-local previousKeyButton = button(content, "ANTERIOR", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false, "previous")
-local nextKeyButton = button(content, "PRÓXIMO", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false, "next")
-local saveButton = button(content, "SALVAR CLIP NO STUDIO", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true, "save")
-label(content, "Publicação pelo Editor de Animação.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
+local previousKeyButton = button(content, "Previous key", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local nextKeyButton = button(content, "Next key", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local saveButton = button(content, "Save clip to Studio", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true)
+label(content, "Publish through the Animation Editor.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
 
 local importedData = nil
 local importedSequence = nil
@@ -410,13 +282,45 @@ local speedOptions = { 0.5, 1, 1.5, 2 }
 local speedOptionIndex = 2
 local isScrubbing = false
 local timelineInputConnections = {}
+local previewRunning = false
+
+local function setButtonState(target, enabled, primary)
+    target.Active = enabled
+    target.Selectable = enabled
+    target.BackgroundColor3 = enabled
+        and (primary and C.accent or C.surface)
+        or C.disabled
+    target.TextColor3 = enabled
+        and (primary and Color3.fromRGB(248, 249, 251) or C.text)
+        or C.disabledText
+end
+
+local function setPreviewRunning(enabled)
+    previewRunning = enabled
+    pauseButton.Text = previewPaused and "Resume" or "Pause"
+    setButtonState(pauseButton, enabled, false)
+    setButtonState(stopButton, enabled, false)
+end
+
+local function setClipControlsEnabled(enabled)
+    setButtonState(previewButton, enabled, true)
+    setButtonState(speedButton, enabled, false)
+    setButtonState(previousKeyButton, enabled, false)
+    setButtonState(nextKeyButton, enabled, false)
+    setButtonState(saveButton, enabled, true)
+    timelineHitbox.Active = enabled
+    timelineHitbox.Selectable = enabled
+    setPreviewRunning(false)
+end
 
 local function setStatus(message, color)
-    local statusColor = color or C.muted
     statusLabel.Text = message
-    statusLabel.TextColor3 = statusColor
-    statusIndicator.BackgroundColor3 = statusColor
+    statusLabel.TextColor3 = color or C.muted
 end
+
+setClipControlsEnabled(false)
+setButtonState(importButton, false, true)
+setButtonState(exampleButton, false, false)
 
 local function clearTimeline()
     for _, child in ipairs(timelineTrack:GetChildren()) do
@@ -500,6 +404,7 @@ local function getSkeleton(rig)
     local childrenByPart0 = {}
     local incoming = {}
     local hasAnimationConstraint = false
+    local discoveredJointCount = 0
 
     for _, descendant in ipairs(rig:GetDescendants()) do
         local part0 = nil
@@ -508,6 +413,9 @@ local function getSkeleton(rig)
         if descendant:IsA("Motor6D") then
             part0 = descendant.Part0
             part1 = descendant.Part1
+            if not part0 or not part1 then
+                error("O Motor6D " .. descendant:GetFullName() .. " não possui Part0 e Part1 definidos.")
+            end
         elseif descendant:IsA("AnimationConstraint") then
             hasAnimationConstraint = true
             local attachment0 = descendant.Attachment0
@@ -522,12 +430,20 @@ local function getSkeleton(rig)
             end
         end
 
-        if isSupportedJoint(descendant) and part0 and part1 then
+        if isSupportedJoint(descendant) then
+            if not part0 or not part1 then
+                error("Uma junta do rig está sem as partes conectadas.")
+            end
             if not part0:IsA("BasePart") or not part1:IsA("BasePart") then
                 error("Uma junta do rig não conecta duas BaseParts.")
             end
             if jointsByPart1[part1.Name] then
                 error("Há duas juntas controlando uma peça chamada " .. part1.Name .. ".")
+            end
+
+            discoveredJointCount += 1
+            if discoveredJointCount > MAX_JOINTS then
+                error("O rig ultrapassa o limite de " .. MAX_JOINTS .. " juntas suportadas.")
             end
 
             jointsByPart1[part1.Name] = descendant
@@ -554,11 +470,19 @@ local function getSkeleton(rig)
     end
 
     if not rootCandidate then
+        local rootCandidates = {}
         for part in pairs(childrenByPart0) do
             if not incoming[part] then
-                rootCandidate = part
-                break
+                table.insert(rootCandidates, part)
             end
+        end
+        table.sort(rootCandidates, function(a, b)
+            return a:GetFullName() < b:GetFullName()
+        end)
+        if #rootCandidates == 1 then
+            rootCandidate = rootCandidates[1]
+        elseif #rootCandidates > 1 then
+            error("O rig possui mais de uma raiz possível. Defina PrimaryPart ou HumanoidRootPart.")
         end
     end
 
@@ -605,15 +529,18 @@ local function getSkeleton(rig)
 end
 
 local function refreshSelectionHint()
-    if importedData then
-        return
+    local rig = selectedRig()
+    if not importedData then
+        rigInfo.Text = rig and ("SELECTED RIG: " .. rig.Name) or "RIG: —"
     end
 
-    local rig = selectedRig()
-    rigInfo.Text = rig and ("SELECIONADO: " .. rig.Name) or "RIG: —"
+    local hasSource = sourceBox.Text:match("^%s*$") == nil
+    setButtonState(importButton, rig ~= nil and hasSource, true)
+    setButtonState(exampleButton, rig ~= nil, false)
 end
 
 Selection.SelectionChanged:Connect(refreshSelectionHint)
+sourceBox:GetPropertyChangedSignal("Text"):Connect(refreshSelectionHint)
 refreshSelectionHint()
 
 local function isFiniteNumber(value)
@@ -747,7 +674,7 @@ local function validateData(data, rig, skeleton)
         Action3 = true,
         Action4 = true,
     }
-    if not validPriorities[priorityName] then
+    if typeof(priorityName) ~= "string" or not validPriorities[priorityName] then
         error('"priority" precisa ser Core, Idle, Movement, Action, Action2, Action3 ou Action4.')
     end
 
@@ -776,6 +703,9 @@ local function validateData(data, rig, skeleton)
 
         local easingStyleName = frameData.easingStyle or data.easingStyle or "Linear"
         local easingDirectionName = frameData.easingDirection or data.easingDirection or "InOut"
+        if typeof(easingStyleName) ~= "string" or typeof(easingDirectionName) ~= "string" then
+            error("EasingStyle e EasingDirection precisam ser strings.")
+        end
         local easingStyle = Enum.PoseEasingStyle[easingStyleName]
         local easingDirection = Enum.PoseEasingDirection[easingDirectionName]
 
@@ -791,7 +721,7 @@ local function validateData(data, rig, skeleton)
                 error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
             end
             if easingStyleName == "CubicV2" and easingDirectionName ~= "InOut" then
-                error("Posecode 1.3 usa CubicV2 com direção InOut. Ajuste o easingDirection deste quadro.")
+                error("CurveAnimation com CubicV2 exige easingDirection InOut. Ajuste o easingDirection deste quadro.")
             end
         end
 
@@ -1100,7 +1030,7 @@ local function stopPreview()
     temporaryAnimator = false
     temporaryHost = false
     previewPaused = false
-    pauseButton.Text = "Ⅱ"
+    setPreviewRunning(false)
     updateTimelineCursor(0)
 end
 
@@ -1156,8 +1086,9 @@ local function beginPreview()
         track.Priority = importedData.priority
         track:Play(0, 1, previewSpeed)
         previewPaused = false
-        pauseButton.Text = "Ⅱ"
+        setPreviewRunning(true)
 
+        local timelineRefreshElapsed = 0
         previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
             if not previewAnimator or not previewTrack then
                 return
@@ -1180,7 +1111,11 @@ local function beginPreview()
             end
 
             if previewTrack and previewTrack.IsPlaying then
-                updateTimelineCursor(previewTrack.TimePosition)
+                timelineRefreshElapsed += deltaTime
+                if timelineRefreshElapsed >= (1 / 30) then
+                    timelineRefreshElapsed = 0
+                    updateTimelineCursor(previewTrack.TimePosition)
+                end
             elseif previewTrack then
                 stopPreview()
                 setStatus("Prévia concluída.", C.green)
@@ -1200,7 +1135,7 @@ end
 local function playPreview()
     if previewTrack and previewTrack.IsPlaying then
         previewPaused = false
-        pauseButton.Text = "Ⅱ"
+        setPreviewRunning(true)
         previewTrack:AdjustSpeed(previewSpeed)
         setStatus("Prévia reproduzindo.", C.green)
     else
@@ -1217,12 +1152,12 @@ local function pausePreview()
     if previewPaused then
         previewTrack:AdjustSpeed(previewSpeed)
         previewPaused = false
-        pauseButton.Text = "Ⅱ"
+        setPreviewRunning(true)
         setStatus("Prévia reproduzindo.", C.green)
     else
         previewTrack:AdjustSpeed(0)
         previewPaused = true
-        pauseButton.Text = "▶"
+        setPreviewRunning(true)
         setStatus("Prévia pausada.", C.muted)
     end
 end
@@ -1251,6 +1186,7 @@ local function seekToTime(seconds)
     end
 
     updateTimelineCursor(target)
+    setPreviewRunning(true)
     setStatus("Prévia pausada no tempo selecionado.", C.muted)
 end
 
@@ -1528,6 +1464,7 @@ importButton.Activated:Connect(function()
     importedData = result.data
     importedSequence = result.clip
     importedRig = rig
+    setClipControlsEnabled(true)
 
     local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE (EXPERIMENTAL)" or "KEYFRAME"
     rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
@@ -1625,6 +1562,7 @@ clearButton.Activated:Connect(function()
     importedSequence = nil
     importedData = nil
     importedRig = nil
+    setClipControlsEnabled(false)
     refreshSelectionHint()
     clearTimeline()
     setStatus("Campo de importação limpo.")
