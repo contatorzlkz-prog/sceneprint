@@ -14,6 +14,7 @@
 - Identifica a saída CurveAnimation para AnimationConstraint como experimental, pois a documentação pública descreve claramente os canais para Motor6D e Bone.
 - Restaura somente Transform, sem tentar escrever CurrentAngle.
 - Atualiza a documentação do formato e os limites de interpolação.
+- Remove a escrita em propriedades de peso depreciadas das Pose e usa o padrão do Studio.
 
 ## 1.1 · Correções e melhorias
 
