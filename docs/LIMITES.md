@@ -14,7 +14,7 @@ Gera uma KeyframeSequence. Cada Keyframe contém uma árvore hierárquica de Pos
 
 ### Rigs com AnimationConstraint
 
-A v1.3 gera uma CurveAnimation como saída experimental. A estrutura usa pastas hierárquicas com Position (Vector3Curve) e Rotation (EulerRotationCurve) para as peças conectadas pelas constraints, usando Attachment0.Parent e Attachment1.Parent. A hierarquia começa no HumanoidRootPart ou PrimaryPart do rig, sem substituir essa raiz pela raiz física da montagem.
+A v1.4 gera uma CurveAnimation como saída experimental. A estrutura usa pastas hierárquicas com Position (Vector3Curve) e Rotation (EulerRotationCurve) para as peças conectadas pelas constraints, usando Attachment0.Parent e Attachment1.Parent. A hierarquia começa no HumanoidRootPart ou PrimaryPart do rig, sem substituir essa raiz pela raiz física da montagem.
 
 **Compatibilidade não garantida:** a referência oficial de CurveAnimation descreve os canais Position/Rotation explicitamente para Motor6D e Bone. AnimationConstraint é a substituição de Motor6D nos rigs de avatar atualizados e possui sua própria propriedade Transform controlada pelo sistema de animação, mas a documentação pública não confirma de forma explícita que a hierarquia CurveAnimation gerada pelo Posecode será aplicada a todas as configurações de AnimationConstraint. Por isso, o plugin marca essa saída como experimental e o resultado precisa ser conferido no Studio. Consulte [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation), [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint) e [a migração de Avatar Joint Upgrade](https://devforum.roblox.com/t/avatar-joint-upgrade-aju-phase-2-rollout-updated-migration-recommendations/4656414).
 
@@ -48,7 +48,11 @@ O Editor de Animação salva KeyframeSequence e CurveAnimation localmente em Ser
 
 O plugin não faz upload próprio. Para publicar, abra o clip salvo no Editor de Animação e use **Publish to Roblox**. A publicação do clip continua no fluxo do Studio, e o ID temporário da prévia não substitui um ID de asset.
 
-## Limites da v1.3
+## Interface e ícones
+
+Os ícones-fonte ficam em `assets/icons/posecode-icons.svg`. O plugin não tenta exibir XML/SVG diretamente em um ImageLabel: a propriedade de imagem espera conteúdo de imagem importado como asset. Para evitar dependência de IDs externos, a interface cria versões lineares equivalentes com Frames e UICorner. Consulte [Studio widgets](https://create.roblox.com/docs/studio/build-studio-widgets) e [ImageLabel](https://create.roblox.com/docs/reference/engine/classes/ImageLabel).
+
+## Limites da v1.4
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
 - Não anima deslocamento global da raiz do personagem.
@@ -57,3 +61,4 @@ O plugin não faz upload próprio. Para publicar, abra o clip salvo no Editor de
 - Rigs customizados podem exigir ajuste na hierarquia e nos nomes de partes/juntas.
 - A saída CurveAnimation para AnimationConstraint é experimental e precisa ser verificada; a saída KeyframeSequence é voltada a rigs Motor6D.
 - A janela do plugin usa rolagem vertical para caber em docks menores; o cabeçalho permanece visível.
+- Os ícones desenhados com GuiObjects são equivalentes visuais do sprite SVG; o arquivo SVG é fonte de design, não um arquivo carregado diretamente pelo runtime.
