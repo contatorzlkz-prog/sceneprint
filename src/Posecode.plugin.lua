@@ -1,6 +1,6 @@
 --[[
     POSECODE
-    Convert structured animation data into Roblox KeyframeSequences.
+    Convert structured animation data into Roblox animation clips.
     Handle: ruancr
     Version: 1.2
     The plugin never executes pasted source; it only extracts and validates JSON.
@@ -307,7 +307,7 @@ local function drawTimeline(data)
         make("UICorner", marker, { CornerRadius = UDim.new(0, 2) })
     end
 
-    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS" or "KEYFRAMES"
+    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS · EXPERIMENTAL" or "KEYFRAMES"
     timelineInfo.Text = string.format("%d QUADROS  /  %.2FS  /  %s", #data.frames, data.duration, clipTypeLabel)
     updateTimelineCursor(0)
 end
@@ -889,9 +889,6 @@ local function stopPreview()
     for joint, snapshot in pairs(previewJointSnapshot) do
         if joint and joint.Parent then
             pcall(function()
-                if joint:IsA("Motor6D") and snapshot.currentAngle ~= nil then
-                    joint.CurrentAngle = snapshot.currentAngle
-                end
                 joint.Transform = snapshot.transform
             end)
         end
@@ -961,7 +958,6 @@ local function beginPreview()
         if isSupportedJoint(descendant) then
             previewJointSnapshot[descendant] = {
                 transform = descendant.Transform,
-                currentAngle = descendant:IsA("Motor6D") and descendant.CurrentAngle or nil,
             }
         end
     end
@@ -1297,12 +1293,14 @@ importButton.Activated:Connect(function()
     importedSequence = result.clip
     importedRig = rig
 
-    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
+    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE (EXPERIMENTAL)" or "KEYFRAME"
     rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
     drawTimeline(importedData)
 
     setStatus(
-        string.format("%d quadros convertidos. Prévia, navegação e salvamento disponíveis.", #importedData.frames),
+        importedData.clipType == "CurveAnimation"
+            and string.format("%d quadros convertidos. Saída CurveAnimation experimental; confira o rig antes de salvar.", #importedData.frames)
+            or string.format("%d quadros convertidos. Prévia, navegação e salvamento disponíveis.", #importedData.frames),
         C.green
     )
 end)
