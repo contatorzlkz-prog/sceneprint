@@ -1,14 +1,11 @@
 # Changelog
 
-## 0.2.0
+## 0.1.0 · Estudo inicial
 
-- Reduzi o Sceneprint para duas verificações contextuais.
-- A leitura agora parte da seleção do Explorer, não do mapa inteiro.
-- Removi cartões de métricas, filtros e contadores.
-- A seleção de um resultado leva ao objeto no Explorer.
-- Ajustei a interface para preto, branco e roxo discreto.
-- Crédito do autor incluído na interface e na documentação.
-
-## 0.1.0
-
-- Primeira versão do painel e das verificações de cena.
+- Nova direção: escultura de superfícies com Parts.
+- Base inicial em grade de 16 × 16 tiles.
+- Ferramentas de subir, baixar e suavizar.
+- Raio de pincel ajustável.
+- Prévia visual do pincel.
+- Registro das pinceladas no histórico de desfazer/refazer do Studio.
+- Interface reduzida e alinhada à identidade do perfil.
