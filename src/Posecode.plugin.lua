@@ -1135,8 +1135,7 @@ local function normalizeV2Data(data, skeleton)
         end
         seenTargets[targetName] = true
 
-        local resolvedTarget = skeleton.jointsByPart1[targetName]
-        if not resolvedTarget then
+        if not skeleton.jointsByPart1[targetName] then
             error('O alvo "' .. targetName .. '" não existe no rig selecionado.')
         end
         if skeleton.jointKindsByName[targetName] ~= targetType then
@@ -1161,6 +1160,9 @@ local function normalizeV2Data(data, skeleton)
         for keyIndex, key in ipairs(keys) do
             if typeof(key) ~= "table" or typeof(key.transform) ~= "table" then
                 error("Keyframe " .. keyIndex .. " da track " .. trackIndex .. " precisa ter transform.")
+            end
+            if key.transform.position == nil and key.transform.rotation == nil then
+                error("key.transform precisa ter position, rotation ou ambos.")
             end
             local time = normalizeTime(key.time, "O time de um keyframe")
             if seenTrackTimes[time] then
@@ -1204,7 +1206,7 @@ local function normalizeV2Data(data, skeleton)
     if events == nil then
         events = {}
     end
-    local eventCount = arrayLength(events, "events", MAX_MARKERS)
+    arrayLength(events, "events", MAX_MARKERS)
     local eventCountsByTime = {}
 
     for eventIndex, event in ipairs(events) do
