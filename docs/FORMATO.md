@@ -84,7 +84,7 @@ O nome da variável precisa ser POSECODE. O delimitador longo pode usar qualquer
 Cada quadro contém:
 
 - time: tempo em segundos.
-- joints: objeto cujas chaves são os nomes das peças conectadas como Part1 por uma Motor6D.
+- joints: objeto cujas chaves são os nomes das peças ligadas à junta. Em Motor6D, use o nome de Part1. Em AnimationConstraint, use o nome da BasePart que é Parent de Attachment1.
 - easingStyle: opcional; substitui o easingStyle global naquele quadro.
 - easingDirection: opcional; substitui o easingDirection global naquele quadro.
 
@@ -112,7 +112,7 @@ Direções aceitas: In, Out e InOut.
 
 Peça à IA algo semelhante a:
 
-> Crie uma animação de [descreva o movimento] para um rig R15 no Roblox. Gere somente um script Luau POSECODE v1: variável POSECODE contendo JSON dentro de uma string longa [==[ ... ]==], seguida de return POSECODE. Informe fps, duration, looped, priority, easingStyle e easingDirection. Para cada keyframe, informe time em segundos e somente as juntas que mudaram, usando nomes exatos das peças R15 conectadas por Motor6D. Rotation deve usar graus locais [x, y, z] e position deve usar offsets locais em studs. Use de 8 a 24 quadros distribuídos pelo movimento. Não use TweenService, não execute código, não invente nomes de juntas.
+> Crie uma animação de [descreva o movimento] para um rig R15 no Roblox. Gere somente um script Luau POSECODE v1: variável POSECODE contendo JSON dentro de uma string longa [==[ ... ]==], seguida de return POSECODE. Informe fps, duration, looped, priority, easingStyle e easingDirection. Para cada keyframe, informe time em segundos e somente as juntas que mudaram, usando nomes exatos das peças conectadas por Motor6D ou AnimationConstraint. Rotation deve usar graus locais [x, y, z] e position deve usar offsets locais em studs. Use de 8 a 24 quadros distribuídos pelo movimento. Não use TweenService, não execute código, não invente nomes de juntas.
 
 Troque R15 por R6 quando estiver usando um rig R6.
 
