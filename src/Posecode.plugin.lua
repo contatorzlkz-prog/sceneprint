@@ -2278,50 +2278,71 @@ exampleButton.Activated:Connect(function()
         end
 
         local jointName = rootChildren[1].Name
+        local targetType = skeleton.jointKindsByName[jointName]
+        if not targetType then
+            error("Não consegui identificar o tipo do primeiro alvo do rig.")
+        end
+
         local sample = {
             format = "POSECODE",
-            version = 1,
-            name = "Posecode_Sample",
-            rig = humanoid and humanoid.RigType.Name or "CUSTOM",
-            fps = 30,
-            duration = 0.6,
-            looped = false,
-            priority = "Action",
-            easingStyle = "CubicV2",
-            easingDirection = "InOut",
-            frames = {
-                {
-                    time = 0,
-                    joints = {
-                        [jointName] = {
-                            position = { 0, 0, 0 },
-                            rotation = { 0, 0, 0 },
-                        },
-                    },
+            version = 2,
+            metadata = {
+                name = "Posecode_Sample",
+                author = "POSECODE",
+                description = "Exemplo gerado para o rig selecionado.",
+            },
+            rig = {
+                profile = humanoid and humanoid.RigType.Name or "CUSTOM",
+            },
+            timeline = {
+                fps = 30,
+                duration = 0.6,
+                looped = false,
+                priority = "Action",
+                defaultEasing = {
+                    style = "CubicV2",
+                    direction = "InOut",
                 },
+            },
+            tracks = {
                 {
-                    time = 0.3,
-                    joints = {
-                        [jointName] = {
-                            position = { 0, 0, 0 },
-                            rotation = { 0, 0, 22 },
-                        },
+                    target = {
+                        type = targetType,
+                        name = jointName,
                     },
-                    markers = not skeleton.hasCurveAnimation and {
-                        { name = "PosecodeSampleEvent", value = "middle" },
-                    } or nil,
-                },
-                {
-                    time = 0.6,
-                    joints = {
-                        [jointName] = {
-                            position = { 0, 0, 0 },
-                            rotation = { 0, 0, 0 },
+                    keys = {
+                        {
+                            time = 0,
+                            transform = {
+                                position = { 0, 0, 0 },
+                                rotation = { 0, 0, 0 },
+                            },
+                        },
+                        {
+                            time = 0.3,
+                            transform = {
+                                position = { 0, 0, 0 },
+                                rotation = { 0, 0, 22 },
+                            },
+                        },
+                        {
+                            time = 0.6,
+                            transform = {
+                                position = { 0, 0, 0 },
+                                rotation = { 0, 0, 0 },
+                            },
                         },
                     },
                 },
             },
         }
+
+        if not skeleton.hasCurveAnimation then
+            sample.events = {
+                { time = 0.3, name = "PosecodeSampleEvent", value = "middle" },
+            }
+        end
+
         return HttpService:JSONEncode(sample)
     end)
 
@@ -2331,7 +2352,7 @@ exampleButton.Activated:Connect(function()
     end
 
     sourceBox.Text = result
-    setStatus("Exemplo carregado. Clique em Importar clip.", C.green)
+    setStatus("Exemplo POSECODE V2 carregado. Clique em Importar clip.", C.green)
 end)
 
 clearButton.Activated:Connect(function()
