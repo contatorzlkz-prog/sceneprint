@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 1.2
+    Version: 1.3
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -16,8 +16,9 @@ local AnimationClipProvider = game:GetService("AnimationClipProvider")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
-local VERSION = "1.2"
+local VERSION = "1.3"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -38,22 +39,22 @@ local C = {
     red = Color3.fromRGB(220, 135, 135),
 }
 
-local toolbar = plugin:CreateToolbar("Posecode")
-local toolbarButton = toolbar:CreateButton("Posecode", "Abrir Posecode", "")
+local toolbar = plugin:CreateToolbar("POSECODE")
+local toolbarButton = toolbar:CreateButton("POSECODE", "Abrir POSECODE", "")
 toolbarButton.ClickableWhenViewportHidden = true
 
 local widgetInfo = DockWidgetPluginGuiInfo.new(
     Enum.InitialDockState.Right,
     false,
     false,
-    440,
-    760,
-    360,
-    740
+    410,
+    650,
+    330,
+    420
 )
 
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Posecode.Main", widgetInfo)
-widget.Title = "Posecode"
+widget.Title = "POSECODE"
 
 local function make(className, parent, properties)
     local object = Instance.new(className)
@@ -80,18 +81,27 @@ local function label(parent, text, position, size, fontSize, color, font)
 end
 
 local function button(parent, text, position, size, primary)
+    local normalColor = primary and C.accent or C.surface
+    local hoverColor = primary and Color3.fromRGB(198, 184, 255) or Color3.fromRGB(39, 37, 47)
     local object = make("TextButton", parent, {
         Position = position,
         Size = size,
-        BackgroundColor3 = primary and C.accent or C.surface,
+        BackgroundColor3 = normalColor,
         BorderSizePixel = 0,
         AutoButtonColor = false,
-        Font = Enum.Font.GothamMedium,
+        Font = Enum.Font.GothamBold,
         Text = text,
         TextColor3 = primary and C.background or C.text,
         TextSize = 10,
+        TextTruncate = Enum.TextTruncate.AtEnd,
     })
     make("UICorner", object, { CornerRadius = UDim.new(0, 5) })
+    object.MouseEnter:Connect(function()
+        TweenService:Create(object, TweenInfo.new(0.12), { BackgroundColor3 = hoverColor }):Play()
+    end)
+    object.MouseLeave:Connect(function()
+        TweenService:Create(object, TweenInfo.new(0.12), { BackgroundColor3 = normalColor }):Play()
+    end)
     return object
 end
 
@@ -102,56 +112,91 @@ local root = make("Frame", widget, {
     Size = UDim2.fromScale(1, 1),
 })
 
-local headerMark = make("Frame", root, {
-    Position = UDim2.fromOffset(18, 17),
+local header = make("Frame", root, {
+    Name = "Header",
+    BackgroundColor3 = C.background,
+    BorderSizePixel = 0,
+    Size = UDim2.new(1, 0, 0, 58),
+})
+
+local headerMark = make("Frame", header, {
+    Position = UDim2.fromOffset(14, 13),
     Size = UDim2.fromOffset(30, 30),
     BackgroundColor3 = C.accentDark,
     BorderSizePixel = 0,
 })
 make("UICorner", headerMark, { CornerRadius = UDim.new(0, 6) })
 make("Frame", headerMark, {
-    Position = UDim2.fromOffset(7, 15),
-    Size = UDim2.fromOffset(5, 8),
+    Position = UDim2.fromOffset(6, 15),
+    Size = UDim2.fromOffset(4, 8),
     BackgroundColor3 = C.accent,
     BorderSizePixel = 0,
 })
 make("Frame", headerMark, {
-    Position = UDim2.fromOffset(15, 9),
-    Size = UDim2.fromOffset(5, 14),
+    Position = UDim2.fromOffset(13, 9),
+    Size = UDim2.fromOffset(4, 14),
     BackgroundColor3 = C.accent,
     BorderSizePixel = 0,
 })
 make("Frame", headerMark, {
-    Position = UDim2.fromOffset(23, 5),
-    Size = UDim2.fromOffset(2, 18),
+    Position = UDim2.fromOffset(20, 5),
+    Size = UDim2.fromOffset(4, 18),
     BackgroundColor3 = C.accent,
     BorderSizePixel = 0,
 })
 
-label(root, "POSECODE", UDim2.fromOffset(59, 14), UDim2.new(1, -150, 0, 22), 16, C.text, Enum.Font.GothamBold)
-label(root, "AI  /  ANIMATION CLIPS", UDim2.fromOffset(60, 34), UDim2.new(1, -150, 0, 13), 8, C.muted, Enum.Font.GothamMedium)
-local versionLabel = label(root, "v" .. VERSION, UDim2.new(1, -64, 0, 23), UDim2.fromOffset(46, 14), 9, C.muted)
-versionLabel.TextXAlignment = Enum.TextXAlignment.Right
+label(header, "POSECODE", UDim2.fromOffset(54, 11), UDim2.new(1, -142, 0, 21), 15, C.text, Enum.Font.GothamBold)
+label(header, "ANIMATION WORKSPACE", UDim2.fromOffset(55, 31), UDim2.new(1, -142, 0, 12), 8, C.muted, Enum.Font.GothamMedium)
+
+local versionChip = make("Frame", header, {
+    Position = UDim2.new(1, -62, 0, 19),
+    Size = UDim2.fromOffset(46, 22),
+    BackgroundColor3 = C.surface,
+    BorderSizePixel = 0,
+})
+make("UICorner", versionChip, { CornerRadius = UDim.new(0, 5) })
+local versionLabel = label(versionChip, "v" .. VERSION, UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), 9, C.accent, Enum.Font.GothamBold)
+versionLabel.TextXAlignment = Enum.TextXAlignment.Center
 
 make("Frame", root, {
-    Position = UDim2.fromOffset(18, 60),
-    Size = UDim2.new(1, -36, 0, 1),
+    Position = UDim2.fromOffset(14, 57),
+    Size = UDim2.new(1, -28, 0, 1),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
 })
 
-label(root, "IMPORTAR SCRIPT", UDim2.fromOffset(18, 75), UDim2.new(1, -36, 0, 16), 9, C.muted, Enum.Font.GothamBold)
-label(root, "Cole o script estruturado pela IA.", UDim2.fromOffset(18, 93), UDim2.new(1, -36, 0, 17), 11, C.text)
+local scroll = make("ScrollingFrame", root, {
+    Name = "ContentScroll",
+    Position = UDim2.fromOffset(0, 62),
+    Size = UDim2.new(1, 0, 1, -62),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    CanvasSize = UDim2.fromOffset(0, 590),
+    ScrollBarThickness = 3,
+    ScrollBarImageColor3 = C.accent,
+    ScrollingDirection = Enum.ScrollingDirection.Y,
+    Active = true,
+})
+local content = make("Frame", scroll, {
+    Name = "Content",
+    Position = UDim2.fromOffset(14, 0),
+    Size = UDim2.new(1, -28, 0, 590),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+})
 
-local sourceBox = make("TextBox", root, {
-    Position = UDim2.fromOffset(18, 116),
-    Size = UDim2.new(1, -36, 0, 185),
+label(content, "01  /  SOURCE", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 9, C.muted, Enum.Font.GothamBold)
+label(content, "POSECODE ou JSON estruturado", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 14), 10, C.text)
+
+local sourceBox = make("TextBox", content, {
+    Position = UDim2.fromOffset(0, 43),
+    Size = UDim2.new(1, 0, 0, 124),
     BackgroundColor3 = C.field,
     BorderSizePixel = 0,
     ClearTextOnFocus = false,
     Font = Enum.Font.Code,
     Text = "",
-    PlaceholderText = "local POSECODE = [==[\n{\n  \"format\": \"POSECODE\",\n  ...\n}\n]==]\nreturn POSECODE",
+    PlaceholderText = '{ "format": "POSECODE", ... }',
     PlaceholderColor3 = C.muted,
     TextColor3 = C.text,
     TextSize = 10,
@@ -161,31 +206,36 @@ local sourceBox = make("TextBox", root, {
     MultiLine = true,
 })
 make("UICorner", sourceBox, { CornerRadius = UDim.new(0, 5) })
+make("UIStroke", sourceBox, {
+    Color = C.line,
+    Thickness = 1,
+    Transparency = 0.2,
+})
 make("UIPadding", sourceBox, {
-    PaddingTop = UDim.new(0, 10),
-    PaddingBottom = UDim.new(0, 10),
+    PaddingTop = UDim.new(0, 9),
+    PaddingBottom = UDim.new(0, 9),
     PaddingLeft = UDim.new(0, 10),
     PaddingRight = UDim.new(0, 10),
 })
 
-local importButton = button(root, "IMPORTAR ANIMAÇÃO", UDim2.fromOffset(18, 311), UDim2.new(1, -36, 0, 34), true)
-local exampleButton = button(root, "CARREGAR EXEMPLO", UDim2.fromOffset(18, 352), UDim2.new(0.5, -23, 0, 28), false)
-local clearButton = button(root, "LIMPAR", UDim2.new(0.5, 5, 0, 352), UDim2.new(0.5, -23, 0, 28), false)
+local importButton = button(content, "↓  IMPORTAR CLIP", UDim2.fromOffset(0, 176), UDim2.new(1, 0, 0, 34), true)
+local exampleButton = button(content, "＋  EXEMPLO", UDim2.fromOffset(0, 218), UDim2.new(0.5, -5, 0, 28), false)
+local clearButton = button(content, "×  LIMPAR", UDim2.new(0.5, 5, 0, 218), UDim2.new(0.5, -5, 0, 28), false)
 
-local timelinePanel = make("Frame", root, {
-    Position = UDim2.fromOffset(18, 392),
-    Size = UDim2.new(1, -36, 0, 100),
-    BackgroundColor3 = C.panel,
+local timelinePanel = make("Frame", content, {
+    Name = "Timeline",
+    Position = UDim2.fromOffset(0, 260),
+    Size = UDim2.new(1, 0, 0, 76),
+    BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-make("UICorner", timelinePanel, { CornerRadius = UDim.new(0, 5) })
-label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(12, 9), UDim2.new(0.45, -12, 0, 14), 8, C.muted, Enum.Font.GothamBold)
-local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.45, 0, 0, 9), UDim2.new(0.55, -12, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
+label(timelinePanel, "02  /  TIMELINE", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 9, C.muted, Enum.Font.GothamBold)
+local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
 local timelineTrack = make("Frame", timelinePanel, {
-    Position = UDim2.fromOffset(12, 38),
-    Size = UDim2.new(1, -24, 0, 26),
+    Position = UDim2.fromOffset(0, 23),
+    Size = UDim2.new(1, 0, 0, 24),
     BackgroundTransparency = 1,
 })
 make("Frame", timelineTrack, {
@@ -209,35 +259,42 @@ local timelineCursor = make("Frame", timelineTrack, {
     Name = "Playhead",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.new(0, 0, 0.5, 0),
-    Size = UDim2.fromOffset(2, 24),
+    Size = UDim2.fromOffset(2, 22),
     BackgroundColor3 = C.text,
     BorderSizePixel = 0,
     ZIndex = 5,
 })
-local timelineTime = label(timelinePanel, "00:00.00", UDim2.fromOffset(12, 72), UDim2.new(1, -24, 0, 16), 9, C.text, Enum.Font.Code)
+local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.fromOffset(0, 52), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.Code)
 
-local rigInfo = label(root, "RIG: —", UDim2.fromOffset(18, 502), UDim2.new(1, -36, 0, 16), 9, C.muted, Enum.Font.GothamMedium)
-local statusLabel = label(root, "Selecione um rig R6 ou R15 antes de importar.", UDim2.fromOffset(18, 522), UDim2.new(1, -36, 0, 30), 10, C.muted)
+local rigInfo = label(content, "RIG: —", UDim2.fromOffset(0, 342), UDim2.new(1, 0, 0, 15), 9, C.muted, Enum.Font.GothamMedium)
+local statusIndicator = make("Frame", content, {
+    Position = UDim2.fromOffset(1, 366),
+    Size = UDim2.fromOffset(6, 6),
+    BackgroundColor3 = C.muted,
+    BorderSizePixel = 0,
+})
+make("UICorner", statusIndicator, { CornerRadius = UDim.new(1, 0) })
+local statusLabel = label(content, "Selecione um rig R6 ou R15.", UDim2.fromOffset(14, 357), UDim2.new(1, -14, 0, 26), 10, C.muted)
 statusLabel.TextWrapped = true
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
-make("Frame", root, {
-    Position = UDim2.fromOffset(18, 560),
-    Size = UDim2.new(1, -36, 0, 1),
+make("Frame", content, {
+    Position = UDim2.fromOffset(0, 396),
+    Size = UDim2.new(1, 0, 0, 1),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
 })
 
-label(root, "PRÉVIA", UDim2.fromOffset(18, 572), UDim2.new(1, -36, 0, 14), 8, C.muted, Enum.Font.GothamBold)
-local previewButton = button(root, "REPRODUZIR", UDim2.fromOffset(18, 592), UDim2.new(0.25, -8, 0, 32), true)
-local pauseButton = button(root, "PAUSAR", UDim2.new(0.25, 14, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
-local stopButton = button(root, "PARAR", UDim2.new(0.5, 2, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
-local speedButton = button(root, "1×", UDim2.new(0.75, -10, 0, 592), UDim2.new(0.25, -8, 0, 32), false)
+label(content, "03  /  PREVIEW", UDim2.fromOffset(0, 408), UDim2.new(1, 0, 0, 14), 9, C.muted, Enum.Font.GothamBold)
+local previewButton = button(content, "▶", UDim2.fromOffset(0, 430), UDim2.new(0.25, -5, 0, 32), true)
+local pauseButton = button(content, "Ⅱ", UDim2.new(0.25, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+local stopButton = button(content, "■", UDim2.new(0.5, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
+local speedButton = button(content, "1×", UDim2.new(0.75, 5, 0, 430), UDim2.new(0.25, -5, 0, 32), false)
 
-local previousKeyButton = button(root, "◀ QUADRO", UDim2.fromOffset(18, 632), UDim2.new(0.5, -23, 0, 28), false)
-local nextKeyButton = button(root, "QUADRO ▶", UDim2.new(0.5, 5, 0, 632), UDim2.new(0.5, -23, 0, 28), false)
-local saveButton = button(root, "SALVAR CLIP NO STUDIO", UDim2.fromOffset(18, 668), UDim2.new(1, -36, 0, 34), true)
-label(root, "Publicação: use o Editor de Animação do Studio.", UDim2.fromOffset(18, 710), UDim2.new(1, -36, 0, 18), 9, C.muted)
+local previousKeyButton = button(content, "‹  ANTERIOR", UDim2.fromOffset(0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local nextKeyButton = button(content, "PRÓXIMO  ›", UDim2.new(0.5, 5, 0, 470), UDim2.new(0.5, -5, 0, 28), false)
+local saveButton = button(content, "↓  SALVAR CLIP NO STUDIO", UDim2.fromOffset(0, 510), UDim2.new(1, 0, 0, 34), true)
+label(content, "Publicação pelo Editor de Animação do Studio.", UDim2.fromOffset(0, 552), UDim2.new(1, 0, 0, 16), 9, C.muted)
 
 local importedData = nil
 local importedSequence = nil
@@ -258,8 +315,10 @@ local isScrubbing = false
 local timelineInputConnections = {}
 
 local function setStatus(message, color)
+    local statusColor = color or C.muted
     statusLabel.Text = message
-    statusLabel.TextColor3 = color or C.muted
+    statusLabel.TextColor3 = statusColor
+    statusIndicator.BackgroundColor3 = statusColor
 end
 
 local function clearTimeline()
@@ -486,10 +545,10 @@ local function readVector3(value, fieldName, limit)
     end
 
     local x, y, z = value[1], value[2], value[3]
-    for _, number in ipairs({ x, y, z }) do
-        if not isFiniteNumber(number) or math.abs(number) > limit then
-            error(fieldName .. " contém um valor fora do limite permitido.")
-        end
+    if not isFiniteNumber(x) or math.abs(x) > limit
+        or not isFiniteNumber(y) or math.abs(y) > limit
+        or not isFiniteNumber(z) or math.abs(z) > limit then
+        error(fieldName .. " contém um valor fora do limite permitido.")
     end
     return x, y, z
 end
@@ -627,16 +686,18 @@ local function validateData(data, rig, skeleton)
             end
         end
 
+        local transforms = {}
         for jointName, jointData in pairs(frameData.joints) do
             if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
                 error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
             end
-            transformFromData(jointData)
+            transforms[jointName] = transformFromData(jointData)
         end
 
         table.insert(frames, {
             time = frameNumber / data.fps,
             joints = frameData.joints,
+            transforms = transforms,
             easingStyle = easingStyle,
             easingDirection = easingDirection,
         })
@@ -650,6 +711,7 @@ local function validateData(data, rig, skeleton)
         table.insert(frames, 1, {
             time = 0,
             joints = {},
+            transforms = {},
             easingStyle = frames[1].easingStyle,
             easingDirection = frames[1].easingDirection,
         })
@@ -660,6 +722,7 @@ local function validateData(data, rig, skeleton)
         table.insert(frames, {
             time = normalizedDuration,
             joints = table.clone(lastFrame.joints),
+            transforms = table.clone(lastFrame.transforms),
             easingStyle = lastFrame.easingStyle,
             easingDirection = lastFrame.easingDirection,
         })
@@ -700,7 +763,7 @@ local function buildKeyframeSequence(data, skeleton)
     local ok, result = pcall(function()
         for index, frameData in ipairs(data.frames) do
             for jointName, jointData in pairs(frameData.joints) do
-                currentTransforms[jointName] = transformFromData(jointData)
+                currentTransforms[jointName] = frameData.transforms[jointName]
             end
 
             local keyframe = Instance.new("Keyframe")
@@ -764,7 +827,12 @@ local function buildCurveAnimation(data, skeleton)
 
         local snapshot = {}
         for jointName in pairs(skeleton.jointsByPart1) do
-            snapshot[jointName] = currentTransforms[jointName] or CFrame.identity
+            local transform = currentTransforms[jointName] or CFrame.identity
+            local rx, ry, rz = transform:ToEulerAnglesXYZ()
+            snapshot[jointName] = {
+                position = transform.Position,
+                rotation = Vector3.new(rx, ry, rz),
+            }
         end
         snapshots[index] = snapshot
     end
@@ -778,14 +846,11 @@ local function buildCurveAnimation(data, skeleton)
             local keys = {}
 
             local function getValue(index)
-                local transform = snapshots[index][partName]
+                local pose = snapshots[index][partName]
                 if axisKind == "position" then
-                    return transform.Position[axisGetter]
+                    return pose.position[axisGetter]
                 end
-
-                local rx, ry, rz = transform:ToEulerAnglesXYZ()
-                local rotationValues = { X = rx, Y = ry, Z = rz }
-                return rotationValues[axisGetter]
+                return pose.rotation[axisGetter]
             end
 
             for index, frameData in ipairs(data.frames) do
@@ -917,7 +982,7 @@ local function stopPreview()
     temporaryAnimator = false
     temporaryHost = false
     previewPaused = false
-    pauseButton.Text = "PAUSAR"
+    pauseButton.Text = "Ⅱ"
     updateTimelineCursor(0)
 end
 
@@ -974,7 +1039,7 @@ local function beginPreview()
         previewAnimation = animation
         previewTrack = track
         previewPaused = false
-        pauseButton.Text = "PAUSAR"
+        pauseButton.Text = "Ⅱ"
 
         previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
             if not previewAnimator or not previewTrack then
@@ -1012,7 +1077,7 @@ end
 local function playPreview()
     if previewTrack and previewTrack.IsPlaying then
         previewPaused = false
-        pauseButton.Text = "PAUSAR"
+        pauseButton.Text = "Ⅱ"
         previewTrack:AdjustSpeed(previewSpeed)
         setStatus("Prévia reproduzindo.", C.green)
     else
@@ -1034,7 +1099,7 @@ local function pausePreview()
     else
         previewTrack:AdjustSpeed(0)
         previewPaused = true
-        pauseButton.Text = "RETOMAR"
+        pauseButton.Text = "▶"
         setStatus("Prévia pausada.", C.muted)
     end
 end
