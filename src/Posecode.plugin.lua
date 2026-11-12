@@ -453,7 +453,10 @@ local function validateData(data, rig, skeleton)
         error("A animação precisa ter entre 1 e " .. MAX_FRAMES .. " keyframes antes da normalização.")
     end
 
-    local durationFrames = math.max(1, math.floor(data.duration * data.fps + 0.5))
+    local durationFrames = math.floor(data.duration * data.fps + 0.5)
+    if durationFrames < 1 then
+        error("A duração precisa ser de pelo menos um quadro no FPS informado.")
+    end
     local normalizedDuration = durationFrames / data.fps
 
     local priorityName = data.priority or "Action"
