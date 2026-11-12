@@ -2,7 +2,7 @@
   <img src="assets/posecode-mark.svg" width="48" alt="Posecode" />
   <h1>POSECODE</h1>
   <p>De uma animação gerada por IA para clips editáveis no Roblox Studio.</p>
-  <p><sub>ruancr · v1.3 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v1.4 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
 ![Interface do Posecode](assets/posecode-preview.svg)
@@ -30,7 +30,7 @@ Ele não tenta adivinhar o comportamento de qualquer script Luau. O texto colado
 
 A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
-## O que mudou na v1.3
+## O que mudou na v1.4
 
 - **Dois formatos de saída:** rigs somente com Motor6D geram KeyframeSequence; rigs com AnimationConstraint geram CurveAnimation (experimental; compatibilidade ainda não garantida pela documentação oficial).
 - Curvas de posição com Vector3Curve e rotação com EulerRotationCurve; essa saída é identificada como experimental.
@@ -42,12 +42,16 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Restauração de Transform sem escrita em propriedades não suportadas.
 - Salvamento com rollback de pastas e referências se a operação falhar.
 - Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
-- Interface reorganizada em uma janela compacta com rolagem, cabeçalho fixo, indicação do rig selecionado e controles com ícones discretos.
-- Botões com estados de hover suaves e indicador de status por cor, sem depender de blocos grandes de texto.
-- Conversão mais eficiente: transformações locais são calculadas uma vez por junta/quadro e reutilizadas nos dois formatos.
-- Curvas Euler são extraídas uma vez por junta/quadro, evitando repetir a decomposição para cada eixo.
-- Validação de vetores sem criar tabelas temporárias a cada leitura.
-- A interface continua identificando se o clip gerado é de keyframes ou curvas.
+- Interface reorganizada com títulos menores, ícones lineares, controles compactos e menos dependência de símbolos tipográficos.
+- SVGs de referência mantidos em [assets/icons/posecode-icons.svg](assets/icons/posecode-icons.svg); dentro do Studio, os mesmos desenhos são renderizados por GuiObjects nativos, sem exigir IDs de imagem externos.
+- Prévia encerrada automaticamente ao ocultar o painel ou remover o rig do Workspace.
+- Limpeza protegida para clips parcialmente criados e animações cuja inicialização falha.
+- Correção da leitura de tempo ao limpar a timeline e de espaçamento dos cabeçalhos.
+- A versão do formato permanece POSECODE v1; 1.4 identifica somente a versão do plugin.
+
+## Ícones e interface
+
+O arquivo SVG é a fonte vetorial dos símbolos. O Roblox não mostra XML/SVG cru diretamente em um ImageLabel: imagens precisam ser importadas como assets. Para manter o plugin independente, a interface desenha os símbolos com elementos nativos da GUI. [Ver o sprite SVG](assets/icons/posecode-icons.svg).
 
 ## Limites atuais
 
