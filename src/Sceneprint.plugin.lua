@@ -1,575 +1,557 @@
 --[[
     SCENEPRINT
-    A small, selection-first scene check for Roblox Studio.
-    Created by Ruan Carlos (ruancr).
-    Version: 0.2.0 | MIT License
+    Part-based terrain sculpting study for Roblox Studio.
+    Handle: ruancr
+    Version: 0.1.0
 ]]
 
-assert(plugin, "Sceneprint precisa ser executado como um plugin do Roblox Studio.")
+assert(plugin, "Execute este código como um plugin do Roblox Studio.")
 
-local Selection = game:GetService("Selection")
 local Workspace = game:GetService("Workspace")
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 
-local COLOR = {
-    background = Color3.fromRGB(13, 13, 16),
+local CELL_SIZE = 4
+local GRID_SIZE = 16
+local MIN_HEIGHT, MAX_HEIGHT = 1.5, 32
+local RAISE_STEP = 2.4
+local SMOOTH_STRENGTH = 0.55
+
+local T = {
+    bg = Color3.fromRGB(13, 13, 16),
     surface = Color3.fromRGB(23, 23, 27),
     text = Color3.fromRGB(239, 238, 244),
     muted = Color3.fromRGB(137, 135, 148),
     line = Color3.fromRGB(46, 45, 53),
     purple = Color3.fromRGB(175, 157, 255),
     purpleDark = Color3.fromRGB(45, 39, 65),
-    amber = Color3.fromRGB(220, 172, 103),
 }
 
 local toolbar = plugin:CreateToolbar("Sceneprint")
-local toolbarButton = toolbar:CreateButton("Sceneprint", "Revisar a seleção com Sceneprint", "")
+local toolbarButton = toolbar:CreateButton("Sceneprint", "Abrir Sceneprint", "")
 toolbarButton.ClickableWhenViewportHidden = true
 
-local widgetInfo = DockWidgetPluginGuiInfo.new(
-    Enum.InitialDockState.Right,
-    false,
-    false,
-    330,
-    480,
-    280,
-    360
-)
-
+local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Right, false, false, 320, 440, 280, 340)
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Sceneprint.Main", widgetInfo)
 widget.Title = "Sceneprint"
 
 local function make(className, parent, properties)
     local object = Instance.new(className)
-
-    for property, value in pairs(properties or {}) do
-        object[property] = value
+    for key, value in pairs(properties or {}) do
+        object[key] = value
     end
-
     object.Parent = parent
     return object
 end
 
-local function makeLabel(parent, text, position, size, textSize, color, font)
+local function label(parent, text, position, size, fontSize, color, font)
     return make("TextLabel", parent, {
         BackgroundTransparency = 1,
         Position = position,
         Size = size,
         Font = font or Enum.Font.Gotham,
         Text = text,
-        TextColor3 = color or COLOR.text,
-        TextSize = textSize or 12,
+        TextColor3 = color or T.text,
+        TextSize = fontSize or 12,
         TextXAlignment = Enum.TextXAlignment.Left,
         TextYAlignment = Enum.TextYAlignment.Center,
         TextTruncate = Enum.TextTruncate.AtEnd,
     })
 end
 
+local function button(parent, text, position, size, selected)
+    local object = make("TextButton", parent, {
+        Position = position,
+        Size = size,
+        BackgroundColor3 = selected and T.purpleDark or T.surface,
+        BorderSizePixel = 0,
+        AutoButtonColor = false,
+        Font = Enum.Font.GothamMedium,
+        Text = text,
+        TextColor3 = selected and T.purple or T.muted,
+        TextSize = 10,
+    })
+    make("UICorner", object, { CornerRadius = UDim.new(0, 6) })
+    return object
+end
+
 local root = make("Frame", widget, {
-    Name = "Sceneprint",
-    BackgroundColor3 = COLOR.background,
+    Name = "SceneprintRoot",
+    BackgroundColor3 = T.bg,
     BorderSizePixel = 0,
     Size = UDim2.fromScale(1, 1),
 })
 
--- Header: nome e autoria sem ocupar a tela.
 local mark = make("Frame", root, {
-    Position = UDim2.fromOffset(18, 17),
-    Size = UDim2.fromOffset(27, 27),
-    BackgroundColor3 = COLOR.purpleDark,
+    Position = UDim2.fromOffset(18, 16),
+    Size = UDim2.fromOffset(28, 28),
+    BackgroundColor3 = T.purpleDark,
     BorderSizePixel = 0,
 })
 make("UICorner", mark, { CornerRadius = UDim.new(0, 7) })
+local markLabel = label(mark, "S", UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), 16, T.purple, Enum.Font.GothamBold)
+markLabel.TextXAlignment = Enum.TextXAlignment.Center
 
-local markText = makeLabel(mark, "S", UDim2.fromScale(0, 0), UDim2.fromScale(1, 1), 16, COLOR.purple, Enum.Font.GothamBold)
-markText.TextXAlignment = Enum.TextXAlignment.Center
-
-makeLabel(root, "sceneprint", UDim2.fromOffset(55, 13), UDim2.new(1, -76, 0, 22), 17, COLOR.text, Enum.Font.GothamBold)
-makeLabel(root, "by ruancr", UDim2.fromOffset(56, 34), UDim2.new(1, -76, 0, 14), 9, COLOR.muted, Enum.Font.GothamMedium)
-
-make("Frame", root, {
-    Position = UDim2.fromOffset(18, 59),
-    Size = UDim2.new(1, -36, 0, 1),
-    BackgroundColor3 = COLOR.line,
-    BorderSizePixel = 0,
-})
-
-makeLabel(
-    root,
-    "Uma revisão rápida do que você selecionou.",
-    UDim2.fromOffset(18, 76),
-    UDim2.new(1, -36, 0, 22),
-    11,
-    COLOR.text
-)
-
-local selectionLabel = makeLabel(
-    root,
-    "NADA SELECIONADO",
-    UDim2.fromOffset(18, 108),
-    UDim2.new(1, -36, 0, 16),
-    9,
-    COLOR.muted,
-    Enum.Font.GothamMedium
-)
-
-local scanButton = make("TextButton", root, {
-    Position = UDim2.fromOffset(18, 136),
-    Size = UDim2.new(1, -36, 0, 36),
-    BackgroundColor3 = COLOR.purple,
-    BorderSizePixel = 0,
-    AutoButtonColor = false,
-    Font = Enum.Font.GothamBold,
-    Text = "VERIFICAR SELEÇÃO",
-    TextColor3 = Color3.fromRGB(20, 18, 25),
-    TextSize = 10,
-})
-make("UICorner", scanButton, { CornerRadius = UDim.new(0, 6) })
-
-local statusLabel = makeLabel(
-    root,
-    "Selecione um Model ou uma peça no Explorer.",
-    UDim2.fromOffset(18, 184),
-    UDim2.new(1, -36, 0, 34),
-    11,
-    COLOR.muted
-)
-statusLabel.TextWrapped = true
-statusLabel.TextYAlignment = Enum.TextYAlignment.Top
-
-local resultsHeading = makeLabel(
-    root,
-    "",
-    UDim2.fromOffset(18, 226),
-    UDim2.new(1, -36, 0, 17),
-    9,
-    COLOR.muted,
-    Enum.Font.GothamBold
-)
-
-local results = make("ScrollingFrame", root, {
-    Name = "Results",
-    Position = UDim2.fromOffset(18, 250),
-    Size = UDim2.new(1, -36, 1, -292),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    ScrollBarThickness = 3,
-    ScrollBarImageColor3 = COLOR.muted,
-    CanvasSize = UDim2.new(0, 0, 0, 0),
-    AutomaticCanvasSize = Enum.AutomaticSize.Y,
-    ScrollingDirection = Enum.ScrollingDirection.Y,
-})
-
-make("UIListLayout", results, {
-    Padding = UDim.new(0, 2),
-    SortOrder = Enum.SortOrder.LayoutOrder,
-})
+label(root, "sceneprint", UDim2.fromOffset(56, 12), UDim2.new(1, -76, 0, 20), 16, T.text, Enum.Font.GothamBold)
+label(root, "ruancr", UDim2.fromOffset(57, 31), UDim2.new(1, -76, 0, 14), 9, T.muted, Enum.Font.GothamMedium)
+local dev = label(root, "EM DESENVOLVIMENTO", UDim2.new(1, -130, 0, 20), UDim2.fromOffset(112, 14), 8, T.purple, Enum.Font.GothamBold)
+dev.TextXAlignment = Enum.TextXAlignment.Right
 
 make("Frame", root, {
-    Position = UDim2.new(0, 18, 1, -26),
+    Position = UDim2.fromOffset(18, 56),
     Size = UDim2.new(1, -36, 0, 1),
-    BackgroundColor3 = COLOR.line,
+    BackgroundColor3 = T.line,
     BorderSizePixel = 0,
 })
 
-makeLabel(
-    root,
-    "SCENEPRINT  /  CRIADO POR RUAN CARLOS",
-    UDim2.new(0, 18, 1, -21),
-    UDim2.new(1, -36, 0, 13),
-    8,
-    COLOR.muted,
-    Enum.Font.GothamMedium
-)
+label(root, "Terreno esculpido com Parts.", UDim2.fromOffset(18, 69), UDim2.new(1, -36, 0, 20), 12, T.text, Enum.Font.GothamMedium)
+label(root, "Sem usar o sistema Terrain do Roblox.", UDim2.fromOffset(18, 89), UDim2.new(1, -36, 0, 16), 10, T.muted)
 
-local findings = {}
-local scanToken = 0
-local scanning = false
+local baseButton = button(root, "CRIAR BASE 16 x 16", UDim2.fromOffset(18, 121), UDim2.new(1, -36, 0, 36), true)
+label(root, "ESCULPIR", UDim2.fromOffset(18, 177), UDim2.new(1, -36, 0, 16), 9, T.muted, Enum.Font.GothamBold)
 
-local INTENTIONAL_NAME_PARTS = {
-    "hitbox",
-    "hurtbox",
-    "trigger",
-    "collider",
-    "collision",
-    "boundary",
-    "bounds",
-    "vehicle",
-    "wheel",
-    "door",
-    "gate",
-    "ragdoll",
-    "projectile",
-    "physics",
-    "moving",
-}
+local modes = {}
+modes.raise = button(root, "SUBIR", UDim2.fromOffset(18, 201), UDim2.fromOffset(84, 32), false)
+modes.lower = button(root, "BAIXAR", UDim2.fromOffset(108, 201), UDim2.fromOffset(84, 32), false)
+modes.smooth = button(root, "SUAVIZAR", UDim2.fromOffset(198, 201), UDim2.fromOffset(92, 32), false)
 
-local function isInWorkspace(instance)
-    return instance == Workspace or instance:IsDescendantOf(Workspace)
+label(root, "RAIO DO PINCEL", UDim2.fromOffset(18, 255), UDim2.fromOffset(112, 18), 9, T.muted, Enum.Font.GothamBold)
+local radius = 3
+local radiusLabel = label(root, tostring(radius), UDim2.new(1, -90, 0, 255), UDim2.fromOffset(24, 18), 11, T.text, Enum.Font.GothamBold)
+radiusLabel.TextXAlignment = Enum.TextXAlignment.Center
+local minusButton = button(root, "−", UDim2.new(1, -60, 0, 251), UDim2.fromOffset(28, 26), false)
+local plusButton = button(root, "+", UDim2.new(1, -28, 0, 251), UDim2.fromOffset(28, 26), false)
+local stopButton = button(root, "PARAR FERRAMENTA", UDim2.fromOffset(18, 294), UDim2.new(1, -36, 0, 30), false)
+
+local status = label(root, "Crie uma base sobre a face superior de uma peça.", UDim2.fromOffset(18, 340), UDim2.new(1, -36, 0, 45), 10, T.muted)
+status.TextWrapped = true
+status.TextYAlignment = Enum.TextYAlignment.Top
+
+make("Frame", root, {
+    Position = UDim2.new(0, 18, 1, -25),
+    Size = UDim2.new(1, -36, 0, 1),
+    BackgroundColor3 = T.line,
+    BorderSizePixel = 0,
+})
+label(root, "PARTS ONLY  /  ruancr", UDim2.new(0, 18, 1, -20), UDim2.new(1, -36, 0, 12), 8, T.muted, Enum.Font.GothamMedium)
+
+local activeMode = nil
+local active = false
+local mouse = nil
+local connections = {}
+local cachedPatches = {}
+local brushPreview = nil
+
+local function setStatus(text)
+    status.Text = text
 end
 
-local function getSelectedRoots()
-    local selected = Selection:Get()
-    local selectedSet = {}
-
-    for _, instance in ipairs(selected) do
-        if isInWorkspace(instance) and instance ~= Workspace then
-            selectedSet[instance] = true
-        end
+local function refreshButtons()
+    for mode, control in pairs(modes) do
+        local selected = active and activeMode == mode
+        control.BackgroundColor3 = selected and T.purpleDark or T.surface
+        control.TextColor3 = selected and T.purple or T.muted
     end
-
-    local roots = {}
-
-    for _, instance in ipairs(selected) do
-        if selectedSet[instance] then
-            local parent = instance.Parent
-            local hasSelectedAncestor = false
-
-            while parent and parent ~= Workspace do
-                if selectedSet[parent] then
-                    hasSelectedAncestor = true
-                    break
-                end
-
-                parent = parent.Parent
-            end
-
-            if not hasSelectedAncestor then
-                table.insert(roots, instance)
-            end
-        end
-    end
-
-    return roots
+    local selected = active and activeMode == "place"
+    baseButton.BackgroundColor3 = selected and T.purpleDark or T.surface
+    baseButton.TextColor3 = selected and T.purple or T.muted
+    baseButton.Text = selected and "CLIQUE NO MAPA..." or "CRIAR BASE 16 x 16"
 end
 
-local function updateSelectionLabel()
-    local roots = getSelectedRoots()
-
-    if #roots == 0 then
-        selectionLabel.Text = "NADA SELECIONADO"
-        return
+local function getTerrainFolder()
+    local folder = Workspace:FindFirstChild("Sceneprint_Terrain")
+    if folder and folder:IsA("Folder") then
+        return folder
     end
-
-    local labelText = #roots == 1 and "ITEM SELECIONADO" or "ITENS SELECIONADOS"
-    selectionLabel.Text = string.format("%d %s", #roots, labelText)
+    return nil
 end
 
-local function hasHumanoidAncestor(instance)
-    local parent = instance.Parent
-
-    while parent and parent ~= Workspace do
-        if parent:IsA("Model") and parent:FindFirstChildOfClass("Humanoid") then
-            return true
-        end
-
-        parent = parent.Parent
+local function makePatchFolder()
+    local folder = getTerrainFolder()
+    if not folder then
+        folder = Instance.new("Folder")
+        folder.Name = "Sceneprint_Terrain"
+        folder.Parent = Workspace
     end
-
-    return false
+    return folder
 end
 
-local function hasIntentionalName(instance)
-    local current = instance
+local function key(x, z)
+    return tostring(x) .. ":" .. tostring(z)
+end
 
+local function patchFromCell(cell)
+    local current = cell
     while current and current ~= Workspace do
-        local name = string.lower(current.Name)
-
-        for _, keyword in ipairs(INTENTIONAL_NAME_PARTS) do
-            if string.find(name, keyword, 1, true) then
-                return true
+        if current:GetAttribute("SceneprintPatch") == true then
+            if cachedPatches[current] then
+                return cachedPatches[current]
             end
-        end
 
+            local state = {
+                folder = current,
+                bottomY = current:GetAttribute("BottomY") or 0,
+                cellSize = current:GetAttribute("CellSize") or CELL_SIZE,
+                cells = {},
+            }
+
+            for _, child in ipairs(current:GetChildren()) do
+                if child:IsA("BasePart") and child:GetAttribute("SceneprintCell") == true then
+                    state.cells[key(child:GetAttribute("GridX"), child:GetAttribute("GridZ"))] = child
+                end
+            end
+
+            cachedPatches[current] = state
+            return state
+        end
         current = current.Parent
     end
+    return nil
+end
 
+local function getCell(state, x, z)
+    local cell = state.cells[key(x, z)]
+    if cell and cell.Parent then
+        return cell
+    end
+    return nil
+end
+
+local function record(name, displayName, callback)
+    local ok, id = pcall(function()
+        return ChangeHistoryService:TryBeginRecording(name, displayName)
+    end)
+
+    if not ok or not id then
+        setStatus("O Studio não iniciou o registro de desfazer.")
+        return false
+    end
+
+    local success, result = pcall(callback)
+
+    if success then
+        pcall(function()
+            ChangeHistoryService:FinishRecording(id, Enum.FinishRecordingOperation.Commit)
+        end)
+        return true, result
+    end
+
+    pcall(function()
+        ChangeHistoryService:FinishRecording(id, Enum.FinishRecordingOperation.Cancel)
+    end)
+    setStatus("A ação foi cancelada: " .. tostring(result))
     return false
 end
 
-local function getPath(instance)
-    local ok, path = pcall(function()
-        return instance:GetFullName()
-    end)
-
-    if not ok then
-        return instance.Name
-    end
-
-    if #path > 64 then
-        return "..." .. string.sub(path, #path - 61, #path)
-    end
-
-    return path
-end
-
-local function addFinding(kind, title, message, object)
-    table.insert(findings, {
-        kind = kind,
-        title = title,
-        message = message,
-        object = object,
-        path = getPath(object),
-    })
-end
-
-local function clearResults()
-    for _, child in ipairs(results:GetChildren()) do
-        if not child:IsA("UIListLayout") then
-            child:Destroy()
-        end
-    end
-end
-
-local function showEmpty(title, detail)
-    clearResults()
-
-    local empty = make("Frame", results, {
-        Size = UDim2.new(1, -4, 0, 58),
-        BackgroundTransparency = 1,
-    })
-
-    makeLabel(empty, title, UDim2.fromOffset(0, 3), UDim2.new(1, 0, 0, 21), 12, COLOR.text, Enum.Font.GothamMedium)
-
-    local detailLabel = makeLabel(empty, detail, UDim2.fromOffset(0, 27), UDim2.new(1, 0, 0, 28), 10, COLOR.muted)
-    detailLabel.TextWrapped = true
-    detailLabel.TextYAlignment = Enum.TextYAlignment.Top
-end
-
-local function renderFindings(partsChecked)
-    clearResults()
-
-    if #findings == 0 then
-        resultsHeading.Text = "RESULTADO"
-        showEmpty(
-            "Nada chamou atenção nesta leitura.",
-            string.format("%d peças conferidas. Isso não substitui um teste no jogo.", partsChecked)
-        )
+local function createPatch(target, hitPosition)
+    if not target or not target:IsA("BasePart") then
+        setStatus("Clique na parte de cima de uma peça existente.")
         return
     end
 
-    resultsHeading.Text = string.format(
-        "%d PONTO(s) PARA CONFERIR",
-        #findings
-    )
-
-    for index, finding in ipairs(findings) do
-        local row = make("TextButton", results, {
-            Name = "Finding_" .. index,
-            Size = UDim2.new(1, -4, 0, 76),
-            BackgroundTransparency = 1,
-            BorderSizePixel = 0,
-            AutoButtonColor = false,
-            Text = "",
-            LayoutOrder = index,
-        })
-
-        local tone = finding.kind == "hidden" and COLOR.amber or COLOR.purple
-        make("Frame", row, {
-            Position = UDim2.fromOffset(0, 8),
-            Size = UDim2.fromOffset(2, 58),
-            BackgroundColor3 = tone,
-            BorderSizePixel = 0,
-        })
-
-        makeLabel(
-            row,
-            finding.title,
-            UDim2.fromOffset(12, 4),
-            UDim2.new(1, -18, 0, 18),
-            11,
-            COLOR.text,
-            Enum.Font.GothamBold
-        )
-
-        makeLabel(
-            row,
-            finding.path,
-            UDim2.fromOffset(12, 23),
-            UDim2.new(1, -18, 0, 14),
-            9,
-            COLOR.muted
-        )
-
-        local detail = makeLabel(
-            row,
-            finding.message,
-            UDim2.fromOffset(12, 40),
-            UDim2.new(1, -18, 0, 31),
-            10,
-            COLOR.text
-        )
-        detail.TextWrapped = true
-        detail.TextYAlignment = Enum.TextYAlignment.Top
-
-        row.Activated:Connect(function()
-            if finding.object and finding.object.Parent then
-                Selection:Set({ finding.object })
-                statusLabel.Text = "Selecionado no Explorer."
-            else
-                statusLabel.Text = "Esse objeto não está mais na cena."
-            end
-        end)
-    end
-end
-
-local function collectSelectedParts(roots)
-    local parts = {}
-    local visited = {}
-
-    local function addIfPart(instance)
-        if instance:IsA("BasePart") and not visited[instance] then
-            visited[instance] = true
-            table.insert(parts, instance)
-        end
+    if target:GetAttribute("SceneprintCell") == true then
+        setStatus("Apoie a base em uma peça normal, não em outro tile.")
+        return
     end
 
-    for _, rootInstance in ipairs(roots) do
-        addIfPart(rootInstance)
-
-        for _, descendant in ipairs(rootInstance:GetDescendants()) do
-            addIfPart(descendant)
-        end
+    if mouse.TargetSurface ~= Enum.NormalId.Top then
+        setStatus("Apoie a base na face superior de uma peça.")
+        return
     end
 
-    return parts
-end
+    local success, patch = record("Sceneprint_CreatePatch", "Sceneprint: criar base", function()
+        local holder = makePatchFolder()
+        local folder = Instance.new("Folder")
+        folder.Name = "Patch_" .. string.format("%02d", #holder:GetChildren() + 1)
 
-local function runChecks(parts, token)
-    local seenAssemblies = {}
+        local bottomY = target.Position.Y + target.Size.Y / 2
+        local centerX = math.floor(hitPosition.X / CELL_SIZE + 0.5) * CELL_SIZE
+        local centerZ = math.floor(hitPosition.Z / CELL_SIZE + 0.5) * CELL_SIZE
+        local originX = centerX - ((GRID_SIZE - 1) * CELL_SIZE) / 2
+        local originZ = centerZ - ((GRID_SIZE - 1) * CELL_SIZE) / 2
 
-    for index, part in ipairs(parts) do
-        if token ~= scanToken then
-            return false
-        end
+        folder:SetAttribute("SceneprintPatch", true)
+        folder:SetAttribute("BottomY", bottomY)
+        folder:SetAttribute("CellSize", CELL_SIZE)
+        folder:SetAttribute("GridSize", GRID_SIZE)
+        folder.Parent = holder
 
-        if not hasHumanoidAncestor(part) then
-            -- Uma peça quase invisível que bloqueia o jogador.
-            if part.Transparency >= 0.95
-                and part.CanCollide
-                and not hasIntentionalName(part) then
+        local state = { folder = folder, bottomY = bottomY, cellSize = CELL_SIZE, cells = {} }
+        local baseColor = Color3.fromRGB(101, 119, 86)
 
-                addFinding(
-                    "hidden",
-                    "Colisão escondida",
-                    "Quase invisível, mas ainda bloqueia o caminho.",
-                    part
+        for z = 1, GRID_SIZE do
+            for x = 1, GRID_SIZE do
+                local shade = math.sin(x * 12.9898 + z * 78.233) * 0.025
+                local cell = Instance.new("Part")
+                cell.Name = string.format("Cell_%02d_%02d", x, z)
+                cell.Anchored = true
+                cell.CanCollide = true
+                cell.CanTouch = false
+                cell.TopSurface = Enum.SurfaceType.Smooth
+                cell.BottomSurface = Enum.SurfaceType.Smooth
+                cell.Material = Enum.Material.Grass
+                cell.Color = Color3.new(
+                    math.clamp(baseColor.R + shade, 0, 1),
+                    math.clamp(baseColor.G + shade, 0, 1),
+                    math.clamp(baseColor.B + shade, 0, 1)
                 )
+                cell.Size = Vector3.new(CELL_SIZE, 4, CELL_SIZE)
+                cell.Position = Vector3.new(
+                    originX + (x - 1) * CELL_SIZE,
+                    bottomY + 2,
+                    originZ + (z - 1) * CELL_SIZE
+                )
+                cell:SetAttribute("SceneprintCell", true)
+                cell:SetAttribute("GridX", x)
+                cell:SetAttribute("GridZ", z)
+                cell.Parent = folder
+                state.cells[key(x, z)] = cell
             end
+        end
 
-            -- Só um aviso por conjunto físico, não um aviso por peça conectada.
-            local assemblyRoot = part.AssemblyRootPart or part
+        cachedPatches[folder] = state
+        return folder
+    end)
 
-            if not seenAssemblies[assemblyRoot] then
-                seenAssemblies[assemblyRoot] = true
+    if success then
+        setStatus("Base criada. Escolha SUBIR, BAIXAR ou SUAVIZAR.")
+    end
+end
 
-                if assemblyRoot.Parent
-                    and not assemblyRoot.Anchored
-                    and assemblyRoot.CanCollide
-                    and not hasIntentionalName(assemblyRoot) then
+local function brushWeight(distance)
+    return math.clamp(1 - distance / (radius + 0.75), 0, 1)
+end
 
-                    addFinding(
-                        "loose",
-                        "Peça sem ancoragem",
-                        "Pode se mover com a física. Confira se isso é intencional.",
-                        assemblyRoot
-                    )
+local function sculpt(cell, mode)
+    if not cell or cell:GetAttribute("SceneprintCell") ~= true then
+        setStatus("Clique em um tile criado pelo Sceneprint.")
+        return
+    end
+
+    local state = patchFromCell(cell)
+    if not state then
+        setStatus("Não encontrei a base deste tile.")
+        return
+    end
+
+    local centerX = cell:GetAttribute("GridX")
+    local centerZ = cell:GetAttribute("GridZ")
+    if typeof(centerX) ~= "number" or typeof(centerZ) ~= "number" then
+        return
+    end
+
+    local changes = {}
+
+    for dz = -radius, radius do
+        for dx = -radius, radius do
+            local distance = math.sqrt(dx * dx + dz * dz)
+            if distance <= radius + 0.25 then
+                local part = getCell(state, centerX + dx, centerZ + dz)
+                if part then
+                    local oldHeight = part.Size.Y
+                    local weight = brushWeight(distance)
+                    local newHeight = oldHeight
+
+                    if mode == "raise" then
+                        newHeight = math.min(MAX_HEIGHT, oldHeight + RAISE_STEP * weight)
+                    elseif mode == "lower" then
+                        newHeight = math.max(MIN_HEIGHT, oldHeight - RAISE_STEP * weight)
+                    elseif mode == "smooth" then
+                        local sum, count = 0, 0
+                        for nz = -1, 1 do
+                            for nx = -1, 1 do
+                                local neighbor = getCell(state, centerX + dx + nx, centerZ + dz + nz)
+                                if neighbor then
+                                    sum += neighbor.Size.Y
+                                    count += 1
+                                end
+                            end
+                        end
+                        if count > 0 then
+                            local average = sum / count
+                            newHeight = oldHeight + (average - oldHeight) * SMOOTH_STRENGTH * weight
+                        end
+                    end
+
+                    newHeight = math.clamp(newHeight, MIN_HEIGHT, MAX_HEIGHT)
+                    if math.abs(newHeight - oldHeight) > 0.001 then
+                        table.insert(changes, { part = part, height = newHeight })
+                    end
                 end
             end
         end
-
-        if index % 180 == 0 then
-            statusLabel.Text = string.format(
-                "Lendo a seleção... %d de %d peças.",
-                index,
-                #parts
-            )
-            task.wait()
-        end
     end
 
-    return token == scanToken
+    if #changes == 0 then
+        setStatus("Nada para alterar neste ponto.")
+        return
+    end
+
+    local success = record("Sceneprint_Sculpt", "Sceneprint: " .. mode, function()
+        for _, change in ipairs(changes) do
+            local part = change.part
+            part.Size = Vector3.new(state.cellSize, change.height, state.cellSize)
+            part.Position = Vector3.new(
+                part.Position.X,
+                state.bottomY + change.height / 2,
+                part.Position.Z
+            )
+            part:SetAttribute("Height", change.height)
+        end
+    end)
+
+    if success then
+        setStatus(string.format("%d tiles ajustados.", #changes))
+    end
 end
 
-local function startScan()
-    if scanning then
-        scanToken += 1
-        scanning = false
-        scanButton.Text = "VERIFICAR SELEÇÃO"
-        statusLabel.Text = "Leitura cancelada."
+local function removePreview()
+    if brushPreview then
+        brushPreview.Parent = nil
+    end
+end
+
+local function updatePreview()
+    if not active or not activeMode or activeMode == "place" or not mouse then
+        removePreview()
         return
     end
 
-    local roots = getSelectedRoots()
-
-    if #roots == 0 then
-        statusLabel.Text = "Selecione algo dentro do Workspace no Explorer."
-        resultsHeading.Text = ""
-        showEmpty(
-            "Escolha uma parte do mapa.",
-            "O Sceneprint só analisa o que você selecionar."
-        )
+    local target = mouse.Target
+    if not target or target:GetAttribute("SceneprintCell") ~= true then
+        removePreview()
         return
     end
 
-    local parts = collectSelectedParts(roots)
-
-    if #parts == 0 then
-        statusLabel.Text = "Não encontrei peças nessa seleção."
-        resultsHeading.Text = ""
-        showEmpty(
-            "Essa seleção não tem peças 3D.",
-            "Escolha um Model, Folder ou BasePart dentro do Workspace."
-        )
+    local state = patchFromCell(target)
+    if not state then
+        removePreview()
         return
     end
 
-    scanToken += 1
-    local token = scanToken
-    scanning = true
-    table.clear(findings)
+    if not brushPreview then
+        brushPreview = Instance.new("Part")
+        brushPreview.Name = "SceneprintBrushPreview"
+        brushPreview.Shape = Enum.PartType.Cylinder
+        brushPreview.Anchored = true
+        brushPreview.CanCollide = false
+        brushPreview.CanTouch = false
+        brushPreview.CanQuery = false
+        brushPreview.CastShadow = false
+        brushPreview.Material = Enum.Material.SmoothPlastic
+        brushPreview.Color = T.purple
+        brushPreview.Transparency = 0.82
+    end
 
-    scanButton.Text = "CANCELAR"
-    resultsHeading.Text = ""
-    clearResults()
-    statusLabel.Text = string.format("Lendo %d peças...", #parts)
+    local diameter = (radius * 2 + 1) * state.cellSize
+    brushPreview.Size = Vector3.new(0.06, diameter, diameter)
+    brushPreview.CFrame = CFrame.new(
+        target.Position.X,
+        target.Position.Y + target.Size.Y / 2 + 0.045,
+        target.Position.Z
+    ) * CFrame.Angles(0, 0, math.rad(90))
+    brushPreview.Parent = Workspace
+end
 
-    task.spawn(function()
-        local ok, errorMessage = pcall(function()
-            return runChecks(parts, token)
-        end)
-
-        if token ~= scanToken then
-            return
-        end
-
-        scanning = false
-        scanButton.Text = "VERIFICAR NOVAMENTE"
-
-        if not ok then
-            statusLabel.Text = "Não consegui terminar a leitura."
-            resultsHeading.Text = ""
-            showEmpty("A leitura foi interrompida.", tostring(errorMessage))
-            return
-        end
-
-        statusLabel.Text = string.format("%d peças conferidas.", #parts)
-        renderFindings(#parts)
+local function stopTool()
+    active = false
+    activeMode = nil
+    removePreview()
+    refreshButtons()
+    pcall(function()
+        plugin:Deactivate()
     end)
 end
 
-scanButton.Activated:Connect(startScan)
+local function onClick()
+    if not active or not mouse then
+        return
+    end
 
-Selection.SelectionChanged:Connect(function()
-    updateSelectionLabel()
+    local target = mouse.Target
+    if activeMode == "place" then
+        if target then
+            createPatch(target, mouse.Hit.Position)
+            stopTool()
+        else
+            setStatus("Clique na face superior de uma peça.")
+        end
+    elseif activeMode then
+        sculpt(target, activeMode)
+        updatePreview()
+    end
+end
+
+local function activate(mode)
+    if not active then
+        plugin:Activate(true)
+        mouse = plugin:GetMouse()
+
+        if #connections == 0 then
+            table.insert(connections, mouse.Button1Down:Connect(onClick))
+            table.insert(connections, mouse.Move:Connect(updatePreview))
+        end
+    end
+
+    active = true
+    activeMode = mode
+    refreshButtons()
+
+    if mode == "place" then
+        setStatus("Clique na face de cima de uma peça para apoiar a base.")
+        removePreview()
+    else
+        setStatus("Clique nos tiles para esculpir. Use PARAR para sair.")
+        updatePreview()
+    end
+end
+
+baseButton.Activated:Connect(function()
+    activate("place")
+end)
+
+for mode, control in pairs(modes) do
+    control.Activated:Connect(function()
+        activate(mode)
+    end)
+end
+
+minusButton.Activated:Connect(function()
+    radius = math.max(1, radius - 1)
+    radiusLabel.Text = tostring(radius)
+    updatePreview()
+end)
+
+plusButton.Activated:Connect(function()
+    radius = math.min(6, radius + 1)
+    radiusLabel.Text = tostring(radius)
+    updatePreview()
+end)
+
+stopButton.Activated:Connect(function()
+    stopTool()
+    setStatus("Ferramenta parada.")
+end)
+
+plugin.Deactivation:Connect(function()
+    active = false
+    activeMode = nil
+    removePreview()
+    refreshButtons()
+end)
+
+plugin.Unloading:Connect(function()
+    for _, connection in ipairs(connections) do
+        connection:Disconnect()
+    end
+    if brushPreview then
+        brushPreview:Destroy()
+        brushPreview = nil
+    end
 end)
 
 toolbarButton.Click:Connect(function()
     widget.Enabled = not widget.Enabled
-    updateSelectionLabel()
 end)
 
-updateSelectionLabel()
-showEmpty(
-    "Escolha uma parte do mapa.",
-    "O Sceneprint só analisa o que você selecionar."
-)
+radiusLabel.Text = tostring(radius)
+refreshButtons()
