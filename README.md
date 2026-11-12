@@ -9,7 +9,7 @@
 
 ## Sobre
 
-O POSECODE converte dados no formato POSECODE v1 em clips editáveis no Roblox Studio. O importador valida a hierarquia do rig, converte keyframes, oferece prévia local e salva o resultado no fluxo de animação do Studio.
+O POSECODE converte dados nos formatos POSECODE V2 e V1 em clips editáveis no Roblox Studio. O V2 é o formato recomendado para novas animações; o V1 continua disponível para compatibilidade. O importador valida a hierarquia do rig, converte keyframes, oferece prévia local e salva o resultado no fluxo de animação do Studio.
 
 O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretamente ou dentro de uma variável `POSECODE`.
 
@@ -23,6 +23,13 @@ A janela foi dividida em três áreas de navegação:
 
 Ao importar um clip com sucesso, o painel abre automaticamente **Prévia**. Os ícones de navegação são desenhados com elementos GUI nativos do plugin; não dependem de IDs de imagem ou uploads externos. O SVG de referência está em [posecode-icons.svg](assets/icons/posecode-icons.svg).
 
+## Formatos
+
+- **POSECODE V2:** estrutura recomendada com `metadata`, `rig`, `timeline`, `tracks` e `events`.
+- **POSECODE V1:** formato anterior, mantido para projetos existentes.
+
+Veja o [guia POSECODE V2](docs/FORMATO_V2.md) e a [referência do V1](docs/FORMATO.md).
+
 ## Compatibilidade
 
 - **Motor6D:** gera `KeyframeSequence`.
@@ -35,7 +42,7 @@ Ao importar um clip com sucesso, o painel abre automaticamente **Prévia**. Os �
 
 1. Selecione o Model do rig no Studio.
 2. Abra **Rig** e use **Analisar estrutura do rig** para conferir a estrutura e a rota de saída.
-3. Abra **Importar**, gere os dados no [formato POSECODE v1](docs/FORMATO.md) e cole o JSON.
+3. Abra **Importar**, gere os dados no [formato POSECODE V2](docs/FORMATO_V2.md) e cole o JSON.
 4. Selecione **Importar clip**. Após a conversão, o POSECODE abre **Prévia** automaticamente.
 5. Confira a timeline e a animação; use os controles de reprodução e salve o clip no Studio.
 6. Publique pelo Editor de Animação.
@@ -61,7 +68,8 @@ Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs
 
 ## Documentação
 
-- [Formato POSECODE v1](docs/FORMATO.md)
+- [Formato POSECODE V2](docs/FORMATO_V2.md)
+- [Formato POSECODE V1 (legado)](docs/FORMATO.md)
 - [Limites técnicos e publicação](docs/LIMITES.md)
 - [Código do plugin](src/Posecode.plugin.lua)
 - [Histórico de versões](CHANGELOG.md)
