@@ -39,7 +39,8 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Navegação para o quadro anterior e o próximo.
 - Botão para carregar um exemplo compatível com o rig selecionado e botão para limpar o campo.
 - Rotações padronizadas em XYZ, em graus, e convertidas para a representação de cada clip.
-- Restauração de Transform simplificada para evitar escrita em CurrentAngle.
+- Restauração de Transform sem escrita em propriedades não suportadas.
+- Salvamento com rollback de pastas e referências se a operação falhar.
 - Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
 - A interface agora identifica se o clip gerado é de keyframes ou curvas.
 
