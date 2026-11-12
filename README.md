@@ -41,6 +41,7 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 - Prioridades Core, Idle, Movement e Action até Action4.
 - Suporte a rigs novos com AnimationConstraint e rigs anteriores com Motor6D.
 - Extração de JSON bruto, cercas de Markdown e string longa POSECODE.
+- Limite de entrada de 256 KB e validação de arrays sem lacunas.
 
 ## Limites atuais
 
