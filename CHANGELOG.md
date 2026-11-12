@@ -14,6 +14,8 @@
 - Mantém a importação de documentos V1 para compatibilidade com projetos existentes.
 - Combina keyframes de tracks diferentes numa timeline comum e valida alvos por tipo.
 - Normaliza keyframes e eventos ao FPS declarado e rejeita conflitos de easing no mesmo instante.
+- Atualiza **Carregar exemplo** para gerar POSECODE V2 com o tipo real do primeiro alvo encontrado no rig.
+- Disponibiliza um JSON Schema para validação externa dos documentos V2.
 - Preserva as rotas de saída KeyframeSequence e CurveAnimation do pipeline existente.
 
 ## 1.7 · Compatibilidade de rigs e organização
