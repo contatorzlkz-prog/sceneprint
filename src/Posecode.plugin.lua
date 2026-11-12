@@ -854,13 +854,13 @@ local function stopPreview()
         end)
     end
 
-    for motor, snapshot in pairs(previewJointSnapshot) do
-        if motor and motor.Parent then
+    for joint, snapshot in pairs(previewJointSnapshot) do
+        if joint and joint.Parent then
             pcall(function()
-                if motor:IsA("Motor6D") and snapshot.currentAngle ~= nil then
-                    motor.CurrentAngle = snapshot.currentAngle
+                if joint:IsA("Motor6D") and snapshot.currentAngle ~= nil then
+                    joint.CurrentAngle = snapshot.currentAngle
                 end
-                motor.Transform = snapshot.transform
+                joint.Transform = snapshot.transform
             end)
         end
     end
@@ -889,6 +889,8 @@ local function stopPreview()
     previewHost = nil
     temporaryAnimator = false
     temporaryHost = false
+    previewPaused = false
+    updateTimelineCursor(0)
 end
 
 local function beginPreview()
@@ -940,28 +942,32 @@ local function beginPreview()
         local track = animator:LoadAnimation(animation)
         track.Looped = importedData.looped
         track.Priority = importedData.priority
-        track:Play(0)
+        track:Play(0, 1, previewSpeed)
 
         previewAnimation = animation
         previewTrack = track
+        previewPaused = false
 
         previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
             if not previewAnimator or not previewTrack then
                 return
             end
 
-            if not previewTrack.IsPlaying then
-                stopPreview()
-                setStatus("Prévia concluída.", C.green)
-                return
-            end
-
             local stepOk, stepError = pcall(function()
                 previewAnimator:StepAnimations(deltaTime)
             end)
+
             if not stepOk then
                 stopPreview()
                 setStatus("Falha ao atualizar a prévia: " .. tostring(stepError), C.red)
+                return
+            end
+
+            if previewTrack and previewTrack.IsPlaying then
+                updateTimelineCursor(previewTrack.TimePosition)
+            elseif previewTrack then
+                stopPreview()
+                setStatus("Prévia concluída.", C.green)
             end
         end)
     end)
@@ -973,6 +979,110 @@ local function beginPreview()
     end
 
     setStatus("Prévia reproduzindo no rig selecionado.", C.green)
+end
+
+local function playPreview()
+    if previewTrack and previewTrack.IsPlaying then
+        previewPaused = false
+        previewTrack:AdjustSpeed(previewSpeed)
+        setStatus("Prévia reproduzindo.", C.green)
+    else
+        beginPreview()
+    end
+end
+
+local function pausePreview()
+    if not previewTrack or not previewTrack.IsPlaying then
+        setStatus("Nenhuma prévia está em reprodução.", C.muted)
+        return
+    end
+
+    previewTrack:AdjustSpeed(0)
+    previewPaused = true
+    setStatus("Prévia pausada.", C.muted)
+end
+
+local function seekToTime(seconds)
+    if not importedData then
+        return
+    end
+
+    if not previewTrack or not previewTrack.IsPlaying then
+        beginPreview()
+    end
+    if not previewTrack or not previewTrack.IsPlaying then
+        return
+    end
+
+    local target = math.clamp(seconds, 0, importedData.duration)
+    previewTrack:AdjustSpeed(0)
+    previewPaused = true
+    previewTrack.TimePosition = target
+
+    if previewAnimator then
+        pcall(function()
+            previewAnimator:StepAnimations(0)
+        end)
+    end
+
+    updateTimelineCursor(target)
+    setStatus("Prévia pausada no tempo selecionado.", C.muted)
+end
+
+local function seekFromScreenX(screenX)
+    if not importedData then
+        return
+    end
+
+    local width = math.max(1, timelineHitbox.AbsoluteSize.X)
+    local localX = screenX - timelineHitbox.AbsolutePosition.X
+    local alpha = math.clamp(localX / width, 0, 1)
+    seekToTime(importedData.duration * alpha)
+end
+
+local function stepKeyframe(direction)
+    if not importedData then
+        setStatus("Importe uma animação antes de navegar pelos quadros.", C.red)
+        return
+    end
+
+    local currentTime = previewTrack and previewTrack.IsPlaying and previewTrack.TimePosition or 0
+    local targetTime = direction < 0 and 0 or importedData.duration
+
+    if direction < 0 then
+        for _, frameData in ipairs(importedData.frames) do
+            if frameData.time < currentTime - 0.0001 then
+                targetTime = frameData.time
+            else
+                break
+            end
+        end
+    else
+        for _, frameData in ipairs(importedData.frames) do
+            if frameData.time > currentTime + 0.0001 then
+                targetTime = frameData.time
+                break
+            end
+        end
+    end
+
+    seekToTime(targetTime)
+end
+
+local function cyclePreviewSpeed()
+    speedOptionIndex += 1
+    if speedOptionIndex > #speedOptions then
+        speedOptionIndex = 1
+    end
+
+    previewSpeed = speedOptions[speedOptionIndex]
+    speedButton.Text = tostring(previewSpeed) .. "×"
+
+    if previewTrack and previewTrack.IsPlaying and not previewPaused then
+        previewTrack:AdjustSpeed(previewSpeed)
+    end
+
+    setStatus("Velocidade da prévia: " .. tostring(previewSpeed) .. "×.", C.muted)
 end
 
 local function saveSequence()
@@ -1148,11 +1258,49 @@ importButton.Activated:Connect(function()
     )
 end)
 
-previewButton.Activated:Connect(beginPreview)
+timelineHitbox.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        isScrubbing = true
+        seekFromScreenX(input.Position.X)
+    end
+end)
+
+UserInputService.InputChanged:Connect(function(input)
+    if not isScrubbing then
+        return
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+        seekFromScreenX(input.Position.X)
+    end
+end)
+
+UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        isScrubbing = false
+    end
+end)
+
+previewButton.Activated:Connect(playPreview)
+
+pauseButton.Activated:Connect(pausePreview)
 
 stopButton.Activated:Connect(function()
     stopPreview()
     setStatus("Prévia parada.")
+end)
+
+speedButton.Activated:Connect(cyclePreviewSpeed)
+
+previousKeyButton.Activated:Connect(function()
+    stepKeyframe(-1)
+end)
+
+nextKeyButton.Activated:Connect(function()
+    stepKeyframe(1)
 end)
 
 saveButton.Activated:Connect(saveSequence)
