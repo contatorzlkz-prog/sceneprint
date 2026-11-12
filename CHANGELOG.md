@@ -1,68 +1,31 @@
 # Changelog
 
-## 1.4 · Ícones vetoriais e robustez da prévia
+## 1.5 · Ajustes técnicos e experiência de uso
 
-- Cria um conjunto de ícones SVG enxuto como fonte visual em `assets/icons/posecode-icons.svg`.
-- Desenha os ícones dentro do plugin com elementos nativos da GUI do Roblox; não depende de upload de imagens nem de IDs externos.
-- Atualiza os títulos de seção e os botões de importar, exemplo, limpar, reproduzir, pausar, parar, navegar e salvar.
-- Centraliza os ícones dos controles compactos e evita sobreposição entre o título da timeline e o resumo do clip.
-- Corrige a exibição do tempo total quando a timeline é limpa.
-- Protege toda a criação de KeyframeSequence e CurveAnimation, destruindo o objeto parcialmente criado se ocorrer uma falha.
-- Registra Animation e AnimationTrack durante a criação para que a limpeza também funcione se LoadAnimation ou Play falhar.
-- Encerra e restaura a prévia quando o rig sai do Workspace ou quando o painel é ocultado.
-- Mantém POSECODE v1 compatível; a versão 1.4 é a versão do plugin.
+- Reorganiza a interface para um painel clássico, discreto e consistente.
+- Adiciona estados contextuais aos controles e evita ações antes de haver um clip importado.
+- Valida juntas incompletas, limita o tamanho do esqueleto e escolhe a raiz de forma determinística.
+- Atualiza a seleção do rig somente quando a seleção muda, sem reexaminar o modelo a cada caractere digitado.
+- Reduz as atualizações visuais da timeline durante a prévia sem reduzir a avaliação da animação.
+- Mantém o formato POSECODE v1.
 
-## 1.3 · Interface compacta e conversão eficiente
+## 1.4 · Ajustes de interface e prévia
 
-- Reorganiza a janela em cabeçalho fixo e conteúdo com rolagem, com tamanho mínimo menor.
-- Reduz a altura do editor de entrada e elimina painéis grandes desnecessários.
-- Substitui rótulos longos nos controles de prévia por símbolos de reprodução, pausa e parada.
-- Adiciona identidade visual mais clara, estado do plugin por indicador de cor e hover discreto nos botões.
-- Calcula cada transformação local uma vez por junta/quadro e reutiliza o cache na geração dos clips.
-- Calcula Euler XYZ uma vez por junta/quadro nas curvas, em vez de decompor a rotação novamente para cada eixo.
-- Valida os três componentes dos vetores sem criar tabelas temporárias.
-- Mostra o nome do rig selecionado antes da importação e usa a raiz declarada do rig, sem depender da raiz física da montagem.
-- Mantém o formato de dados POSECODE v1 compatível; a versão 1.3 é a versão do plugin, não do JSON.
+- Melhora a organização dos controles e a estabilidade da limpeza de clips e da prévia.
 
-## 1.2 · Clips, curva e controles de prévia
+## 1.3 · Interface compacta e eficiência
 
-- Gera KeyframeSequence para rigs somente com Motor6D.
-- Gera CurveAnimation para rigs com AnimationConstraint, com canais Position e Rotation.
-- Adiciona navegação por arraste na linha do tempo e leitura do tempo atual.
-- Adiciona pausa/retomada, parada e velocidades 0.5×, 1×, 1.5× e 2×.
-- Adiciona navegação para o quadro anterior e seguinte.
-- Adiciona botão para carregar um exemplo com base no rig selecionado e botão para limpar.
-- Padroniza rotações locais em ordem XYZ.
-- Calcula tangentes para segmentos cúbicos das CurveAnimations.
-- Atualiza a interface para distinguir clips de keyframes e de curvas.
-- Identifica a saída CurveAnimation para AnimationConstraint como experimental, pois a documentação pública descreve claramente os canais para Motor6D e Bone.
-- Restaura somente Transform, sem tentar escrever CurrentAngle.
-- Remove atribuições a propriedades de peso depreciadas em Pose.
-- Torna o salvamento transacional e remove pastas/referências criadas se a operação falhar.
-- Atualiza a documentação do formato e os limites de interpolação.
-- Remove a escrita em propriedades de peso depreciadas das Pose e usa o padrão do Studio.
+- Reorganiza a janela e reduz trabalho repetido durante a conversão das animações.
 
-## 1.1 · Correções e melhorias
+## 1.2 · Linha do tempo e reprodução
 
-- Prévia com avanço explícito do Animator no modo de edição e restauração da pose ao parar.
-- Salvamento seguindo ServerStorage.RBX_ANIMSAVES e o ObjectValue AnimSaves do rig.
-- Compatibilidade com referências AnimSaves antigas em formato Folder.
-- Quadros alinhados ao FPS declarado, com início e fim garantidos.
-- Transformações de juntas mantidas entre keyframes esparsos.
-- Easing Linear, Constant, CubicV2, Elastic e Bounce.
-- Prioridades Core, Idle, Movement e Action até Action4.
-- Identificação de rigs com AnimationConstraint e Motor6D.
-- Extração de JSON bruto, cercas de Markdown e string longa POSECODE.
-- Limite de entrada de 256 KB e validação de arrays sem lacunas.
+- Adiciona navegação temporal, pausa, velocidade e navegação entre quadros.
+- Inclui geração de KeyframeSequence para Motor6D e uma rota experimental de CurveAnimation.
 
-## 0.1.0 · Nova direção: Posecode
+## 1.1 · Correções do fluxo
 
-- Projeto reorientado de escultura de terreno para importação de animações geradas por IA.
-- Formato declarativo POSECODE v1 com tempos e transformações por junta.
-- Validação de rig, duração, keyframes e nomes das juntas.
-- Conversão para KeyframeSequence e hierarquia de Pose.
-- Prévia local usando AnimationClipProvider.
-- Salvamento local em ServerStorage com referência AnimSaves.
-- Documentação dos limites de conversão e do fluxo de publicação do Roblox.
+- Melhora a prévia, a restauração de Transform, a validação e o salvamento local.
 
-> Protótipo em desenvolvimento.
+## 0.1.0 · Primeira versão do POSECODE
+
+- Introduz o formato estruturado POSECODE v1 e a conversão inicial para clips do Roblox.
