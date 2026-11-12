@@ -1,37 +1,49 @@
 <div align="center">
-  <img src="assets/sceneprint-mark.svg" width="54" alt="Marca do Sceneprint" />
-  <h1>sceneprint</h1>
-  <p>Escultura de terreno com Parts para Roblox Studio.</p>
+  <img src="assets/posecode-mark.svg" width="48" alt="Posecode" />
+  <h1>POSECODE</h1>
+  <p>Do movimento descrito por IA para keyframes editáveis no Roblox Studio.</p>
   <p><sub>ruancr · EM DESENVOLVIMENTO</sub></p>
-  <img src="assets/sceneprint-progress.svg" width="220" alt="" />
 </div>
 
-![Prévia do Sceneprint](assets/sceneprint-preview.svg)
+![Interface do Posecode](assets/posecode-preview.svg)
 
-## A ideia
+## A proposta
 
-Um terreno que você consegue esculpir como em um editor 3D, mas construído com **Parts** comuns do Roblox.
+Você pede uma animação para uma IA, recebe um script no formato Posecode e cola no plugin. O Posecode lê os dados do movimento, monta uma KeyframeSequence e permite reproduzir no rig selecionado.
 
-A proposta é criar uma base de blocos e trabalhar a altura diretamente na viewport. Sem usar o objeto Terrain do Roblox e sem precisar montar cada peça manualmente.
+A ideia não é tentar interpretar qualquer código Luau. Scripts comuns podem ter loops, condições, cálculos e chamadas de TweenService; não existe uma forma confiável de reconstruir todos os estados pretendidos apenas olhando o texto. Por isso, a IA gera um bloco de dados com tempos e transformações definidos.
 
-## O que está em estudo
+## Fluxo
 
-- **Criar base:** gerar uma área inicial de 16 × 16 tiles sobre uma peça existente.
-- **Subir e baixar:** alterar a altura dos tiles com queda gradual ao redor do pincel.
-- **Suavizar:** aproximar a altura dos tiles vizinhos para reduzir degraus.
-- **Raio do pincel:** controlar quantos tiles recebem cada alteração.
-- **Desfazer e refazer:** registrar as alterações na própria história do Studio.
+1. Selecione um rig R6 ou R15 no Studio.
+2. Peça à IA uma animação no formato Posecode.
+3. Cole o script no campo de importação.
+4. Gere os keyframes, confira a linha do tempo e reproduza a prévia.
+5. Salve a sequência local e finalize/publica pelo Editor de Animação do Studio.
+
+## O que a primeira versão faz
+
+- Importa o bloco estruturado dentro de um script Luau.
+- Valida versão, rig, duração, quantidade de keyframes e nomes das juntas.
+- Converte posição e rotação de juntas em objetos Pose.
+- Gera uma KeyframeSequence com loop e prioridade.
+- Reproduz uma prévia local usando o ID temporário do AnimationClipProvider.
+- Salva a sequência local em ServerStorage, com referência AnimSaves no rig.
+
+## Limites atuais
+
+- Não converte automaticamente scripts Luau arbitrários.
+- Não executa o texto colado.
+- A versão inicial usa rigs com juntas Motor6D e formatos R6/R15.
+- Movimento da raiz, eventos, markers, curvas avançadas e edição individual de tracks ainda não fazem parte do protótipo.
+- A publicação na nuvem continua pelo fluxo oficial do Editor de Animação do Roblox. O ID temporário da prévia só funciona localmente no Studio.
+
+## Documentação
+
+- [Formato aceito e exemplo](docs/FORMATO.md)
+- [Limites e publicação](docs/LIMITES.md)
+- [Código do plugin](src/Posecode.plugin.lua)
 
 ## Estado
 
-**Protótipo em desenvolvimento**
-
-A prioridade é acertar a sensação do pincel, a organização dos blocos e o custo de gerar terreno com Parts antes de adicionar mais ferramentas.
-
-Ainda não é uma versão pronta para produção. O comportamento precisa ser testado no Roblox Studio, principalmente em mapas maiores.
-
-## Arquivos
-
-- [Código do plugin](src/Sceneprint.plugin.lua)
-- [Estudo das ferramentas](docs/ESTUDO.md)
-- [Decisões de implementação](docs/DECISOES.md)
+**Protótipo em desenvolvimento.** O código está versionado, mas ainda precisa ser instalado e validado no Roblox Studio.
