@@ -790,21 +790,17 @@ local function saveSequence()
         return
     end
 
-    local recordingId = nil
-    pcall(function()
-        recordingId = ChangeHistoryService:TryBeginRecording(
+    local recordingCallOk, recordingId = pcall(function()
+        return ChangeHistoryService:TryBeginRecording(
             "Posecode_SaveAnimation",
             "Posecode: salvar keyframes"
         )
     end)
 
-    local originalParent = importedSequence.Parent
-    local originalName = importedSequence.Name
-    local createdRoot = nil
-    local createdFolder = nil
-    local createdReference = nil
-    local existingReference = nil
-    local originalReferenceValue = nil
+    if not recordingCallOk or not recordingId then
+        setStatus("O Studio não iniciou o registro de Undo. Feche um playtest ou finalize outra ação de plugin e tente novamente.", C.red)
+        return
+    end
 
     local ok, result = pcall(function()
         local animSaves = importedRig:FindFirstChild("AnimSaves")
@@ -815,8 +811,6 @@ local function saveSequence()
                 -- Compatibilidade com rigs que ainda usam o formato antigo.
                 saveFolder = animSaves
             elseif animSaves:IsA("ObjectValue") then
-                existingReference = animSaves
-                originalReferenceValue = animSaves.Value
                 if animSaves.Value then
                     if not animSaves.Value:IsA("Folder") then
                         error("A referência AnimSaves não aponta para uma Folder.")
@@ -838,7 +832,6 @@ local function saveSequence()
                 rootFolder = Instance.new("Folder")
                 rootFolder.Name = "RBX_ANIMSAVES"
                 rootFolder.Parent = ServerStorage
-                createdRoot = rootFolder
             end
 
             local folderName = importedRig.Name:gsub("[^%w_%-]", "_")
@@ -856,13 +849,11 @@ local function saveSequence()
             saveFolder = Instance.new("Folder")
             saveFolder.Name = finalFolderName
             saveFolder.Parent = rootFolder
-            createdFolder = saveFolder
 
             if not animSaves then
                 animSaves = Instance.new("ObjectValue")
                 animSaves.Name = "AnimSaves"
                 animSaves.Parent = importedRig
-                createdReference = animSaves
             end
             animSaves.Value = saveFolder
         end
@@ -881,36 +872,32 @@ local function saveSequence()
         return finalName
     end)
 
-    if recordingId then
+    if not ok then
         pcall(function()
             ChangeHistoryService:FinishRecording(
                 recordingId,
-                ok and Enum.FinishRecordingOperation.Commit or Enum.FinishRecordingOperation.Cancel
+                Enum.FinishRecordingOperation.Cancel
             )
         end)
-    else
-        pcall(function()
-            ChangeHistoryService:SetWaypoint("Posecode: salvar keyframes")
-        end)
+        setStatus("Falha ao salvar: " .. tostring(result), C.red)
+        return
     end
 
-    if not ok then
-        importedSequence.Parent = originalParent
-        importedSequence.Name = originalName
+    local finishOk, finishError = pcall(function()
+        ChangeHistoryService:FinishRecording(
+            recordingId,
+            Enum.FinishRecordingOperation.Commit
+        )
+    end)
 
-        if createdReference then
-            createdReference:Destroy()
-        elseif existingReference then
-            existingReference.Value = originalReferenceValue
-        end
-        if createdFolder and #createdFolder:GetChildren() == 0 then
-            createdFolder:Destroy()
-        end
-        if createdRoot and #createdRoot:GetChildren() == 0 then
-            createdRoot:Destroy()
-        end
-
-        setStatus("Falha ao salvar: " .. tostring(result), C.red)
+    if not finishOk then
+        pcall(function()
+            ChangeHistoryService:FinishRecording(
+                recordingId,
+                Enum.FinishRecordingOperation.Cancel
+            )
+        end)
+        setStatus("O Studio não conseguiu concluir o registro de Undo: " .. tostring(finishError), C.red)
         return
     end
 
