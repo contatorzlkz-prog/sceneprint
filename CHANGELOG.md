@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.1 · Correções e melhorias
+## 1.1 · Correções e melhorias
 
 - Prévia agora avança a avaliação do Animator no Studio.
 - Restaura Transform e CurrentAngle das juntas ao encerrar a prévia.
