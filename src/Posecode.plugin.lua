@@ -19,6 +19,7 @@ local RunService = game:GetService("RunService")
 local VERSION = "1.1"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
+local MAX_SOURCE_LENGTH = 262144
 local MAX_TRANSFORM_OFFSET = 5
 local MAX_ROTATION = 720
 
@@ -394,12 +395,37 @@ local function isFiniteNumber(value)
     return typeof(value) == "number" and value == value and value > -math.huge and value < math.huge
 end
 
+local function arrayLength(value, fieldName, maximum)
+    if typeof(value) ~= "table" then
+        error(fieldName .. " precisa ser um array.")
+    end
+
+    local count = 0
+    local highestIndex = 0
+    for key in pairs(value) do
+        if typeof(key) ~= "number" or key < 1 or key % 1 ~= 0 then
+            error(fieldName .. " deve conter apenas índices inteiros começando em 1.")
+        end
+        count += 1
+        highestIndex = math.max(highestIndex, key)
+        if highestIndex > maximum then
+            error(fieldName .. " ultrapassa o limite de " .. maximum .. " itens.")
+        end
+    end
+
+    if highestIndex ~= count then
+        error(fieldName .. " contém posições vazias ou índices fora de ordem.")
+    end
+
+    return count
+end
+
 local function readVector3(value, fieldName, limit)
     if value == nil then
         return 0, 0, 0
     end
-    if typeof(value) ~= "table" or #value ~= 3 then
-        error(fieldName .. " deve conter três números [x, y, z].")
+    if arrayLength(value, fieldName, 3) ~= 3 then
+        error(fieldName .. " deve conter exatamente três números [x, y, z].")
     end
 
     local x, y, z = value[1], value[2], value[3]
@@ -475,8 +501,9 @@ local function validateData(data, rig, skeleton)
     if not isFiniteNumber(data.duration) or data.duration <= 0 or data.duration > MAX_DURATION then
         error('"duration" precisa estar entre 0 e 15 segundos.')
     end
-    if typeof(data.frames) ~= "table" or #data.frames < 1 or #data.frames > MAX_FRAMES then
-        error("A animação precisa ter entre 1 e " .. MAX_FRAMES .. " keyframes antes da normalização.")
+    local frameCount = arrayLength(data.frames, "frames", MAX_FRAMES)
+    if frameCount < 1 then
+        error("A animação precisa ter pelo menos um keyframe.")
     end
 
     local durationFrames = math.floor(data.duration * data.fps + 0.5)
@@ -915,6 +942,11 @@ importButton.Activated:Connect(function()
     local rig = selectedRig()
     if not rig then
         setStatus("Selecione um rig R6 ou R15 com Motor6D ou AnimationConstraint.", C.red)
+        return
+    end
+
+    if #sourceBox.Text > MAX_SOURCE_LENGTH then
+        setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
         return
     end
 
