@@ -2,7 +2,7 @@
 
 Este formato é usado pelo plugin Posecode 1.1. O campo version dentro do JSON continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
 
-O plugin não executa o código colado. Ele extrai apenas o JSON de uma variável POSECODE ou aceita o JSON diretamente.
+O plugin não executa o código colado. Ele extrai apenas o JSON de uma variável POSECODE ou aceita o JSON diretamente. A caixa de importação aceita no máximo 256 KB.
 
 ## Estrutura do script
 
@@ -118,4 +118,4 @@ Troque R15 por R6 quando estiver usando um rig R6.
 
 ## Regras de validação
 
-O importador rejeita versões diferentes de v1, rig incompatível, juntas desconhecidas, tempos inválidos ou repetidos após o ajuste, transformações fora dos limites, estilos de easing desconhecidos e animações acima de 15 segundos ou 120 quadros após normalização.
+O importador rejeita versões diferentes de v1, rig incompatível, arrays com lacunas ou índices inválidos, juntas desconhecidas, tempos inválidos ou repetidos após o ajuste, transformações fora dos limites, estilos de easing desconhecidos e animações acima de 15 segundos ou 120 quadros após normalização.
