@@ -257,20 +257,24 @@ local function drawTimeline(data)
     timelineInfo.Text = string.format("%d CHAVES  /  %.2FS", #data.frames, data.duration)
 end
 
+local function isSupportedJoint(instance)
+    return instance:IsA("Motor6D") or instance:IsA("AnimationConstraint")
+end
+
 local function selectedRig()
     local items = Selection:Get()
     for _, item in ipairs(items) do
         local current = item
         while current and current ~= Workspace do
             if current:IsA("Model") then
-                local hasMotor = false
+                local hasJoint = false
                 for _, descendant in ipairs(current:GetDescendants()) do
-                    if descendant:IsA("Motor6D") then
-                        hasMotor = true
+                    if isSupportedJoint(descendant) then
+                        hasJoint = true
                         break
                     end
                 end
-                if hasMotor then
+                if hasJoint then
                     return current
                 end
             end
@@ -281,32 +285,54 @@ local function selectedRig()
 end
 
 local function getSkeleton(rig)
-    local motorsByPart1 = {}
+    local jointsByPart1 = {}
     local childrenByPart0 = {}
     local incoming = {}
 
     for _, descendant in ipairs(rig:GetDescendants()) do
-        if descendant:IsA("Motor6D") and descendant.Part0 and descendant.Part1 then
-            if motorsByPart1[descendant.Part1.Name] then
-                error("Há duas juntas controlando uma peça chamada " .. descendant.Part1.Name .. ".")
+        local part0 = nil
+        local part1 = nil
+
+        if descendant:IsA("Motor6D") then
+            part0 = descendant.Part0
+            part1 = descendant.Part1
+        elseif descendant:IsA("AnimationConstraint") then
+            local attachment0 = descendant.Attachment0
+            local attachment1 = descendant.Attachment1
+            part0 = attachment0 and attachment0.Parent
+            part1 = attachment1 and attachment1.Parent
+
+            if not part0 or not part1
+                or not part0:IsA("BasePart")
+                or not part1:IsA("BasePart") then
+                error("Uma AnimationConstraint não possui Attachments ligados a BaseParts.")
+            end
+        end
+
+        if isSupportedJoint(descendant) and part0 and part1 then
+            if not part0:IsA("BasePart") or not part1:IsA("BasePart") then
+                error("Uma junta do rig não conecta duas BaseParts.")
+            end
+            if jointsByPart1[part1.Name] then
+                error("Há duas juntas controlando uma peça chamada " .. part1.Name .. ".")
             end
 
-            motorsByPart1[descendant.Part1.Name] = descendant
-            incoming[descendant.Part1] = true
-            childrenByPart0[descendant.Part0] = childrenByPart0[descendant.Part0] or {}
-            table.insert(childrenByPart0[descendant.Part0], descendant)
+            jointsByPart1[part1.Name] = descendant
+            incoming[part1] = true
+            childrenByPart0[part0] = childrenByPart0[part0] or {}
+            table.insert(childrenByPart0[part0], part1)
         end
     end
 
-    local motorCount = 0
+    local jointCount = 0
     for _, children in pairs(childrenByPart0) do
         table.sort(children, function(a, b)
-            return a.Part1.Name < b.Part1.Name
+            return a.Name < b.Name
         end)
-        motorCount += #children
+        jointCount += #children
     end
-    if motorCount == 0 then
-        error("O rig não possui juntas Motor6D.")
+    if jointCount == 0 then
+        error("O rig não possui Motor6D ou AnimationConstraint válidas.")
     end
 
     local rootCandidate = rig:FindFirstChild("HumanoidRootPart", true)
@@ -329,38 +355,38 @@ local function getSkeleton(rig)
 
     local rootPart = rootCandidate.AssemblyRootPart or rootCandidate
     local visitedParts = {}
-    local visitedMotors = {}
+    local visitedChildren = {}
 
     local function walk(part)
         if visitedParts[part] then
-            error("A hierarquia de Motor6D contém um ciclo.")
+            error("A hierarquia de juntas contém um ciclo.")
         end
         visitedParts[part] = true
 
-        for _, motor in ipairs(childrenByPart0[part] or {}) do
-            if visitedMotors[motor] then
-                error("Uma junta Motor6D foi encontrada mais de uma vez.")
+        for _, childPart in ipairs(childrenByPart0[part] or {}) do
+            if visitedChildren[childPart] then
+                error("Uma peça conectada foi encontrada em mais de uma junta.")
             end
-            visitedMotors[motor] = true
-            walk(motor.Part1)
+            visitedChildren[childPart] = true
+            walk(childPart)
         end
     end
 
     walk(rootPart)
 
     local reachable = 0
-    for _ in pairs(visitedMotors) do
+    for _ in pairs(visitedChildren) do
         reachable += 1
     end
-    if reachable ~= motorCount then
-        error("A hierarquia de Motor6D não parte da raiz do rig. Confira Part0, Part1 e AssemblyRootPart.")
+    if reachable ~= jointCount then
+        error("A hierarquia de juntas não parte da raiz do rig. Confira Attachments e AssemblyRootPart.")
     end
 
     return {
         rootPart = rootPart,
-        motorsByPart1 = motorsByPart1,
+        jointsByPart1 = jointsByPart1,
         childrenByPart0 = childrenByPart0,
-        motorCount = motorCount,
+        jointCount = jointCount,
     }
 end
 
@@ -509,7 +535,7 @@ local function validateData(data, rig, skeleton)
         end
 
         for jointName, jointData in pairs(frameData.joints) do
-            if typeof(jointName) ~= "string" or not skeleton.motorsByPart1[jointName] then
+            if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
                 error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada por Motor6D.')
             end
             transformFromData(jointData)
@@ -592,8 +618,7 @@ local function buildSequence(data, skeleton)
             rootPose.Weight = 0
 
             local function addChildren(part, parentPose)
-                for _, motor in ipairs(skeleton.childrenByPart0[part] or {}) do
-                    local part1 = motor.Part1
+                for _, part1 in ipairs(skeleton.childrenByPart0[part] or {}) do
                     local pose = Instance.new("Pose")
                     pose.Name = part1.Name
                     pose.CFrame = currentTransforms[part1.Name] or CFrame.identity
@@ -641,7 +666,9 @@ local function stopPreview()
     for motor, snapshot in pairs(previewJointSnapshot) do
         if motor and motor.Parent then
             pcall(function()
-                motor.CurrentAngle = snapshot.currentAngle
+                if motor:IsA("Motor6D") and snapshot.currentAngle ~= nil then
+                    motor.CurrentAngle = snapshot.currentAngle
+                end
                 motor.Transform = snapshot.transform
             end)
         end
@@ -705,10 +732,10 @@ local function beginPreview()
     previewAnimator = animator
 
     for _, descendant in ipairs(importedRig:GetDescendants()) do
-        if descendant:IsA("Motor6D") then
+        if isSupportedJoint(descendant) then
             previewJointSnapshot[descendant] = {
                 transform = descendant.Transform,
-                currentAngle = descendant.CurrentAngle,
+                currentAngle = descendant:IsA("Motor6D") and descendant.CurrentAngle or nil,
             }
         end
     end
@@ -895,7 +922,7 @@ importButton.Activated:Connect(function()
 
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione um Model com rig R6 ou R15 no Explorer ou na viewport.", C.red)
+        setStatus("Selecione um rig R6 ou R15 com Motor6D ou AnimationConstraint.", C.red)
         return
     end
 
