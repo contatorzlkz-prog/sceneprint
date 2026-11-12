@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.4 · Ícones vetoriais e robustez da prévia
+
+- Cria um conjunto de ícones SVG enxuto como fonte visual em `assets/icons/posecode-icons.svg`.
+- Desenha os ícones dentro do plugin com elementos nativos da GUI do Roblox; não depende de upload de imagens nem de IDs externos.
+- Atualiza os títulos de seção e os botões de importar, exemplo, limpar, reproduzir, pausar, parar, navegar e salvar.
+- Centraliza os ícones dos controles compactos e evita sobreposição entre o título da timeline e o resumo do clip.
+- Corrige a exibição do tempo total quando a timeline é limpa.
+- Protege toda a criação de KeyframeSequence e CurveAnimation, destruindo o objeto parcialmente criado se ocorrer uma falha.
+- Registra Animation e AnimationTrack durante a criação para que a limpeza também funcione se LoadAnimation ou Play falhar.
+- Encerra e restaura a prévia quando o rig sai do Workspace ou quando o painel é ocultado.
+- Mantém POSECODE v1 compatível; a versão 1.4 é a versão do plugin.
+
 ## 1.3 · Interface compacta e conversão eficiente
 
 - Reorganiza a janela em cabeçalho fixo e conteúdo com rolagem, com tamanho mínimo menor.
