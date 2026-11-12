@@ -14,7 +14,7 @@ Gera uma KeyframeSequence. Cada Keyframe contém uma árvore hierárquica de Pos
 
 ### Rigs com AnimationConstraint
 
-A v1.3 gera uma CurveAnimation como saída experimental. A estrutura usa pastas hierárquicas com Position (Vector3Curve) e Rotation (EulerRotationCurve) para as peças conectadas pelas constraints, usando Attachment0.Parent e Attachment1.Parent.
+A v1.3 gera uma CurveAnimation como saída experimental. A estrutura usa pastas hierárquicas com Position (Vector3Curve) e Rotation (EulerRotationCurve) para as peças conectadas pelas constraints, usando Attachment0.Parent e Attachment1.Parent. A hierarquia começa no HumanoidRootPart ou PrimaryPart do rig, sem substituir essa raiz pela raiz física da montagem.
 
 **Compatibilidade não garantida:** a referência oficial de CurveAnimation descreve os canais Position/Rotation explicitamente para Motor6D e Bone. AnimationConstraint é a substituição de Motor6D nos rigs de avatar atualizados e possui sua própria propriedade Transform controlada pelo sistema de animação, mas a documentação pública não confirma de forma explícita que a hierarquia CurveAnimation gerada pelo Posecode será aplicada a todas as configurações de AnimationConstraint. Por isso, o plugin marca essa saída como experimental e o resultado precisa ser conferido no Studio. Consulte [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation), [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint) e [a migração de Avatar Joint Upgrade](https://devforum.roblox.com/t/avatar-joint-upgrade-aju-phase-2-rollout-updated-migration-recommendations/4656414).
 
