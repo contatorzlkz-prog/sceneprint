@@ -1,6 +1,6 @@
 # Formato POSECODE V2
 
-O **POSECODE V2** é o formato recomendado para novas animações. Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
+O **POSECODE V2** é o formato recomendado para novas animações e o formato principal do POSECODE 2.0. Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
 
 O plugin POSECODE v1.8 importa V2 e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
 
@@ -197,6 +197,20 @@ São aceitos até 128 eventos no total e 8 eventos por quadro normalizado. Os ev
 Os tempos são ajustados para o quadro mais próximo de acordo com `fps`. A duração também precisa representar ao menos um quadro depois dessa normalização. Keyframes de tracks diferentes que resultem no mesmo quadro são combinados. Dois keyframes da mesma track que resultem no mesmo quadro são recusados. Eventos também são associados ao quadro normalizado correspondente.
 
 Se o primeiro instante estiver depois de zero, o plugin insere um quadro neutro no início. Se o último keyframe estiver antes do fim, a última pose é mantida até `duration`. Quadros automáticos também contam no limite de 120 instantes normalizados.
+
+## Otimização de keyframes
+
+Na importação V2, o plugin procura sequências de três ou mais keyframes consecutivos da mesma track com transformação local idêntica. Quando encontra uma sequência assim, mantém o primeiro e o último keyframe e remove somente os intermediários redundantes.
+
+A comparação considera posição e rotação depois de normalizar os valores locais. O otimizador não simplifica curvas aproximadas nem remove keyframes que tenham outra transformação. Eventos são tratados separadamente e não são apagados pela otimização de tracks. O status da importação informa quantos keyframes foram removidos.
+
+Essa abordagem segue o princípio de otimização de keyframes repetidos descrito pelo Animation Editor do Roblox, mas é aplicada no POSECODE antes da criação do clip.
+
+## Migração de V1 para V2
+
+Na aba **Importar**, selecione o rig correspondente, cole um documento V1 válido e clique em **Converter V1 para V2**. O plugin valida o documento V1 com as regras atuais, converte cada alvo em uma track tipada e transforma markers compatíveis em events. O JSON convertido substitui o texto na caixa; revise-o e use **Importar clip** quando estiver pronto.
+
+A migração não cria nem salva um clip automaticamente. Ela gera somente o novo documento JSON. Se o documento V1 contiver markers em uma rota CurveAnimation, a validação recusa a migração em vez de descartar os eventos.
 
 ## Limites de segurança
 
