@@ -504,7 +504,7 @@ local function transformFromData(jointData)
     local px, py, pz = readVector3(jointData.position, "position", MAX_TRANSFORM_OFFSET)
     local rx, ry, rz = readVector3(jointData.rotation, "rotation", MAX_ROTATION)
 
-    return CFrame.new(px, py, pz) * CFrame.fromOrientation(
+    return CFrame.new(px, py, pz) * CFrame.fromEulerAnglesXYZ(
         math.rad(rx),
         math.rad(ry),
         math.rad(rz)
@@ -784,7 +784,7 @@ local function buildCurveAnimation(data, skeleton)
                 if axisKind == "position" then
                     value = transform.Position[axisGetter]
                 else
-                    local rx, ry, rz = transform:ToOrientation()
+                    local rx, ry, rz = transform:ToEulerAnglesXYZ()
                     local rotationValues = { X = rx, Y = ry, Z = rz }
                     value = rotationValues[axisGetter]
                 end
@@ -1011,10 +1011,17 @@ local function pausePreview()
         return
     end
 
-    previewTrack:AdjustSpeed(0)
-    previewPaused = true
-    pauseButton.Text = "RETOMAR"
-    setStatus("Prévia pausada.", C.muted)
+    if previewPaused then
+        previewTrack:AdjustSpeed(previewSpeed)
+        previewPaused = false
+        pauseButton.Text = "PAUSAR"
+        setStatus("Prévia reproduzindo.", C.green)
+    else
+        previewTrack:AdjustSpeed(0)
+        previewPaused = true
+        pauseButton.Text = "RETOMAR"
+        setStatus("Prévia pausada.", C.muted)
+    end
 end
 
 local function seekToTime(seconds)
