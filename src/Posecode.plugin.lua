@@ -129,7 +129,7 @@ make("Frame", headerMark, {
 })
 
 label(root, "POSECODE", UDim2.fromOffset(59, 14), UDim2.new(1, -150, 0, 22), 16, C.text, Enum.Font.GothamBold)
-label(root, "AI  /  KEYFRAMES", UDim2.fromOffset(60, 34), UDim2.new(1, -150, 0, 13), 8, C.muted, Enum.Font.GothamMedium)
+label(root, "AI  /  ANIMATION CLIPS", UDim2.fromOffset(60, 34), UDim2.new(1, -150, 0, 13), 8, C.muted, Enum.Font.GothamMedium)
 local versionLabel = label(root, "v" .. VERSION, UDim2.new(1, -64, 0, 23), UDim2.fromOffset(46, 14), 9, C.muted)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -197,6 +197,7 @@ make("Frame", timelineTrack, {
 })
 local timelineHitbox = make("TextButton", timelineTrack, {
     Name = "TimelineInput",
+    Active = true,
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
@@ -777,24 +778,44 @@ local function buildCurveAnimation(data, skeleton)
 
         local function addCurveKeys(floatCurve, axisGetter, partName, axisKind)
             local keys = {}
-            for index, frameData in ipairs(data.frames) do
-                local transform = snapshots[index][partName]
-                local value
 
+            local function getValue(index)
+                local transform = snapshots[index][partName]
                 if axisKind == "position" then
-                    value = transform.Position[axisGetter]
-                else
-                    local rx, ry, rz = transform:ToEulerAnglesXYZ()
-                    local rotationValues = { X = rx, Y = ry, Z = rz }
-                    value = rotationValues[axisGetter]
+                    return transform.Position[axisGetter]
                 end
 
-                table.insert(keys, FloatCurveKey.new(
-                    frameData.time,
-                    value,
-                    curveInterpolation(frameData)
-                ))
+                local rx, ry, rz = transform:ToEulerAnglesXYZ()
+                local rotationValues = { X = rx, Y = ry, Z = rz }
+                return rotationValues[axisGetter]
             end
+
+            for index, frameData in ipairs(data.frames) do
+                local value = getValue(index)
+                local interpolation = curveInterpolation(frameData)
+                local key = FloatCurveKey.new(frameData.time, value, interpolation)
+
+                if interpolation == Enum.KeyInterpolationMode.Cubic and index < #data.frames then
+                    local nextFrame = data.frames[index + 1]
+                    local nextValue = getValue(index + 1)
+                    local deltaTime = nextFrame.time - frameData.time
+                    if deltaTime > 0 then
+                        key.RightTangent = (nextValue - value) / deltaTime
+                    end
+                end
+
+                if index > 1 and curveInterpolation(data.frames[index - 1]) == Enum.KeyInterpolationMode.Cubic then
+                    local previousFrame = data.frames[index - 1]
+                    local previousValue = getValue(index - 1)
+                    local deltaTime = frameData.time - previousFrame.time
+                    if deltaTime > 0 then
+                        key.LeftTangent = (value - previousValue) / deltaTime
+                    end
+                end
+
+                table.insert(keys, key)
+            end
+
             floatCurve:SetKeys(keys)
         end
 
