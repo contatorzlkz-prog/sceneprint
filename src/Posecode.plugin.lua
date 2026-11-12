@@ -1646,7 +1646,7 @@ local function convertV1ToV2(legacyData, validatedData, skeleton)
         migrated.events = events
     end
 
-    return migrated
+    return migrated, #events
 end
 
 local function buildKeyframeSequence(data, skeleton)
@@ -2542,7 +2542,7 @@ migrateButton.Activated:Connect(function()
 
         local skeleton = getSkeleton(rig)
         local validated = validateData(decoded, rig, skeleton)
-        local migrated = convertV1ToV2(decoded, validated, skeleton)
+        local migrated, eventCount = convertV1ToV2(decoded, validated, skeleton)
         local encoded = HttpService:JSONEncode(migrated)
 
         if #encoded > MAX_SOURCE_LENGTH then
@@ -2552,7 +2552,7 @@ migrateButton.Activated:Connect(function()
         return {
             json = encoded,
             trackCount = #migrated.tracks,
-            eventCount = #migrated.events,
+            eventCount = eventCount,
         }
     end)
 
