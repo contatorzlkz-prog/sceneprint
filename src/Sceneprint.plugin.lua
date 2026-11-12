@@ -250,10 +250,8 @@ local function updateSelectionLabel()
         return
     end
 
-    selectionLabel.Text = string.format(
-        "%d ITEM(ns) NA SELEÇÃO",
-        #roots
-    )
+    local labelText = #roots == 1 and "ITEM SELECIONADO" or "ITENS SELECIONADOS"
+    selectionLabel.Text = string.format("%d %s", #roots, labelText)
 end
 
 local function hasHumanoidAncestor(instance)
