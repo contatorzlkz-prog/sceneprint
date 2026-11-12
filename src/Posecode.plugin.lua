@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox KeyframeSequences.
     Handle: ruancr
-    Version: 0.1.1
+    Version: 1.1
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -16,7 +16,7 @@ local AnimationClipProvider = game:GetService("AnimationClipProvider")
 local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 
-local VERSION = "0.1.1"
+local VERSION = "1.1"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_TRANSFORM_OFFSET = 5
