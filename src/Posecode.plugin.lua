@@ -420,6 +420,8 @@ end
 
 local function getSkeleton(rig)
     local jointsByPart1 = {}
+    local nodes = {}
+    local nodeNameCounts = {}
     local childrenByPart0 = {}
     local incomingParts = {}
     local curveChildrenByParent = {}
@@ -439,14 +441,8 @@ local function getSkeleton(rig)
     end
 
     local function registerJointName(name, target)
-        if jointsByPart1[name] then
-            error(
-                'Há mais de uma junta ou Bone com o nome "'
-                    .. name
-                    .. '". Renomeie os alvos para que cada canal seja único.'
-            )
-        end
-        jointsByPart1[name] = target
+        nodeNameCounts[name] = (nodeNameCounts[name] or 0) + 1
+        table.insert(nodes, target)
     end
 
     for _, descendant in ipairs(rig:GetDescendants()) do
@@ -644,9 +640,50 @@ local function getSkeleton(rig)
         error("O rig possui Bones, mas nenhum Bone raiz ligado diretamente a uma BasePart.")
     end
 
+    local channelTargets = {}
+    local nodePaths = {}
+
+    local function getRelativeNodePath(node)
+        local segments = {}
+        local current = node
+        while current and current ~= rig do
+            table.insert(segments, current.Name)
+            current = current.Parent
+        end
+        if current ~= rig then
+            error("Não foi possível resolver o caminho de um canal dentro do Model.")
+        end
+
+        local ordered = {}
+        for index = #segments, 1, -1 do
+            table.insert(ordered, segments[index])
+        end
+        return table.concat(ordered, "/")
+    end
+
+    for _, node in ipairs(nodes) do
+        local path = getRelativeNodePath(node)
+        if channelTargets[path] then
+            error('O caminho de canal "' .. path .. '" não é único dentro do Model.')
+        end
+        channelTargets[path] = node
+        nodePaths[node] = path
+
+        if nodeNameCounts[node.Name] == 1 then
+            channelTargets[node.Name] = node
+        end
+    end
+
+    table.sort(nodes, function(a, b)
+        return nodePaths[a] < nodePaths[b]
+    end)
+
     return {
         rootPart = rootPart,
-        jointsByPart1 = jointsByPart1,
+        nodes = nodes,
+        nodePaths = nodePaths,
+        channelTargets = channelTargets,
+        jointsByPart1 = channelTargets,
         childrenByPart0 = childrenByPart0,
         curveChildrenByParent = curveChildrenByParent,
         boneChildrenByParent = boneChildrenByParent,
