@@ -1,6 +1,6 @@
 # Formato POSECODE v1
 
-Este formato é usado pelo plugin POSECODE 1.5. O campo JSON version continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
+Este formato é usado pelo plugin POSECODE 1.6. O campo JSON version continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
 
 O plugin não executa o código colado. Ele extrai o JSON de uma variável POSECODE ou aceita JSON diretamente. A caixa de importação aceita até 256 KB.
 
@@ -35,7 +35,10 @@ O plugin não executa o código colado. Ele extrai o JSON de uma variável POSEC
               "position": [0, 0, 0],
               "rotation": [0, 0, 45]
             }
-          }
+          },
+          "markers": [
+            { "name": "Footstep", "value": "left" }
+          ]
         },
         {
           "time": 0.8,
@@ -77,7 +80,7 @@ Cada quadro contém:
 - time: tempo em segundos.
 - joints: objeto com o nome de cada peça ligada a uma junta.
 - easingStyle: opcional; substitui o easingStyle global nesse quadro.
-- easingDirection: opcional; substitui o easingDirection global nesse quadro.
+- easingDirection: opcional; substitui o easingDirection global nesse quadro.\n- markers: opcional; eventos disparados quando esse quadro é alcançado.
 
 Em Motor6D, use o nome da peça em Part1. Em AnimationConstraint, use o nome da BasePart que é Parent de Attachment1.
 
@@ -103,6 +106,25 @@ Os tempos são arredondados para o quadro mais próximo de acordo com fps. Dois 
 
 Se não existir um quadro em 0, o plugin cria um quadro inicial neutro. Se o último quadro ocorrer antes de duration, o plugin adiciona um quadro final que mantém a última pose. Os quadros automáticos também contam no limite de 120.
 
+## Eventos de animação
+
+Um quadro pode conter uma lista opcional de eventos:
+
+    "markers": [
+      { "name": "Footstep", "value": "left" },
+      { "name": "Sound", "value": "land" }
+    ]
+
+Cada evento possui:
+- `name`: identificador do evento, entre 1 e 64 caracteres.
+- `value`: texto opcional de até 256 caracteres; quando omitido, fica vazio.
+
+O limite é de 8 eventos por quadro e 128 por animação. Os eventos são convertidos em `KeyframeMarker` dentro da `KeyframeSequence`. Na prévia do plugin, os pontos aparecem na timeline e o status mostra o nome e o valor quando são alcançados.
+
+Rigs com `AnimationConstraint` usam a saída experimental `CurveAnimation`, que não recebe esses marcadores. O importador rejeita esse caso em vez de descartar os eventos silenciosamente.
+
+Em uma animação publicada, scripts podem escutar um evento com `AnimationTrack:GetMarkerReachedSignal("Footstep")`. O parâmetro recebido corresponde ao campo `value`. Veja a [documentação de eventos de animação](https://create.roblox.com/docs/animation/events).
+
 ## Easing
 
 Para KeyframeSequence, são aceitos Linear, Constant, CubicV2, Elastic e Bounce, com direções In, Out ou InOut.
@@ -111,10 +133,10 @@ Para CurveAnimation, o formato de curva aceita Linear, Constant e CubicV2 com di
 
 ## Prompt para a IA
 
-> Crie uma animação de [descreva o movimento] para um rig R15 no Roblox. Gere somente um script Luau POSECODE v1: variável POSECODE contendo JSON dentro de uma string longa [==[ ... ]==], seguida de return POSECODE. Informe fps, duration, looped, priority, easingStyle e easingDirection. Para cada quadro, informe time em segundos e somente as juntas que mudaram. Use nomes exatos das peças conectadas por Motor6D ou AnimationConstraint. Rotation deve usar graus locais em ordem XYZ [x, y, z] e position deve usar offsets locais em studs. Use de 8 a 24 quadros distribuídos pelo movimento. Para rigs com AnimationConstraint, use somente Linear, Constant ou CubicV2 com direção InOut. Não use TweenService, não execute código e não invente nomes de juntas.
+> Crie uma animação de [descreva o movimento] para um rig R15 no Roblox. Gere somente um script Luau POSECODE v1: variável POSECODE contendo JSON dentro de uma string longa [==[ ... ]==], seguida de return POSECODE. Informe fps, duration, looped, priority, easingStyle e easingDirection. Para cada quadro, informe time em segundos e somente as juntas que mudaram. Use nomes exatos das peças conectadas por Motor6D ou AnimationConstraint. Rotation deve usar graus locais em ordem XYZ [x, y, z] e position deve usar offsets locais em studs. Use de 8 a 24 quadros distribuídos pelo movimento. Quando necessário, inclua markers opcionais com name e value nos quadros. Para rigs com AnimationConstraint, não use markers e use somente Linear, Constant ou CubicV2 com direção InOut. Não use TweenService, não execute código e não invente nomes de juntas.
 
 Troque R15 por R6 quando estiver usando um rig R6.
 
 ## Validação
 
-O importador rejeita versão incompatível, rig diferente, arrays com lacunas ou índices inválidos, juntas desconhecidas, tempos repetidos depois da normalização, valores fora dos limites, estilos de easing incompatíveis e animações acima de 15 segundos ou 120 quadros normalizados.
+O importador rejeita versão incompatível, rig diferente, arrays com lacunas ou índices inválidos, juntas desconhecidas, tempos repetidos depois da normalização, valores fora dos limites, estilos de easing incompatíveis, markers inválidos ou incompatíveis e animações acima de 15 segundos ou 120 quadros normalizados.
