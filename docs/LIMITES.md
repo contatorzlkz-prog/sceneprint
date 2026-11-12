@@ -36,7 +36,7 @@ A documentação e os anúncios do Roblox descrevem esse modelo de referência: 
 
 A publicação continua pelo Editor de Animação: abra a sequência salva, confira o movimento e use Publish to Roblox. O plugin não exibe um botão próprio de upload porque a API pública documentada de AssetService:CreateAssetAsync() lista atualmente Model e Plugin como tipos suportados, não Animation ou KeyframeSequence. Não seria correto prometer um upload direto que a interface pública não oferece. Consulte [AssetService](https://create.roblox.com/docs/reference/engine/classes/AssetService).
 
-## Limites da v0.1.1
+## Limites da v1.1
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
 - Não anima a raiz do personagem nem deslocamento global.
@@ -45,4 +45,4 @@ A publicação continua pelo Editor de Animação: abra a sequência salva, conf
 - Não faz upload direto para o catálogo de animações.
 - Foca rigs R6/R15 com hierarquia conectada de Motor6D ou AnimationConstraint; rigs customizados podem exigir ajustes.
 
-A v0.1.1 foi revisada estaticamente. Ainda precisa ser executada no Roblox Studio para validar a compatibilidade do preview e a abertura das sequências salvas pelo Editor de Animação.
+A v1.1 foi revisada estaticamente. Ainda precisa ser executada no Roblox Studio para validar a compatibilidade do preview e a abertura das sequências salvas pelo Editor de Animação.
