@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.1 · Correções e melhorias
+
+- Prévia agora avança a avaliação do Animator no Studio.
+- Restaura Transform e CurrentAngle das juntas ao encerrar a prévia.
+- Usa RegisterActiveAnimationClip para criar o ID temporário.
+- Identifica a raiz pela AssemblyRootPart e valida a árvore Motor6D.
+- Alinha tempos ao FPS declarado e rejeita colisões após o arredondamento.
+- Insere quadro neutro no início e mantém a última pose até a duração final.
+- Suporta transformações esparsas e easing global ou por keyframe.
+- Amplia as prioridades até Action4.
+- Salva em ServerStorage.RBX_ANIMSAVES, referenciado por AnimSaves.
+- Mantém compatibilidade com a pasta AnimSaves antiga e restaura referências se o salvamento falhar.
+- Melhora a extração do conteúdo JSON.
+
 ## 0.1.0 · Nova direção: Posecode
 
 - Projeto reorientado de escultura de terreno para importação de animações geradas por IA.
