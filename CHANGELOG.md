@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.8 · Navegação compacta e interface por etapas
+
+- Divide a janela em três abas: **Importar**, **Prévia** e **Rig**.
+- Oculta os controles das outras etapas até que o usuário abra a aba correspondente.
+- Mantém o editor JSON e as ações de importação concentrados na aba **Importar**.
+- Move a timeline, a reprodução, a velocidade, a repetição e o salvamento para **Prévia**.
+- Isola a análise de estrutura e compatibilidade na aba **Rig**.
+- Adiciona ícones vetoriais simples desenhados com elementos GUI nativos, sem IDs de imagem externos.
+- Mantém o status em uma faixa fixa no rodapé para que mensagens continuem visíveis durante a navegação.
+- Abre **Prévia** automaticamente após uma importação bem-sucedida.
+- Preserva o formato POSECODE v1 e as rotas de conversão da versão anterior.
+
 ## 1.7 · Compatibilidade de rigs e organização
 
 - Adiciona suporte a hierarquias **Bone** e malhas skinned usando `CurveAnimation`.
