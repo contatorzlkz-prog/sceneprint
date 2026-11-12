@@ -10,7 +10,11 @@
 - Adiciona ícones vetoriais simples desenhados com elementos GUI nativos, sem IDs de imagem externos.
 - Mantém o status em uma faixa fixa no rodapé para que mensagens continuem visíveis durante a navegação.
 - Abre **Prévia** automaticamente após uma importação bem-sucedida.
-- Preserva o formato POSECODE v1 e as rotas de conversão da versão anterior.
+- Adiciona suporte ao formato **POSECODE V2**, organizado em metadata, rig, timeline, tracks e events.
+- Mantém a importação de documentos V1 para compatibilidade com projetos existentes.
+- Combina keyframes de tracks diferentes numa timeline comum e valida alvos por tipo.
+- Normaliza keyframes e eventos ao FPS declarado e rejeita conflitos de easing no mesmo instante.
+- Preserva as rotas de saída KeyframeSequence e CurveAnimation do pipeline existente.
 
 ## 1.7 · Compatibilidade de rigs e organização
 
