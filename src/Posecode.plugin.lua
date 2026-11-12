@@ -841,12 +841,15 @@ local function validateData(data, rig, skeleton)
                 MAX_CURVE_KEYS
             ))
         end
-    elseif estimatedJointFrames > MAX_POSE_INSTANCES then
-        error(string.format(
-            "A saída KeyframeSequence exigiria %d poses; o limite seguro é %d. Reduza quadros ou juntas.",
-            estimatedJointFrames,
-            MAX_POSE_INSTANCES
-        ))
+    else
+        local estimatedPoseInstances = (skeleton.jointCount + 1) * #frames
+        if estimatedPoseInstances > MAX_POSE_INSTANCES then
+            error(string.format(
+                "A saída KeyframeSequence exigiria %d poses; o limite seguro é %d. Reduza quadros ou juntas.",
+                estimatedPoseInstances,
+                MAX_POSE_INSTANCES
+            ))
+        end
     end
 
     local cleanName = typeof(data.name) == "string" and data.name or "Posecode_Animation"
