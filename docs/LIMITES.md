@@ -1,48 +1,54 @@
 # Limites técnicos e publicação
 
-## Por que não converter qualquer script?
+## Importação segura
 
-Um script de animação pode construir movimentos de várias maneiras: alterar Motor6D.Transform ou AnimationConstraint.Transform, aplicar tweens, calcular trajetórias em loops, reagir a eventos ou depender de variáveis externas. O texto não descreve necessariamente uma lista fixa de poses. Tentar executar e observar um script arbitrário não seria seguro nem reproduzível.
+O plugin não tenta interpretar a lógica de scripts Luau arbitrários. Um script pode conter loops, cálculos, condições, TweenService e eventos, sem uma lista fixa de poses. Executá-lo para tentar reconstruir os movimentos seria imprevisível.
 
-O Posecode trabalha com uma representação declarativa: cada quadro tem um tempo e cada junta tem uma transformação local. O plugin extrai apenas o bloco de dados e **nunca executa o script colado**.
+O Posecode extrai somente o JSON estruturado de POSECODE v1. Não usa loadstring e não executa o conteúdo colado. A entrada tem limite de 256 KB e validação de arrays, tempos, juntas e transformações.
 
-## Hierarquia dos keyframes
+## Formatos de saída
 
-O importador cria uma KeyframeSequence. Cada Keyframe contém uma hierarquia de Pose baseada nas conexões de juntas do rig. A Pose nomeada pela peça conectada é colocada como filha da Pose da peça que a controla; sua CFrame é aplicada à junta correspondente.
+### Rigs com Motor6D
 
-A v1.1 aceita Motor6D e AnimationConstraint. Para Motor6D, a conexão usa Part0 e Part1. Para AnimationConstraint, usa Attachment0.Parent e Attachment1.Parent. A raiz é identificada pela AssemblyRootPart do rig selecionado. O importador exige uma hierarquia conectada, nomes de peças sem duplicação e correspondência com o tipo R6/R15 declarado no bloco.
+Gera uma KeyframeSequence. Cada Keyframe contém uma árvore hierárquica de Pose, na qual o nome da Pose corresponde à peça conectada pela junta. O CFrame local da Pose é aplicado à junta correspondente.
 
-As transformações são esparsas: uma junta mantém o último valor definido nos keyframes seguintes até receber uma nova transformação. Juntas que nunca aparecem permanecem neutras.
+### Rigs com AnimationConstraint
 
-## Tempo e interpolação
+Gera uma CurveAnimation. A estrutura é composta por pastas hierárquicas e canais de animação: Position usa Vector3Curve e Rotation usa EulerRotationCurve em ordem XYZ. As curvas são organizadas pela hierarquia de partes obtida de Attachment0.Parent e Attachment1.Parent.
 
-Os tempos são arredondados para o quadro mais próximo de acordo com fps. O plugin rejeita dois keyframes que colidam após esse arredondamento.
+O formato CurveAnimation usa interpolação Linear, Constant ou Cubic. CubicV2 é mapeado para Cubic com tangentes estimadas dos quadros vizinhos e direção InOut. Elastic e Bounce são recusados nesse caminho porque não possuem correspondência direta no modelo de interpolação das curvas.
 
-Para que o clip tenha exatamente a duração declarada, é criado um quadro neutro inicial quando necessário e uma cópia da última pose no fim, caso o último quadro seja anterior à duração. O limite de 120 quadros considera esses quadros automáticos.
+A documentação de CurveAnimation descreve curvas de posição e rotação organizadas pela hierarquia de juntas e consumidas pelo sistema de animação. A compatibilidade de rigs específicos pode depender da estrutura de juntas e nomes presentes no modelo. Consulte [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation) e [AnimationConstraint](https://create.roblox.com/docs/physics/constraints/animation).
 
-O easing pode ser definido globalmente ou em cada quadro, usando Linear, Constant, CubicV2, Elastic ou Bounce, com direção In, Out ou InOut.
+## Rotações e tempo
 
-## Prévia
+As rotações de POSECODE são expressas em graus locais na ordem XYZ e convertidas para CFrame/curvas Euler XYZ.
 
-O plugin registra a KeyframeSequence usando AnimationClipProvider:RegisterActiveAnimationClip e carrega o ID temporário em um Animator. Durante a prévia, ele avança a avaliação com Animator:StepAnimations no Heartbeat do Studio. Ao parar ou terminar, encerra a track e restaura os valores originais de Transform das juntas e CurrentAngle quando a junta é Motor6D.
+Os tempos são arredondados para o quadro mais próximo segundo fps. O importador rejeita colisões depois do arredondamento. Um quadro neutro é acrescentado em 0 quando necessário e o último quadro é prolongado até duration. O limite de 120 inclui quadros criados automaticamente; a duração máxima é 15 segundos.
 
-O ID temporário serve apenas para teste local no Studio; não é um asset publicado e não funciona fora dele.
+## Prévia e navegação
 
-## Salvamento e publicação
+O plugin registra o clip temporariamente com AnimationClipProvider:RegisterActiveAnimationClip e carrega o ID local em um Animator. O ID temporário não é um asset publicado e não funciona fora do Studio.
 
-O botão de salvar preserva a KeyframeSequence no local de animações do Roblox: ServerStorage.RBX_ANIMSAVES, com uma subpasta para o rig e um ObjectValue chamado AnimSaves no rig apontando para essa pasta. Em rigs que ainda usam uma pasta AnimSaves antiga, o plugin salva nela sem apagar os dados existentes.
+Durante a prévia, Animator:StepAnimations avança a avaliação. O plugin permite pausar/retomar, parar, alterar a velocidade (0.5×, 1×, 1.5× ou 2×), arrastar o cursor e saltar para o quadro anterior ou seguinte. A posição é atualizada por AnimationTrack.TimePosition, que só pode ser alterada enquanto a track está tocando. Ao parar, o plugin restaura Transform e CurrentAngle quando aplicável.
 
-A documentação e os anúncios do Roblox descrevem esse modelo de referência: o ObjectValue AnimSaves aponta para a pasta do rig em ServerStorage.RBX_ANIMSAVES. A referência deve ser usada para acessar as animações locais, em vez de depender do nome da pasta. Consulte [Animation Editor](https://create.roblox.com/docs/animation/editor) e [a mudança de estrutura AnimSaves](https://devforum.roblox.com/t/important-changes-for-the-animation-clip-editor-animsaves-folder/2732912).
+Consulte [Animator](https://create.roblox.com/docs/reference/engine/classes/Animator), [AnimationTrack](https://create.roblox.com/docs/reference/engine/classes/AnimationTrack) e [AnimationClipProvider](https://create.roblox.com/docs/reference/engine/classes/AnimationClipProvider).
 
-A publicação continua pelo Editor de Animação: abra a sequência salva, confira o movimento e use Publish to Roblox. O plugin não exibe um botão próprio de upload porque a API pública documentada de AssetService:CreateAssetAsync() lista atualmente Model e Plugin como tipos suportados, não Animation ou KeyframeSequence. Não seria correto prometer um upload direto que a interface pública não oferece. Consulte [AssetService](https://create.roblox.com/docs/reference/engine/classes/AssetService).
+## Salvamento
 
-## Limites da v1.1
+O botão **Salvar Clip no Studio** armazena o clip em ServerStorage.RBX_ANIMSAVES, com uma subpasta para o rig e um ObjectValue AnimSaves no próprio rig apontando para essa pasta. Rigs que já possuem uma pasta AnimSaves local continuam sendo aceitos.
+
+O Editor de Animação salva KeyframeSequence e CurveAnimation localmente em ServerStorage, e usa a referência AnimSaves no rig para acessar esse trabalho. Consulte [Animation Editor](https://create.roblox.com/docs/animation/editor).
+
+## Publicação
+
+O plugin não faz upload próprio. Para publicar, abra o clip salvo no Editor de Animação e use **Publish to Roblox**. A publicação do clip continua no fluxo do Studio, e o ID temporário da prévia não substitui um ID de asset.
+
+## Limites da v1.2
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
-- Não anima a raiz do personagem nem deslocamento global.
-- Não inclui markers/eventos de animação.
-- Não tem edição independente de cada track ou keyframe dentro do plugin.
-- Não faz upload direto para o catálogo de animações.
-- Foca rigs R6/R15 com hierarquia conectada de Motor6D ou AnimationConstraint; rigs customizados podem exigir ajustes.
-
-A v1.1 foi revisada estaticamente. Ainda precisa ser executada no Roblox Studio para validar a compatibilidade do preview e a abertura das sequências salvas pelo Editor de Animação.
+- Não anima deslocamento global da raiz do personagem.
+- Não cria markers/eventos de animação.
+- Não inclui edição independente de tracks ou keyframes dentro do plugin.
+- Rigs customizados podem exigir ajuste na hierarquia e nos nomes de partes/juntas.
+- A saída CurveAnimation usa somente Linear, Constant e CubicV2/InOut; Elastic e Bounce ficam disponíveis apenas no caminho KeyframeSequence.
