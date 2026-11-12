@@ -1,6 +1,6 @@
 # Formato POSECODE v1
 
-Este formato é usado pelo plugin Posecode 1.2. O campo JSON version continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
+Este formato é usado pelo plugin Posecode 1.3. O campo JSON version continua sendo 1; ele identifica a estrutura dos dados, não a versão do plugin.
 
 O plugin não executa o código colado. Ele extrai o JSON de uma variável POSECODE ou aceita JSON diretamente. A caixa de importação aceita até 256 KB.
 
