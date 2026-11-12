@@ -49,7 +49,7 @@ local widgetInfo = DockWidgetPluginGuiInfo.new(
     440,
     760,
     360,
-    650
+    740
 )
 
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Posecode.Main", widgetInfo)
@@ -254,6 +254,7 @@ local previewSpeed = 1
 local speedOptions = { 0.5, 1, 1.5, 2 }
 local speedOptionIndex = 2
 local isScrubbing = false
+local timelineInputConnections = {}
 
 local function setStatus(message, color)
     statusLabel.Text = message
@@ -900,6 +901,7 @@ local function stopPreview()
     temporaryAnimator = false
     temporaryHost = false
     previewPaused = false
+    pauseButton.Text = "PAUSAR"
     updateTimelineCursor(0)
 end
 
@@ -957,6 +959,7 @@ local function beginPreview()
         previewAnimation = animation
         previewTrack = track
         previewPaused = false
+        pauseButton.Text = "PAUSAR"
 
         previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
             if not previewAnimator or not previewTrack then
@@ -994,6 +997,7 @@ end
 local function playPreview()
     if previewTrack and previewTrack.IsPlaying then
         previewPaused = false
+        pauseButton.Text = "PAUSAR"
         previewTrack:AdjustSpeed(previewSpeed)
         setStatus("Prévia reproduzindo.", C.green)
     else
@@ -1009,6 +1013,7 @@ local function pausePreview()
 
     previewTrack:AdjustSpeed(0)
     previewPaused = true
+    pauseButton.Text = "RETOMAR"
     setStatus("Prévia pausada.", C.muted)
 end
 
@@ -1363,6 +1368,32 @@ clearButton.Activated:Connect(function()
     setStatus("Campo de importação limpo.")
 end)
 
+timelineInputConnections[1] = timelineHitbox.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        isScrubbing = true
+        seekFromScreenX(input.Position.X)
+    end
+end)
+
+timelineInputConnections[2] = UserInputService.InputChanged:Connect(function(input)
+    if not isScrubbing then
+        return
+    end
+
+    if input.UserInputType == Enum.UserInputType.MouseMovement
+        or input.UserInputType == Enum.UserInputType.Touch then
+        seekFromScreenX(input.Position.X)
+    end
+end)
+
+timelineInputConnections[3] = UserInputService.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        isScrubbing = false
+    end
+end)
+
 previewButton.Activated:Connect(playPreview)
 
 pauseButton.Activated:Connect(pausePreview)
@@ -1390,6 +1421,9 @@ end)
 
 plugin.Unloading:Connect(function()
     stopPreview()
+    for _, connection in ipairs(timelineInputConnections) do
+        connection:Disconnect()
+    end
     if importedSequence and importedSequence.Parent == nil then
         importedSequence:Destroy()
     end
