@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.7 · Compatibilidade de rigs e organização
+
+- Adiciona suporte a hierarquias Bone e malhas skinned usando CurveAnimation.
+- Permite perfis CUSTOM para Models sem Humanoid.
+- Organiza a geração de curvas em uma árvore que acompanha a hierarquia dos nós animados.
+- Permite combinar canais Motor6D e Bone na mesma saída CurveAnimation.
+- Adiciona **Analisar rig** para conferir perfil, quantidade de elementos e tipo de saída antes da importação.
+- Diferencia a rota documentada de Bone da conversão experimental de AnimationConstraint.
+- Atualiza os exemplos, a validação e a documentação sem alterar o formato POSECODE v1.
+
 ## 1.6 · Eventos e robustez técnica
 
 - Adiciona event markers opcionais em KeyframeSequence, com nome e valor por quadro.
@@ -9,6 +19,7 @@
 - Desconecta os listeners de eventos ao parar ou reiniciar a prévia.
 - Faz pré-verificação do volume de saída: 18.000 poses ou 24.000 chaves de curva.
 - Mantém o formato POSECODE v1 e a interface clássica da versão anterior.
+
 
 ## 1.5 · Ajustes técnicos e experiência de uso
 
