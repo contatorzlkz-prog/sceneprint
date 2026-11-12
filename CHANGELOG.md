@@ -11,6 +11,8 @@
 - Padroniza rotações locais em ordem XYZ.
 - Calcula tangentes para segmentos cúbicos das CurveAnimations.
 - Atualiza a interface para distinguir clips de keyframes e de curvas.
+- Identifica a saída CurveAnimation para AnimationConstraint como experimental, pois a documentação pública descreve claramente os canais para Motor6D e Bone.
+- Restaura somente Transform, sem tentar escrever CurrentAngle.
 - Atualiza a documentação do formato e os limites de interpolação.
 
 ## 1.1 · Correções e melhorias
