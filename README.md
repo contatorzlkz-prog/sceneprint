@@ -2,7 +2,7 @@
   <img src="assets/posecode-mark.svg" width="48" alt="Posecode" />
   <h1>POSECODE</h1>
   <p>Do movimento descrito por IA para keyframes editáveis no Roblox Studio.</p>
-  <p><sub>ruancr · v0.1.1 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v1.1 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
 ![Interface do Posecode](assets/posecode-preview.svg)
@@ -30,7 +30,7 @@ A ideia não é tentar interpretar qualquer código Luau. Scripts comuns podem t
 
 A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
-## O que mudou na v0.1.1
+## O que mudou na v1.1
 
 - Prévia com avanço explícito do Animator no modo de edição e restauração da pose ao parar.
 - Salvamento seguindo ServerStorage.RBX_ANIMSAVES e o ObjectValue AnimSaves do rig.
@@ -58,4 +58,4 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 
 ## Estado
 
-**Protótipo em desenvolvimento.** A v0.1.1 foi revisada estaticamente, mas ainda precisa ser executada e validada no Roblox Studio.
+**Protótipo em desenvolvimento.** A v1.1 foi revisada estaticamente, mas ainda precisa ser executada e validada no Roblox Studio.
