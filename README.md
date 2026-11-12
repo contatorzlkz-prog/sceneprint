@@ -2,16 +2,26 @@
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
   <p>Importador de animações estruturadas para Roblox Studio.</p>
-  <p><sub>ruancr · v1.7 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v1.8 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
-![Interface do POSECODE v1.7](assets/posecode-preview.svg)
+![Interface do POSECODE v1.8](assets/posecode-preview.svg)
 
 ## Sobre
 
 O POSECODE converte dados no formato POSECODE v1 em clips editáveis no Roblox Studio. O importador valida a hierarquia do rig, converte keyframes, oferece prévia local e salva o resultado no fluxo de animação do Studio.
 
 O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretamente ou dentro de uma variável `POSECODE`.
+
+## Interface v1.8
+
+A janela foi dividida em três áreas de navegação:
+
+- **Importar:** editor JSON, importação, exemplo e limpeza.
+- **Prévia:** timeline, reprodução, pausa, velocidade, repetição, navegação por quadros e salvamento.
+- **Rig:** análise isolada da estrutura e da rota de saída.
+
+Ao importar um clip com sucesso, o painel abre automaticamente **Prévia**. Os ícones de navegação são desenhados com elementos GUI nativos do plugin; não dependem de IDs de imagem ou uploads externos. O SVG de referência está em [posecode-icons.svg](assets/icons/posecode-icons.svg).
 
 ## Compatibilidade
 
@@ -24,10 +34,10 @@ O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretament
 ## Como usar
 
 1. Selecione o Model do rig no Studio.
-2. Use **Analisar rig** para conferir a estrutura e a rota de saída.
-3. Gere os dados no [formato POSECODE v1](docs/FORMATO.md).
-4. Cole o JSON e selecione **Importar clip**.
-5. Confira a prévia, navegue pela timeline e salve o clip no Studio.
+2. Abra **Rig** e use **Analisar estrutura do rig** para conferir a estrutura e a rota de saída.
+3. Abra **Importar**, gere os dados no [formato POSECODE v1](docs/FORMATO.md) e cole o JSON.
+4. Selecione **Importar clip**. Após a conversão, o POSECODE abre **Prévia** automaticamente.
+5. Confira a timeline e a animação; use os controles de reprodução e salve o clip no Studio.
 6. Publique pelo Editor de Animação.
 
 ## Instalação
@@ -38,10 +48,6 @@ O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretament
 4. Depois de salvar, remova o Script original de `ServerStorage` e use a cópia do plugin em `PluginDebugService`.
 
 Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs/studio/plugins).
-
-## v1.7
-
-Amplia o suporte a rigs do Roblox com Bones e perfis CUSTOM, organiza a geração de curvas por hierarquia, adiciona análise prévia do rig e diferencia a rota oficial de Bone da conversão experimental de AnimationConstraint. O formato POSECODE v1 permanece compatível.
 
 ## Limites
 
