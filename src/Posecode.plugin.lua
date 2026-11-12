@@ -386,7 +386,10 @@ local function drawTimeline(data)
         end
     end
 
-    local clipTypeLabel = data.clipType == "CurveAnimation" and "CURVAS*" or "KEYFRAMES"
+    local clipTypeLabel = "KEYFRAMES"
+    if data.clipType == "CurveAnimation" then
+        clipTypeLabel = data.hasAnimationConstraint and "CURVAS*" or "CURVAS / BONE"
+    end
     timelineInfo.Text = string.format("%d quadros · %d eventos · %.2fs · %s", #data.frames, totalMarkers, data.duration, clipTypeLabel)
     updateTimelineCursor(0)
 end
@@ -706,7 +709,14 @@ local function analyzeSelectedRig()
         table.insert(details, string.format("%d Bones", skeleton.boneCount))
     end
 
-    local outputType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence"
+    local outputType = "KeyframeSequence"
+    if skeleton.hasBone then
+        outputType = "CurveAnimation / Bone"
+    end
+    if skeleton.hasAnimationConstraint then
+        outputType = "CurveAnimation / Constraint (experimental)"
+    end
+
     rigInfo.Text = string.format("RIG: %s  /  %d ELEMENTOS  /  %s", profile, skeleton.jointCount, outputType)
     setStatus("Rig compatível: " .. table.concat(details, " + ") .. ". Saída: " .. outputType .. ".", C.green)
 end
