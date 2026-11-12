@@ -9,6 +9,7 @@
 - Calcula cada transformação local uma vez por junta/quadro e reutiliza o cache na geração dos clips.
 - Calcula Euler XYZ uma vez por junta/quadro nas curvas, em vez de decompor a rotação novamente para cada eixo.
 - Valida os três componentes dos vetores sem criar tabelas temporárias.
+- Mostra o nome do rig selecionado antes da importação e usa a raiz declarada do rig, sem depender da raiz física da montagem.
 - Mantém o formato de dados POSECODE v1 compatível; a versão 1.3 é a versão do plugin, não do JSON.
 
 ## 1.2 · Clips, curva e controles de prévia
