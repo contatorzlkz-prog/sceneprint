@@ -14,6 +14,8 @@
 - Salva em ServerStorage.RBX_ANIMSAVES, referenciado por AnimSaves.
 - Mantém compatibilidade com a pasta AnimSaves antiga e restaura referências se o salvamento falhar.
 - Melhora a extração do conteúdo JSON.
+- Limita a entrada a 256 KB e rejeita arrays incompletos ou com índices inválidos.
+- A versão do plugin passa a ser identificada como 1.1.
 
 ## 0.1.0 · Nova direção: Posecode
 
