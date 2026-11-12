@@ -32,7 +32,7 @@ Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs
 
 ## v1.6
 
-Adiciona eventos de animação em clips Motor6D, repetição independente na prévia e uma revisão técnica de limites de processamento, inicialização da prévia e limpeza de conexões. A interface mantém o visual clássico da v1.5.
+Adiciona eventos de animação em clips Motor6D, repetição independente na prévia e uma revisão técnica de limites de processamento, inicialização da prévia e limpeza de conexões. A interface mantém o visual clássico.
 
 ## Saída por tipo de rig
 
