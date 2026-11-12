@@ -1,11 +1,14 @@
 # Changelog
 
+## 0.2.0
+
+- Reduzi o Sceneprint para duas verificações contextuais.
+- A leitura agora parte da seleção do Explorer, não do mapa inteiro.
+- Removi cartões de métricas, filtros e contadores.
+- A seleção de um resultado leva ao objeto no Explorer.
+- Ajustei a interface para preto, branco e roxo discreto.
+- Crédito do autor incluído na interface e na documentação.
+
 ## 0.1.0
 
-- Primeiro painel Sceneprint.
-- Análise de Workspace ou de todo o DataModel.
-- Verificações de física, colisão, partículas, iluminação, áudio, prompts, malhas e organização.
-- Filtros por tipo de apontamento.
-- Seleção do objeto relacionado no Studio.
-- Cancelamento de uma leitura em andamento.
-- Documentação das regras e dos possíveis falsos positivos.
+- Primeira versão do painel e das verificações de cena.
