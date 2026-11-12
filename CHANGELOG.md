@@ -13,6 +13,8 @@
 - Atualiza a interface para distinguir clips de keyframes e de curvas.
 - Identifica a saída CurveAnimation para AnimationConstraint como experimental, pois a documentação pública descreve claramente os canais para Motor6D e Bone.
 - Restaura somente Transform, sem tentar escrever CurrentAngle.
+- Remove atribuições a propriedades de peso depreciadas em Pose.
+- Torna o salvamento transacional e remove pastas/referências criadas se a operação falhar.
 - Atualiza a documentação do formato e os limites de interpolação.
 - Remove a escrita em propriedades de peso depreciadas das Pose e usa o padrão do Studio.
 
