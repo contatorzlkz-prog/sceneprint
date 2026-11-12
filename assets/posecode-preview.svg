@@ -3,14 +3,18 @@
   <rect x="1" y="1" width="958" height="698" rx="11" stroke="#34313D"/>
   <path d="M20 68H940" stroke="#34313D"/>
   <rect x="28" y="20" width="30" height="30" rx="6" fill="#302944"/>
-  <path d="M36 39V31M43 39V27M50 39V24" stroke="#B3A0FF" stroke-width="2.7" stroke-linecap="square"/>
+  <g stroke="#B3A0FF" stroke-width="2" stroke-linecap="round"><path d="M34 35h18M38 30v10M47 27v16"/></g>
   <text x="70" y="36" fill="#F0EDF6" font-family="Arial,sans-serif" font-size="17" font-weight="700">POSECODE</text>
-  <text x="71" y="51" fill="#827C8F" font-family="Arial,sans-serif" font-size="8" letter-spacing="1.1">ANIMATION WORKSPACE</text>
+  <text x="71" y="51" fill="#827C8F" font-family="Arial,sans-serif" font-size="8" letter-spacing="1.1">ANIMATION IMPORTER</text>
   <rect x="884" y="24" width="46" height="22" rx="5" fill="#24222B"/>
-  <text x="907" y="39" text-anchor="middle" fill="#B3A0FF" font-family="Arial,sans-serif" font-size="9" font-weight="700">v1.3</text>
+  <text x="907" y="39" text-anchor="middle" fill="#B3A0FF" font-family="Arial,sans-serif" font-size="9" font-weight="700">v1.4</text>
 
-  <text x="30" y="101" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">01 / SOURCE</text>
-  <text x="30" y="120" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="11">POSECODE ou JSON estruturado</text>
+  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M31 86h7l3 3v8H31zM38 86v3h3"/>
+    <path d="M52 89h10"/>
+  </g>
+  <text x="62" y="101" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">01 / SOURCE</text>
+  <text x="30" y="120" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="11">POSECODE / JSON</text>
   <rect x="30" y="135" width="900" height="124" rx="5" fill="#101014" stroke="#383541"/>
   <text x="48" y="162" fill="#B3A0FF" font-family="monospace" font-size="11">{ "format": "POSECODE",</text>
   <text x="48" y="183" fill="#C8C3D0" font-family="monospace" font-size="10">  "rig": "R15", "fps": 30,</text>
@@ -18,28 +22,26 @@
   <text x="48" y="235" fill="#827C8F" font-family="monospace" font-size="9">...</text>
 
   <rect x="30" y="270" width="900" height="36" rx="5" fill="#B3A0FF"/>
-  <text x="480" y="293" text-anchor="middle" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">↓  IMPORTAR CLIP</text>
+  <g stroke="#17151D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M480 278v13m-5-5 5 5 5-5M470 296h20"/></g>
+  <text x="506" y="293" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">IMPORTAR CLIP</text>
   <rect x="30" y="316" width="442" height="29" rx="5" fill="#24222B"/>
-  <text x="251" y="335" text-anchor="middle" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9">＋  EXEMPLO</text>
+  <g stroke="#D7D2E2" stroke-width="1.7" stroke-linecap="round"><path d="M251 324v13m-6.5-6.5h13"/></g>
+  <text x="266" y="335" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9" font-weight="700">EXEMPLO</text>
   <rect x="482" y="316" width="448" height="29" rx="5" fill="#24222B"/>
-  <text x="706" y="335" text-anchor="middle" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9">×  LIMPAR</text>
+  <g stroke="#D7D2E2" stroke-width="1.7" stroke-linecap="round"><path d="m697 325 9 9m0-9-9 9"/></g>
+  <text x="715" y="335" fill="#D7D2E2" font-family="Arial,sans-serif" font-size="9" font-weight="700">LIMPAR</text>
 
-  <text x="30" y="379" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">02 / TIMELINE</text>
+  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round"><path d="M31 365h14m-10-4v8m7-10v12"/></g>
+  <text x="52" y="379" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">02 / TIMELINE</text>
   <text x="930" y="379" text-anchor="end" fill="#8A8596" font-family="Arial,sans-serif" font-size="8">12 QUADROS / 0.80S / KEYFRAMES</text>
   <path d="M30 410H930" stroke="#3B3747" stroke-width="2" stroke-linecap="round"/>
   <g fill="#B3A0FF">
-    <rect x="30" y="402" width="5" height="16" rx="2"/>
-    <rect x="111" y="402" width="5" height="16" rx="2"/>
-    <rect x="193" y="402" width="5" height="16" rx="2"/>
-    <rect x="275" y="402" width="5" height="16" rx="2"/>
-    <rect x="356" y="402" width="5" height="16" rx="2"/>
-    <rect x="438" y="402" width="5" height="16" rx="2"/>
-    <rect x="520" y="402" width="5" height="16" rx="2"/>
-    <rect x="601" y="402" width="5" height="16" rx="2"/>
-    <rect x="683" y="402" width="5" height="16" rx="2"/>
-    <rect x="765" y="402" width="5" height="16" rx="2"/>
-    <rect x="846" y="402" width="5" height="16" rx="2"/>
-    <rect x="925" y="402" width="5" height="16" rx="2"/>
+    <rect x="30" y="402" width="5" height="16" rx="2"/><rect x="111" y="402" width="5" height="16" rx="2"/>
+    <rect x="193" y="402" width="5" height="16" rx="2"/><rect x="275" y="402" width="5" height="16" rx="2"/>
+    <rect x="356" y="402" width="5" height="16" rx="2"/><rect x="438" y="402" width="5" height="16" rx="2"/>
+    <rect x="520" y="402" width="5" height="16" rx="2"/><rect x="601" y="402" width="5" height="16" rx="2"/>
+    <rect x="683" y="402" width="5" height="16" rx="2"/><rect x="765" y="402" width="5" height="16" rx="2"/>
+    <rect x="846" y="402" width="5" height="16" rx="2"/><rect x="925" y="402" width="5" height="16" rx="2"/>
   </g>
   <path d="M438 394V426" stroke="#F0EDF6" stroke-width="2"/>
   <text x="30" y="440" fill="#F0EDF6" font-family="monospace" font-size="9">00:00.36 / 00:00.80</text>
@@ -49,20 +51,24 @@
   <text x="44" y="503" fill="#A9A4B4" font-family="Arial,sans-serif" font-size="10">12 quadros convertidos. Prévia e salvamento disponíveis.</text>
   <path d="M30 527H930" stroke="#34313D"/>
 
-  <text x="30" y="551" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">03 / PREVIEW</text>
+  <g stroke="#8A8596" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="m33 540 9 7-9 7v-14Z"/></g>
+  <text x="52" y="551" fill="#8A8596" font-family="Arial,sans-serif" font-size="9" font-weight="700" letter-spacing="1">03 / PREVIEW</text>
   <rect x="30" y="565" width="214" height="34" rx="5" fill="#B3A0FF"/>
-  <text x="137" y="587" text-anchor="middle" fill="#17151D" font-family="Arial,sans-serif" font-size="14" font-weight="700">▶</text>
+  <path d="m130 573 12 9-12 9v-18Z" fill="none" stroke="#17151D" stroke-width="1.8" stroke-linejoin="round"/>
   <rect x="254" y="565" width="214" height="34" rx="5" fill="#24222B"/>
-  <text x="361" y="587" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="14" font-weight="700">Ⅱ</text>
+  <path d="M354 574v16m8-16v16" stroke="#EDEAF2" stroke-width="2" stroke-linecap="round"/>
   <rect x="478" y="565" width="214" height="34" rx="5" fill="#24222B"/>
-  <text x="585" y="587" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="14" font-weight="700">■</text>
+  <rect x="578" y="575" width="14" height="14" rx="1.5" stroke="#EDEAF2" stroke-width="1.8"/>
   <rect x="702" y="565" width="228" height="34" rx="5" fill="#24222B"/>
-  <text x="816" y="587" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="10">1×</text>
+  <text x="816" y="587" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="10" font-weight="700">1×</text>
 
   <rect x="30" y="610" width="442" height="30" rx="5" fill="#24222B"/>
-  <text x="251" y="630" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9">‹  ANTERIOR</text>
+  <path d="M242 618v14m-7-7 7-7 7 7" stroke="#EDEAF2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="259" y="630" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9" font-weight="700">ANTERIOR</text>
   <rect x="482" y="610" width="448" height="30" rx="5" fill="#24222B"/>
-  <text x="706" y="630" text-anchor="middle" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9">PRÓXIMO  ›</text>
+  <path d="M704 618v14m-7-7 7 7 7-7" stroke="#EDEAF2" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="721" y="630" fill="#EDEAF2" font-family="Arial,sans-serif" font-size="9" font-weight="700">PRÓXIMO</text>
   <rect x="30" y="651" width="900" height="34" rx="5" fill="#B3A0FF"/>
-  <text x="480" y="673" text-anchor="middle" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">↓  SALVAR CLIP NO STUDIO</text>
+  <path d="M450 659v13m-5-5 5 5 5-5M440 677h20" stroke="#17151D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="474" y="673" fill="#17151D" font-family="Arial,sans-serif" font-size="10" font-weight="700">SALVAR CLIP NO STUDIO</text>
 </svg>
