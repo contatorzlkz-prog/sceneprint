@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0 · Formato V2 nativo, migração e otimização
+
+- Promove o **POSECODE V2** a formato principal do plugin.
+- Mantém a leitura do POSECODE V1 para não quebrar animações e projetos existentes.
+- Adiciona **Converter V1 para V2** na aba Importar; a migração valida o rig e o documento antes de gerar o JSON convertido.
+- Converte canais V1 em tracks tipadas, preservando tempos normalizados, easing e eventos compatíveis.
+- Adiciona otimização conservadora por track: em sequências de três ou mais keyframes consecutivos com transformação idêntica, remove somente os intermediários e conserva os dois extremos.
+- Informa quantos keyframes redundantes foram removidos durante a importação V2.
+- Amplia o diagnóstico do rig com contagens separadas de Motor6D, AnimationConstraint e Bone.
+- Atualiza o exemplo interno para continuar gerando V2 com o tipo real do alvo selecionado.
+- Mantém a arquitetura de saída KeyframeSequence e CurveAnimation do pipeline validado.
+- Atualiza documentação e JSON Schema para a estrutura V2.
+
 ## 1.8 · Navegação compacta e interface por etapas
 
 - Divide a janela em três abas: **Importar**, **Prévia** e **Rig**.
