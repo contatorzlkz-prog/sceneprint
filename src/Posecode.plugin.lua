@@ -197,7 +197,7 @@ local function button(parent, text, position, size, primary, iconName)
         local iconSize = math.min(16, math.max(12, size.Y.Offset - 12))
         local hasText = text ~= nil and text ~= ""
         local iconY = math.floor((size.Y.Offset - iconSize) * 0.5)
-        local iconObject = drawIcon(object, iconName,
+        drawIcon(object, iconName,
             hasText and UDim2.fromOffset(10, iconY) or UDim2.new(0.5, -iconSize * 0.5, 0, iconY),
             iconSize, primary and C.background or C.text)
         if hasText then
