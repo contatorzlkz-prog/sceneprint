@@ -1,27 +1,27 @@
 <div align="center">
   <img src="assets/posecode-mark.svg" width="48" alt="Posecode" />
   <h1>POSECODE</h1>
-  <p>Do movimento descrito por IA para keyframes editáveis no Roblox Studio.</p>
-  <p><sub>ruancr · v1.1 · EM DESENVOLVIMENTO</sub></p>
+  <p>De uma animação gerada por IA para clips editáveis no Roblox Studio.</p>
+  <p><sub>ruancr · v1.2 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
 ![Interface do Posecode](assets/posecode-preview.svg)
 
 ## A proposta
 
-Você pede uma animação para uma IA, recebe um script no formato Posecode e cola no plugin. O Posecode lê os dados do movimento, monta uma KeyframeSequence e permite reproduzir no rig selecionado.
+O Posecode recebe um movimento descrito por IA em um formato de dados próprio, converte os quadros em um clip de animação e permite conferir o resultado no rig selecionado.
 
-A ideia não é tentar interpretar qualquer código Luau. Scripts comuns podem ter loops, condições, cálculos e chamadas de TweenService; não existe uma forma confiável de reconstruir todos os estados pretendidos apenas olhando o texto. Por isso, a IA gera um bloco de dados com tempos e transformações definidos.
+Ele não tenta adivinhar o comportamento de qualquer script Luau. O texto colado nunca é executado: o plugin extrai apenas o JSON estruturado e valida tempos, juntas e transformações antes de criar o clip.
 
 ## Fluxo
 
 1. Selecione um rig R6 ou R15 no Studio.
-2. Peça à IA uma animação no formato Posecode.
-3. Cole o script no campo de importação.
-4. Gere os keyframes, confira a linha do tempo e reproduza a prévia.
-5. Salve a sequência local e finalize a publicação pelo Editor de Animação do Studio.
+2. Peça à IA uma animação no formato POSECODE v1.
+3. Cole o script ou JSON e clique em **Importar Animação**.
+4. Arraste o cursor da linha do tempo, reproduza, pause, altere a velocidade ou avance quadro a quadro.
+5. Salve o clip no Studio e publique pelo Editor de Animação.
 
-## Instalar para testar
+## Instalar
 
 1. No Roblox Studio, habilite **Plugin Debugging Enabled** nas configurações do Studio.
 2. Crie um Script dentro de ServerStorage e cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua).
@@ -30,33 +30,34 @@ A ideia não é tentar interpretar qualquer código Luau. Scripts comuns podem t
 
 A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
-## O que mudou na v1.1
+## O que mudou na v1.2
 
-- Prévia com avanço explícito do Animator no modo de edição e restauração da pose ao parar.
-- Salvamento seguindo ServerStorage.RBX_ANIMSAVES e o ObjectValue AnimSaves do rig.
-- Compatibilidade com referências AnimSaves antigas em formato Folder.
-- Quadros alinhados ao FPS declarado, com início e fim garantidos.
-- Transformações de juntas mantidas entre keyframes esparsos.
-- Easing Linear, Constant, CubicV2, Elastic e Bounce.
-- Prioridades Core, Idle, Movement e Action até Action4.
-- Suporte a rigs novos com AnimationConstraint e rigs anteriores com Motor6D.
-- Extração de JSON bruto, cercas de Markdown e string longa POSECODE.
-- Limite de entrada de 256 KB e validação de arrays sem lacunas.
+- **Dois formatos de saída:** rigs somente com Motor6D geram KeyframeSequence; rigs com AnimationConstraint geram CurveAnimation.
+- Curvas de posição com Vector3Curve e rotação com EulerRotationCurve.
+- Linha do tempo arrastável com cursor e leitura do tempo atual.
+- Prévia com reproduzir, pausar/retomar, parar e velocidades 0.5×, 1×, 1.5× e 2×.
+- Navegação para o quadro anterior e o próximo.
+- Botão para carregar um exemplo compatível com o rig selecionado e botão para limpar o campo.
+- Rotações padronizadas em XYZ, em graus, e convertidas para a representação de cada clip.
+- Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
+- A interface agora identifica se o clip gerado é de keyframes ou curvas.
 
 ## Limites atuais
 
-- Não converte automaticamente scripts Luau arbitrários.
-- Não executa o texto colado.
-- A v1.1 aceita rigs R6/R15 com juntas Motor6D ou AnimationConstraint.
-- Movimento de raiz, markers, curvas avançadas e edição individual de tracks ainda não fazem parte do protótipo.
-- A publicação na nuvem continua pelo fluxo oficial do Editor de Animação do Roblox. O ID temporário da prévia só funciona localmente no Studio.
+- Não converte scripts Luau arbitrários, TweenService ou lógica condicionada.
+- Não executa o conteúdo colado. A entrada aceita até 256 KB.
+- Movimento global da raiz, markers/eventos e edição individual de tracks ainda não fazem parte do plugin.
+- Em CurveAnimation, os easings aceitos são Linear, Constant e CubicV2 com direção InOut. Elastic e Bounce ficam disponíveis no caminho KeyframeSequence.
+- A prévia usa um ID temporário, válido apenas no Studio.
+- A publicação na nuvem continua pelo Editor de Animação do Roblox.
 
 ## Documentação
 
-- [Formato aceito e exemplo](docs/FORMATO.md)
-- [Limites e publicação](docs/LIMITES.md)
+- [Formato POSECODE v1](docs/FORMATO.md)
+- [Limites técnicos e publicação](docs/LIMITES.md)
 - [Código do plugin](src/Posecode.plugin.lua)
+- [Histórico de versões](CHANGELOG.md)
 
 ## Estado
 
-**Protótipo em desenvolvimento.** A v1.1 foi revisada estaticamente, mas ainda precisa ser executada e validada no Roblox Studio.
+**Protótipo em desenvolvimento.**
