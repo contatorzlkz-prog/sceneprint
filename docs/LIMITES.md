@@ -10,7 +10,7 @@ O Posecode extrai somente o JSON estruturado de POSECODE v1. Não usa loadstring
 
 ### Rigs com Motor6D
 
-Gera uma KeyframeSequence. Cada Keyframe contém uma árvore hierárquica de Pose, na qual o nome da Pose corresponde à peça conectada pela junta. O CFrame local da Pose é aplicado ao Motor6D correspondente. <CITE_NOT_IN_FILE>
+Gera uma KeyframeSequence. Cada Keyframe contém uma árvore hierárquica de Pose, na qual o nome da Pose corresponde à peça conectada pela junta. O CFrame local da Pose é aplicado ao Motor6D correspondente.
 
 ### Rigs com AnimationConstraint
 
