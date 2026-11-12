@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox KeyframeSequences.
     Handle: ruancr
-    Version: 0.1.0
+    Version: 0.1.1
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -14,8 +14,9 @@ local ServerStorage = game:GetService("ServerStorage")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local AnimationClipProvider = game:GetService("AnimationClipProvider")
 local Workspace = game:GetService("Workspace")
+local RunService = game:GetService("RunService")
 
-local VERSION = "0.1.0"
+local VERSION = "0.1.1"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_TRANSFORM_OFFSET = 5
@@ -217,6 +218,8 @@ local previewHost = nil
 local previewAnimator = nil
 local temporaryHost = false
 local temporaryAnimator = false
+local previewStepConnection = nil
+local previewJointSnapshot = {}
 
 local function setStatus(message, color)
     statusLabel.Text = message
@@ -278,7 +281,6 @@ local function selectedRig()
 end
 
 local function getSkeleton(rig)
-    local motors = {}
     local motorsByPart1 = {}
     local childrenByPart0 = {}
     local incoming = {}
@@ -289,67 +291,76 @@ local function getSkeleton(rig)
                 error("Há duas juntas controlando uma peça chamada " .. descendant.Part1.Name .. ".")
             end
 
-            table.insert(motors, descendant)
             motorsByPart1[descendant.Part1.Name] = descendant
             incoming[descendant.Part1] = true
-
             childrenByPart0[descendant.Part0] = childrenByPart0[descendant.Part0] or {}
             table.insert(childrenByPart0[descendant.Part0], descendant)
         end
     end
 
-    if #motors == 0 then
-        error("O rig não possui juntas Motor6D.")
-    end
-
+    local motorCount = 0
     for _, children in pairs(childrenByPart0) do
         table.sort(children, function(a, b)
             return a.Part1.Name < b.Part1.Name
         end)
+        motorCount += #children
+    end
+    if motorCount == 0 then
+        error("O rig não possui juntas Motor6D.")
     end
 
-    local rootPart = rig:FindFirstChild("HumanoidRootPart", true)
-    if not rootPart or not rootPart:IsA("BasePart") then
-        rootPart = rig.PrimaryPart
+    local rootCandidate = rig:FindFirstChild("HumanoidRootPart", true)
+    if not rootCandidate or not rootCandidate:IsA("BasePart") then
+        rootCandidate = rig.PrimaryPart
     end
 
-    if not rootPart then
+    if not rootCandidate then
         for part in pairs(childrenByPart0) do
             if not incoming[part] then
-                rootPart = part
+                rootCandidate = part
                 break
             end
         end
     end
 
-    if not rootPart or not rootPart:IsA("BasePart") then
+    if not rootCandidate or not rootCandidate:IsA("BasePart") then
         error("Não foi possível identificar a raiz do rig.")
     end
 
-    local visited = {}
+    local rootPart = rootCandidate.AssemblyRootPart or rootCandidate
+    local visitedParts = {}
+    local visitedMotors = {}
+
     local function walk(part)
+        if visitedParts[part] then
+            error("A hierarquia de Motor6D contém um ciclo.")
+        end
+        visitedParts[part] = true
+
         for _, motor in ipairs(childrenByPart0[part] or {}) do
-            if visited[motor] then
-                error("A hierarquia de Motor6D contém um ciclo.")
+            if visitedMotors[motor] then
+                error("Uma junta Motor6D foi encontrada mais de uma vez.")
             end
-            visited[motor] = true
+            visitedMotors[motor] = true
             walk(motor.Part1)
         end
     end
+
     walk(rootPart)
 
     local reachable = 0
-    for _ in pairs(visited) do
+    for _ in pairs(visitedMotors) do
         reachable += 1
     end
-    if reachable ~= #motors then
-        error("Há juntas desconectadas da raiz do rig.")
+    if reachable ~= motorCount then
+        error("A hierarquia de Motor6D não parte da raiz do rig. Confira Part0, Part1 e AssemblyRootPart.")
     end
 
     return {
         rootPart = rootPart,
         motorsByPart1 = motorsByPart1,
         childrenByPart0 = childrenByPart0,
+        motorCount = motorCount,
     }
 end
 
@@ -393,12 +404,16 @@ local function transformFromData(jointData)
 end
 
 local function extractPayload(source)
+    local fence = string.rep(string.char(96), 3)
+    source = source:gsub("^%s*" .. fence .. "[%w_-]*%s*", "")
+    source = source:gsub("%s*" .. fence .. "%s*$", "")
+
     local payload = source:match("POSECODE_BEGIN(.-)POSECODE_END")
     if payload then
         return payload
     end
 
-    local _, body = source:match("local%s+POSECODE%s*=%s*%[(=*)%[(.-)%]%1%]")
+    local _, body = source:match("POSECODE%s*=%s*%[(=*)%[(.-)%]%1%]")
     if body then
         return body
     end
@@ -435,17 +450,28 @@ local function validateData(data, rig, skeleton)
         error('"duration" precisa estar entre 0 e 15 segundos.')
     end
     if typeof(data.frames) ~= "table" or #data.frames < 1 or #data.frames > MAX_FRAMES then
-        error("A animação precisa ter entre 1 e " .. MAX_FRAMES .. " keyframes.")
+        error("A animação precisa ter entre 1 e " .. MAX_FRAMES .. " keyframes antes da normalização.")
     end
 
+    local durationFrames = math.max(1, math.floor(data.duration * data.fps + 0.5))
+    local normalizedDuration = durationFrames / data.fps
+
     local priorityName = data.priority or "Action"
-    local priority = Enum.AnimationPriority[priorityName]
-    if not priority then
-        error('"priority" precisa ser Core, Idle, Movement ou Action.')
+    local validPriorities = {
+        Core = true,
+        Idle = true,
+        Movement = true,
+        Action = true,
+        Action2 = true,
+        Action3 = true,
+        Action4 = true,
+    }
+    if not validPriorities[priorityName] then
+        error('"priority" precisa ser Core, Idle, Movement, Action, Action2, Action3 ou Action4.')
     end
 
     local frames = {}
-    local seenTimes = {}
+    local seenFrames = {}
 
     for index, frameData in ipairs(data.frames) do
         if typeof(frameData) ~= "table" or not isFiniteNumber(frameData.time) then
@@ -454,30 +480,72 @@ local function validateData(data, rig, skeleton)
         if frameData.time < 0 or frameData.time > data.duration then
             error("O tempo de um keyframe ultrapassa a duração declarada.")
         end
-
-        local timeKey = string.format("%.4f", frameData.time)
-        if seenTimes[timeKey] then
-            error("Existem dois keyframes no mesmo instante.")
-        end
-        seenTimes[timeKey] = true
-
         if typeof(frameData.joints) ~= "table" then
             error("Keyframe " .. index .. " precisa ter um objeto joints.")
         end
 
+        local frameNumber = math.floor(frameData.time * data.fps + 0.5)
+        if frameNumber > durationFrames then
+            error("Um keyframe ficou depois do fim ao ajustar ao FPS informado.")
+        end
+        if seenFrames[frameNumber] then
+            error("Dois keyframes caíram no mesmo quadro depois do ajuste ao FPS.")
+        end
+        seenFrames[frameNumber] = true
+
+        local easingStyleName = frameData.easingStyle or data.easingStyle or "Linear"
+        local easingDirectionName = frameData.easingDirection or data.easingDirection or "InOut"
+        local easingStyle = Enum.PoseEasingStyle[easingStyleName]
+        local easingDirection = Enum.PoseEasingDirection[easingDirectionName]
+
+        if not easingStyle then
+            error('EasingStyle inválido no keyframe ' .. index .. '. Use Linear, Constant, CubicV2, Elastic ou Bounce.')
+        end
+        if not easingDirection then
+            error('EasingDirection inválido no keyframe ' .. index .. '. Use In, Out ou InOut.')
+        end
+
         for jointName, jointData in pairs(frameData.joints) do
             if typeof(jointName) ~= "string" or not skeleton.motorsByPart1[jointName] then
-                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig.')
+                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada por Motor6D.')
             end
             transformFromData(jointData)
         end
 
-        table.insert(frames, frameData)
+        table.insert(frames, {
+            time = frameNumber / data.fps,
+            joints = frameData.joints,
+            easingStyle = easingStyle,
+            easingDirection = easingDirection,
+        })
     end
 
     table.sort(frames, function(a, b)
         return a.time < b.time
     end)
+
+    if frames[1].time > 0 then
+        table.insert(frames, 1, {
+            time = 0,
+            joints = {},
+            easingStyle = frames[1].easingStyle,
+            easingDirection = frames[1].easingDirection,
+        })
+    end
+
+    local lastFrame = frames[#frames]
+    if lastFrame.time < normalizedDuration then
+        table.insert(frames, {
+            time = normalizedDuration,
+            joints = table.clone(lastFrame.joints),
+            easingStyle = lastFrame.easingStyle,
+            easingDirection = lastFrame.easingDirection,
+        })
+    end
+
+    if #frames > MAX_FRAMES then
+        error("A normalização adicionou keyframes e ultrapassou o limite de " .. MAX_FRAMES .. ". Reduza a quantidade de quadros.")
+    end
 
     local cleanName = typeof(data.name) == "string" and data.name or "Posecode_Animation"
     cleanName = cleanName:gsub("[^%w_%-]", "_"):sub(1, 42)
@@ -492,8 +560,8 @@ local function validateData(data, rig, skeleton)
         rig = data.rig,
         fps = data.fps,
         looped = data.looped,
-        duration = data.duration,
-        priority = priority,
+        duration = normalizedDuration,
+        priority = Enum.AnimationPriority[priorityName],
         frames = frames,
     }
 end
@@ -504,34 +572,39 @@ local function buildSequence(data, skeleton)
     sequence.Loop = data.looped
     sequence.Priority = data.priority
 
+    local currentTransforms = {}
+
     local ok, result = pcall(function()
         for index, frameData in ipairs(data.frames) do
+            for jointName, jointData in pairs(frameData.joints) do
+                currentTransforms[jointName] = transformFromData(jointData)
+            end
+
             local keyframe = Instance.new("Keyframe")
             keyframe.Name = string.format("Keyframe_%03d", index)
             keyframe.Time = frameData.time
 
             local rootPose = Instance.new("Pose")
             rootPose.Name = skeleton.rootPart.Name
-            rootPose.CFrame = CFrame.identity
             rootPose.Weight = 0
-            rootPose.Parent = keyframe
 
             local function addChildren(part, parentPose)
                 for _, motor in ipairs(skeleton.childrenByPart0[part] or {}) do
                     local part1 = motor.Part1
                     local pose = Instance.new("Pose")
                     pose.Name = part1.Name
-                    pose.CFrame = transformFromData(frameData.joints[part1.Name])
+                    pose.CFrame = currentTransforms[part1.Name] or CFrame.identity
                     pose.Weight = 1
-                    pose.EasingStyle = Enum.PoseEasingStyle.Linear
-                    pose.EasingDirection = Enum.PoseEasingDirection.In
-                    pose.Parent = parentPose
+                    pose.EasingStyle = frameData.easingStyle
+                    pose.EasingDirection = frameData.easingDirection
+                    parentPose:AddSubPose(pose)
                     addChildren(part1, pose)
                 end
             end
 
             addChildren(skeleton.rootPart, rootPose)
-            keyframe.Parent = sequence
+            keyframe:AddPose(rootPose)
+            sequence:AddKeyframe(keyframe)
         end
         return sequence
     end)
@@ -540,13 +613,40 @@ local function buildSequence(data, skeleton)
         sequence:Destroy()
         error(result)
     end
+
     return result
 end
 
 local function stopPreview()
+    if previewStepConnection then
+        previewStepConnection:Disconnect()
+        previewStepConnection = nil
+    end
+
     if previewTrack then
         pcall(function()
-            previewTrack:Stop(0.12)
+            previewTrack:Stop(0)
+        end)
+    end
+
+    if previewAnimator then
+        pcall(function()
+            previewAnimator:StepAnimations(0)
+        end)
+    end
+
+    for motor, snapshot in pairs(previewJointSnapshot) do
+        if motor and motor.Parent then
+            pcall(function()
+                motor.CurrentAngle = snapshot.currentAngle
+                motor.Transform = snapshot.transform
+            end)
+        end
+    end
+    table.clear(previewJointSnapshot)
+
+    if previewTrack then
+        pcall(function()
             previewTrack:Destroy()
         end)
         previewTrack = nil
@@ -601,19 +701,48 @@ local function beginPreview()
     end
     previewAnimator = animator
 
+    for _, descendant in ipairs(importedRig:GetDescendants()) do
+        if descendant:IsA("Motor6D") then
+            previewJointSnapshot[descendant] = {
+                transform = descendant.Transform,
+                currentAngle = descendant.CurrentAngle,
+            }
+        end
+    end
+
     local ok, result = pcall(function()
-        local temporaryId = AnimationClipProvider:RegisterAnimationClip(importedSequence)
+        local temporaryId = AnimationClipProvider:RegisterActiveAnimationClip(importedSequence)
         local animation = Instance.new("Animation")
         animation.Name = "PosecodePreview"
         animation.AnimationId = temporaryId
 
         local track = animator:LoadAnimation(animation)
         track.Looped = importedData.looped
-        track.Priority = importedSequence.Priority
-        track:Play(0.12)
+        track.Priority = importedData.priority
+        track:Play(0)
 
         previewAnimation = animation
         previewTrack = track
+
+        previewStepConnection = RunService.Heartbeat:Connect(function(deltaTime)
+            if not previewAnimator or not previewTrack then
+                return
+            end
+
+            if not previewTrack.IsPlaying then
+                stopPreview()
+                setStatus("Prévia concluída.", C.green)
+                return
+            end
+
+            local stepOk, stepError = pcall(function()
+                previewAnimator:StepAnimations(deltaTime)
+            end)
+            if not stepOk then
+                stopPreview()
+                setStatus("Falha ao atualizar a prévia: " .. tostring(stepError), C.red)
+            end
+        end)
     end)
 
     if not ok then
@@ -631,28 +760,75 @@ local function saveSequence()
         return
     end
 
+    local recordingId = nil
+    pcall(function()
+        recordingId = ChangeHistoryService:TryBeginRecording(
+            "Posecode_SaveAnimation",
+            "Posecode: salvar keyframes"
+        )
+    end)
+
+    local originalParent = importedSequence.Parent
+    local originalName = importedSequence.Name
+    local createdRoot = nil
+    local createdFolder = nil
+    local createdReference = nil
+
     local ok, result = pcall(function()
         local animSaves = importedRig:FindFirstChild("AnimSaves")
         local saveFolder = nil
 
         if animSaves then
-            if not animSaves:IsA("ObjectValue") then
-                error('O rig já possui um objeto "AnimSaves" que não é ObjectValue.')
-            end
-            if animSaves.Value and animSaves.Value:IsA("Folder") then
-                saveFolder = animSaves.Value
+            if animSaves:IsA("Folder") then
+                -- Compatibilidade com rigs que ainda usam o formato antigo.
+                saveFolder = animSaves
+            elseif animSaves:IsA("ObjectValue") then
+                if animSaves.Value then
+                    if not animSaves.Value:IsA("Folder") then
+                        error("A referência AnimSaves não aponta para uma Folder.")
+                    end
+                    saveFolder = animSaves.Value
+                end
+            else
+                error('O objeto "AnimSaves" do rig precisa ser Folder ou ObjectValue.')
             end
         end
 
         if not saveFolder then
+            local rootFolder = ServerStorage:FindFirstChild("RBX_ANIMSAVES")
+            if rootFolder and not rootFolder:IsA("Folder") then
+                error('ServerStorage.RBX_ANIMSAVES existe, mas não é uma Folder.')
+            end
+
+            if not rootFolder then
+                rootFolder = Instance.new("Folder")
+                rootFolder.Name = "RBX_ANIMSAVES"
+                rootFolder.Parent = ServerStorage
+                createdRoot = rootFolder
+            end
+
+            local folderName = importedRig.Name:gsub("[^%w_%-]", "_")
+            if folderName == "" then
+                folderName = "Rig"
+            end
+
+            local finalFolderName = folderName
+            local suffix = 2
+            while rootFolder:FindFirstChild(finalFolderName) do
+                finalFolderName = folderName .. "_" .. suffix
+                suffix += 1
+            end
+
             saveFolder = Instance.new("Folder")
-            saveFolder.Name = "Posecode_" .. importedRig.Name:gsub("[^%w_%-]", "_")
-            saveFolder.Parent = ServerStorage
+            saveFolder.Name = finalFolderName
+            saveFolder.Parent = rootFolder
+            createdFolder = saveFolder
 
             if not animSaves then
                 animSaves = Instance.new("ObjectValue")
                 animSaves.Name = "AnimSaves"
                 animSaves.Parent = importedRig
+                createdReference = animSaves
             end
             animSaves.Value = saveFolder
         end
@@ -665,36 +841,44 @@ local function saveSequence()
             suffix += 1
         end
 
-        local recordingId = nil
-        pcall(function()
-            recordingId = ChangeHistoryService:TryBeginRecording(
-                "Posecode_SaveAnimation",
-                "Posecode: salvar keyframes"
-            )
-        end)
-
         importedSequence.Name = finalName
         importedSequence.Parent = saveFolder
-
-        if recordingId then
-            pcall(function()
-                ChangeHistoryService:FinishRecording(recordingId, Enum.FinishRecordingOperation.Commit)
-            end)
-        else
-            pcall(function()
-                ChangeHistoryService:SetWaypoint("Posecode: salvar keyframes")
-            end)
-        end
 
         return finalName
     end)
 
+    if recordingId then
+        pcall(function()
+            ChangeHistoryService:FinishRecording(
+                recordingId,
+                ok and Enum.FinishRecordingOperation.Commit or Enum.FinishRecordingOperation.Cancel
+            )
+        end)
+    else
+        pcall(function()
+            ChangeHistoryService:SetWaypoint("Posecode: salvar keyframes")
+        end)
+    end
+
     if not ok then
+        importedSequence.Parent = originalParent
+        importedSequence.Name = originalName
+
+        if createdReference then
+            createdReference:Destroy()
+        end
+        if createdFolder and #createdFolder:GetChildren() == 0 then
+            createdFolder:Destroy()
+        end
+        if createdRoot and #createdRoot:GetChildren() == 0 then
+            createdRoot:Destroy()
+        end
+
         setStatus("Falha ao salvar: " .. tostring(result), C.red)
         return
     end
 
-    setStatus('Keyframes salvos em ServerStorage. Nome: "' .. result .. '".', C.green)
+    setStatus('Keyframes salvos em AnimSaves. Nome: "' .. result .. '".', C.green)
 end
 
 importButton.Activated:Connect(function()
