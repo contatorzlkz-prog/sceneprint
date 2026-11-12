@@ -2,15 +2,15 @@
 
 ## Por que não converter qualquer script?
 
-Um script de animação pode construir movimentos de várias maneiras: alterar Motor6D.Transform, aplicar tweens, calcular trajetórias em loops, reagir a eventos ou depender de variáveis externas. O texto não descreve necessariamente uma lista fixa de poses. Tentar executar e observar um script arbitrário não seria seguro nem reproduzível.
+Um script de animação pode construir movimentos de várias maneiras: alterar Motor6D.Transform ou AnimationConstraint.Transform, aplicar tweens, calcular trajetórias em loops, reagir a eventos ou depender de variáveis externas. O texto não descreve necessariamente uma lista fixa de poses. Tentar executar e observar um script arbitrário não seria seguro nem reproduzível.
 
 O Posecode trabalha com uma representação declarativa: cada quadro tem um tempo e cada junta tem uma transformação local. O plugin extrai apenas o bloco de dados e **nunca executa o script colado**.
 
 ## Hierarquia dos keyframes
 
-O importador cria uma KeyframeSequence. Cada Keyframe contém uma hierarquia de Pose baseada nas conexões Motor6D do rig. A Pose nomeada pela peça conectada é colocada como filha da Pose da peça que a controla; sua CFrame é aplicada à junta correspondente.
+O importador cria uma KeyframeSequence. Cada Keyframe contém uma hierarquia de Pose baseada nas conexões de juntas do rig. A Pose nomeada pela peça conectada é colocada como filha da Pose da peça que a controla; sua CFrame é aplicada à junta correspondente.
 
-A raiz é identificada pela AssemblyRootPart do rig selecionado. O importador exige uma hierarquia conectada, nomes de peças sem duplicação e correspondência com o tipo R6/R15 declarado no bloco.
+A v1.1 aceita Motor6D e AnimationConstraint. Para Motor6D, a conexão usa Part0 e Part1. Para AnimationConstraint, usa Attachment0.Parent e Attachment1.Parent. A raiz é identificada pela AssemblyRootPart do rig selecionado. O importador exige uma hierarquia conectada, nomes de peças sem duplicação e correspondência com o tipo R6/R15 declarado no bloco.
 
 As transformações são esparsas: uma junta mantém o último valor definido nos keyframes seguintes até receber uma nova transformação. Juntas que nunca aparecem permanecem neutras.
 
@@ -24,7 +24,7 @@ O easing pode ser definido globalmente ou em cada quadro, usando Linear, Constan
 
 ## Prévia
 
-O plugin registra a KeyframeSequence usando AnimationClipProvider:RegisterActiveAnimationClip e carrega o ID temporário em um Animator. Durante a prévia, ele avança a avaliação com Animator:StepAnimations no Heartbeat do Studio. Ao parar ou terminar, encerra a track e restaura os valores originais de Transform e CurrentAngle das juntas Motor6D.
+O plugin registra a KeyframeSequence usando AnimationClipProvider:RegisterActiveAnimationClip e carrega o ID temporário em um Animator. Durante a prévia, ele avança a avaliação com Animator:StepAnimations no Heartbeat do Studio. Ao parar ou terminar, encerra a track e restaura os valores originais de Transform das juntas e CurrentAngle quando a junta é Motor6D.
 
 O ID temporário serve apenas para teste local no Studio; não é um asset publicado e não funciona fora dele.
 
@@ -43,6 +43,6 @@ A publicação continua pelo Editor de Animação: abra a sequência salva, conf
 - Não inclui markers/eventos de animação.
 - Não tem edição independente de cada track ou keyframe dentro do plugin.
 - Não faz upload direto para o catálogo de animações.
-- Foca rigs R6/R15 com hierarquia Motor6D conectada; rigs customizados podem exigir ajustes.
+- Foca rigs R6/R15 com hierarquia conectada de Motor6D ou AnimationConstraint; rigs customizados podem exigir ajustes.
 
 A v0.1.1 foi revisada estaticamente. Ainda precisa ser executada no Roblox Studio para validar a compatibilidade do preview e a abertura das sequências salvas pelo Editor de Animação.
