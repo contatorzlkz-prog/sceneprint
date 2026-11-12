@@ -20,7 +20,6 @@
 - Faz pré-verificação do volume de saída: 18.000 poses ou 24.000 chaves de curva.
 - Mantém o formato POSECODE v1 e a interface clássica da versão anterior.
 
-
 ## 1.5 · Ajustes técnicos e experiência de uso
 
 - Reorganiza a interface para um painel clássico, discreto e consistente.
