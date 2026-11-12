@@ -30,7 +30,7 @@ local toolbar = plugin:CreateToolbar("Sceneprint")
 local toolbarButton = toolbar:CreateButton("Sceneprint", "Abrir Sceneprint", "")
 toolbarButton.ClickableWhenViewportHidden = true
 
-local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Right, false, false, 320, 440, 280, 340)
+local widgetInfo = DockWidgetPluginGuiInfo.new(Enum.InitialDockState.Right, false, false, 320, 460, 280, 420)
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Sceneprint.Main", widgetInfo)
 widget.Title = "Sceneprint"
 
