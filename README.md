@@ -19,7 +19,16 @@ A ideia não é tentar interpretar qualquer código Luau. Scripts comuns podem t
 2. Peça à IA uma animação no formato Posecode.
 3. Cole o script no campo de importação.
 4. Gere os keyframes, confira a linha do tempo e reproduza a prévia.
-5. Salve a sequência local e finalize/publica pelo Editor de Animação do Studio.
+5. Salve a sequência local e publique pelo Editor de Animação do Studio.
+
+## Instalar para testar
+
+1. No Roblox Studio, habilite **Plugin Debugging Enabled** nas configurações do Studio.
+2. Crie um Script dentro de ServerStorage e cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua).
+3. Com o Script selecionado no Explorer, use **Plugins → Save as Local Plugin**.
+4. Depois de salvar, remova o Script original de ServerStorage e use a cópia do plugin no PluginDebugService.
+
+A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
 ## O que a primeira versão faz
 
