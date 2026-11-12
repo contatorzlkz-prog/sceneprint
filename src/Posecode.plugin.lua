@@ -918,7 +918,7 @@ local function validateData(data, rig, skeleton)
             error('EasingDirection inválido no keyframe ' .. index .. '. Use In, Out ou InOut.')
         end
 
-        if skeleton.hasAnimationConstraint then
+        if skeleton.hasCurveAnimation then
             if easingStyleName == "Elastic" or easingStyleName == "Bounce" then
                 error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
             end
@@ -977,7 +977,7 @@ local function validateData(data, rig, skeleton)
     end
 
     local estimatedJointFrames = skeleton.jointCount * #frames
-    if skeleton.hasAnimationConstraint then
+    if skeleton.hasCurveAnimation then
         local estimatedCurveKeys = estimatedJointFrames * 6
         if estimatedCurveKeys > MAX_CURVE_KEYS then
             error(string.format(
@@ -1012,7 +1012,10 @@ local function validateData(data, rig, skeleton)
         looped = data.looped,
         duration = normalizedDuration,
         priority = Enum.AnimationPriority[priorityName],
-        clipType = skeleton.hasAnimationConstraint and "CurveAnimation" or "KeyframeSequence",
+        clipType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence",
+        hasBone = skeleton.hasBone,
+        hasAnimationConstraint = skeleton.hasAnimationConstraint,
+        hasMotor6D = skeleton.hasMotor6D,
         frames = frames,
     }
 end
@@ -1190,7 +1193,6 @@ local function buildCurveAnimation(data, skeleton)
                 addNodeFolder(rootNode, rootFolder)
             end
         else
-            rootFolder:Destroy()
             for _, rootBone in ipairs(skeleton.boneRoots) do
                 addNodeFolder(rootBone, animation)
             end
@@ -1209,7 +1211,7 @@ local function buildCurveAnimation(data, skeleton)
 end
 
 local function buildAnimationClip(data, skeleton)
-    if skeleton.hasAnimationConstraint then
+    if skeleton.hasCurveAnimation then
         data.clipType = "CurveAnimation"
         return buildCurveAnimation(data, skeleton)
     end
@@ -1758,14 +1760,21 @@ importButton.Activated:Connect(function()
     loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
     setClipControlsEnabled(true)
 
-    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
+    local clipTypeLabel = "KEYFRAME"
+    if importedData.clipType == "CurveAnimation" then
+        clipTypeLabel = importedData.hasAnimationConstraint and "CURVE* / CONSTRAINT" or "CURVE / BONE"
+    end
     rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
     drawTimeline(importedData)
 
     setStatus(
-        importedData.clipType == "CurveAnimation"
-            and string.format("%d quadros convertidos. Prévia CurveAnimation disponível; confira o comportamento do rig customizado no Studio.", #importedData.frames)
-            or string.format("%d quadros convertidos. Prévia, navegação e salvamento disponíveis.", #importedData.frames),
+        importedData.hasAnimationConstraint
+            and string.format("%d quadros convertidos. A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", #importedData.frames)
+            or string.format(
+                "%d quadros convertidos. %s Prévia, navegação e salvamento disponíveis.",
+                #importedData.frames,
+                importedData.hasBone and "Rig com Bone compatível." or "Rig Motor6D compatível."
+            ),
         C.green
     )
 end)
