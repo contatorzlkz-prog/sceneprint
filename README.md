@@ -32,13 +32,14 @@ A documentação oficial do Roblox explica esse fluxo em [Studio plugins](https:
 
 ## O que mudou na v1.2
 
-- **Dois formatos de saída:** rigs somente com Motor6D geram KeyframeSequence; rigs com AnimationConstraint geram CurveAnimation.
-- Curvas de posição com Vector3Curve e rotação com EulerRotationCurve.
+- **Dois formatos de saída:** rigs somente com Motor6D geram KeyframeSequence; rigs com AnimationConstraint geram CurveAnimation (experimental; compatibilidade ainda não garantida pela documentação oficial).
+- Curvas de posição com Vector3Curve e rotação com EulerRotationCurve; essa saída é identificada como experimental.
 - Linha do tempo arrastável com cursor e leitura do tempo atual.
 - Prévia com reproduzir, pausar/retomar, parar e velocidades 0.5×, 1×, 1.5× e 2×.
 - Navegação para o quadro anterior e o próximo.
 - Botão para carregar um exemplo compatível com o rig selecionado e botão para limpar o campo.
 - Rotações padronizadas em XYZ, em graus, e convertidas para a representação de cada clip.
+- Restauração de Transform simplificada para evitar escrita em CurrentAngle.
 - Tangentes calculadas para os segmentos cúbicos das CurveAnimations.
 - A interface agora identifica se o clip gerado é de keyframes ou curvas.
 
