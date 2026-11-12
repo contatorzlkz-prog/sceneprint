@@ -1,0 +1,322 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/contatorzlkz-prog/sceneprint/blob/main/schemas/posecode-v2.schema.json",
+  "title": "POSECODE V2",
+  "description": "Schema do formato de animação POSECODE V2 importado pelo plugin POSECODE.",
+  "type": "object",
+  "required": [
+    "format",
+    "version",
+    "metadata",
+    "rig",
+    "timeline",
+    "tracks"
+  ],
+  "properties": {
+    "format": {
+      "const": "POSECODE"
+    },
+    "version": {
+      "const": 2
+    },
+    "metadata": {
+      "$ref": "#/$defs/metadata"
+    },
+    "rig": {
+      "$ref": "#/$defs/rig"
+    },
+    "timeline": {
+      "$ref": "#/$defs/timeline"
+    },
+    "tracks": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 256,
+      "items": {
+        "$ref": "#/$defs/track"
+      }
+    },
+    "events": {
+      "type": "array",
+      "maxItems": 128,
+      "items": {
+        "$ref": "#/$defs/event"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "metadata": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "author": {
+          "type": "string",
+          "maxLength": 64
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 256
+        }
+      },
+      "additionalProperties": false
+    },
+    "rig": {
+      "type": "object",
+      "required": [
+        "profile"
+      ],
+      "properties": {
+        "profile": {
+          "enum": [
+            "R6",
+            "R15",
+            "CUSTOM"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "easing": {
+      "type": "object",
+      "required": [
+        "style",
+        "direction"
+      ],
+      "properties": {
+        "style": {
+          "enum": [
+            "Linear",
+            "Constant",
+            "CubicV2",
+            "Elastic",
+            "Bounce"
+          ]
+        },
+        "direction": {
+          "enum": [
+            "In",
+            "Out",
+            "InOut"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "timeline": {
+      "type": "object",
+      "required": [
+        "fps",
+        "duration"
+      ],
+      "properties": {
+        "fps": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        },
+        "duration": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "maximum": 15
+        },
+        "looped": {
+          "type": "boolean",
+          "default": false
+        },
+        "priority": {
+          "enum": [
+            "Core",
+            "Idle",
+            "Movement",
+            "Action",
+            "Action2",
+            "Action3",
+            "Action4"
+          ],
+          "default": "Action"
+        },
+        "defaultEasing": {
+          "type": "object",
+          "properties": {
+            "style": {
+              "enum": [
+                "Linear",
+                "Constant",
+                "CubicV2",
+                "Elastic",
+                "Bounce"
+              ],
+              "default": "Linear"
+            },
+            "direction": {
+              "enum": [
+                "In",
+                "Out",
+                "InOut"
+              ],
+              "default": "InOut"
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "target": {
+      "type": "object",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "Motor6D",
+            "AnimationConstraint",
+            "Bone"
+          ]
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "vector3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": -5,
+          "maximum": 5
+        },
+        {
+          "type": "number",
+          "minimum": -5,
+          "maximum": 5
+        },
+        {
+          "type": "number",
+          "minimum": -5,
+          "maximum": 5
+        }
+      ],
+      "items": false
+    },
+    "rotation3": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "prefixItems": [
+        {
+          "type": "number",
+          "minimum": -720,
+          "maximum": 720
+        },
+        {
+          "type": "number",
+          "minimum": -720,
+          "maximum": 720
+        },
+        {
+          "type": "number",
+          "minimum": -720,
+          "maximum": 720
+        }
+      ],
+      "items": false
+    },
+    "transform": {
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 2,
+      "properties": {
+        "position": {
+          "$ref": "#/$defs/vector3"
+        },
+        "rotation": {
+          "$ref": "#/$defs/rotation3"
+        }
+      },
+      "additionalProperties": false
+    },
+    "key": {
+      "type": "object",
+      "required": [
+        "time",
+        "transform"
+      ],
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "transform": {
+          "$ref": "#/$defs/transform"
+        },
+        "easing": {
+          "$ref": "#/$defs/easing"
+        }
+      },
+      "additionalProperties": false
+    },
+    "track": {
+      "type": "object",
+      "required": [
+        "target",
+        "keys"
+      ],
+      "properties": {
+        "target": {
+          "$ref": "#/$defs/target"
+        },
+        "keys": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 120,
+          "items": {
+            "$ref": "#/$defs/key"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "event": {
+      "type": "object",
+      "required": [
+        "time",
+        "name"
+      ],
+      "properties": {
+        "time": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 15
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "value": {
+          "type": "string",
+          "maxLength": 256,
+          "default": ""
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
