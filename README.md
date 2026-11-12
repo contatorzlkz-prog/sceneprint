@@ -3,6 +3,7 @@
   <h1>Sceneprint</h1>
   <p>Uma revisão rápida da sua seleção no Roblox Studio.</p>
   <p><sub>Criado por <strong>Ruan Carlos</strong> · <a href="https://github.com/contatorzlkz-prog">ruancr</a></sub></p>
+  <img src="assets/sceneprint-scan.svg" width="180" alt="" />
 </div>
 
 ![Prévia do Sceneprint](assets/sceneprint-preview.svg)
