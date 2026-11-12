@@ -132,7 +132,7 @@ local header = make("Frame", root, {
 })
 
 label(header, "POSECODE", UDim2.fromOffset(14, 8), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
-label(header, "ANIMATION TOOL", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
+label(header, "IMPORTADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
 local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -267,7 +267,8 @@ local statusDot = make("Frame", footer, {
 })
 make("UICorner", statusDot, { CornerRadius = UDim.new(1, 0) })
 local statusLabel = label(footer, "Selecione um rig R6 ou R15.", UDim2.fromOffset(29, 6), UDim2.new(1, -43, 0, 27), 9, C.muted)
-statusLabel.TextWrapped = false
+statusLabel.TextWrapped = true
+statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
 label(content, "ENTRADA", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
 label(content, "Cole o JSON ou a variável POSECODE.", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 14), 9, C.muted)
