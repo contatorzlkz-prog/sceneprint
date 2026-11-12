@@ -664,6 +664,7 @@ local function refreshActionButtons()
     local hasSource = sourceBox.Text:match("^%s*$") == nil
     setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
     setButtonState(exampleButton, selectedRigCache ~= nil, false)
+    setButtonState(rigCheckButton, selectedRigCache ~= nil, false)
 end
 
 local function refreshSelectionHint()
@@ -679,6 +680,38 @@ end
 Selection.SelectionChanged:Connect(refreshSelectionHint)
 sourceBox:GetPropertyChangedSignal("Text"):Connect(refreshActionButtons)
 refreshSelectionHint()
+
+local function analyzeSelectedRig()
+    local rig = selectedRigCache
+    if not rig then
+        setStatus("Selecione um Model com juntas ou Bones antes de analisar.", C.red)
+        return
+    end
+
+    local ok, skeleton = pcall(function()
+        return getSkeleton(rig)
+    end)
+    if not ok then
+        setStatus("Rig inválido: " .. tostring(skeleton), C.red)
+        return
+    end
+
+    local humanoid = rig:FindFirstChildOfClass("Humanoid")
+    local profile = humanoid and humanoid.RigType.Name or "CUSTOM"
+    local details = {}
+    if skeleton.partJointCount > 0 then
+        table.insert(details, string.format("%d juntas", skeleton.partJointCount))
+    end
+    if skeleton.boneCount > 0 then
+        table.insert(details, string.format("%d Bones", skeleton.boneCount))
+    end
+
+    local outputType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence"
+    rigInfo.Text = string.format("RIG: %s  /  %d ELEMENTOS  /  %s", profile, skeleton.jointCount, outputType)
+    setStatus("Rig compatível: " .. table.concat(details, " + ") .. ". Saída: " .. outputType .. ".", C.green)
+end
+
+rigCheckButton.Activated:Connect(analyzeSelectedRig)
 
 local function isFiniteNumber(value)
     return typeof(value) == "number" and value == value and value > -math.huge and value < math.huge
@@ -772,8 +805,8 @@ local function validateData(data, rig, skeleton)
     if data.version ~= 1 then
         error('Versão incompatível. Use "version": 1.')
     end
-    if data.rig ~= "R6" and data.rig ~= "R15" then
-        error('Campo "rig" precisa ser "R6" ou "R15".')
+    if data.rig ~= "R6" and data.rig ~= "R15" and data.rig ~= "CUSTOM" then
+        error('Campo "rig" precisa ser "R6", "R15" ou "CUSTOM".')
     end
 
     local humanoid = rig:FindFirstChildOfClass("Humanoid")
@@ -833,7 +866,7 @@ local function validateData(data, rig, skeleton)
         local markers = {}
         if frameData.markers ~= nil then
             local markerCount = arrayLength(frameData.markers, "markers do quadro " .. index, MAX_MARKERS_PER_FRAME)
-            if markerCount > 0 and skeleton.hasAnimationConstraint then
+            if markerCount > 0 and skeleton.hasCurveAnimation then
                 error("Eventos KeyframeMarker exigem saída KeyframeSequence. Remova os markers deste rig CurveAnimation experimental.")
             end
 
@@ -1078,9 +1111,12 @@ local function buildCurveAnimation(data, skeleton)
             snapshots[index] = snapshot
         end
 
-        local rootFolder = Instance.new("Folder")
-        rootFolder.Name = skeleton.rootPart.Name
-        rootFolder.Parent = animation
+        local rootFolder = nil
+        if skeleton.rootPart then
+            rootFolder = Instance.new("Folder")
+            rootFolder.Name = skeleton.rootPart.Name
+            rootFolder.Parent = animation
+        end
 
         local function addCurveKeys(floatCurve, axisGetter, partName, axisKind)
             local keys = {}
@@ -1122,34 +1158,43 @@ local function buildCurveAnimation(data, skeleton)
             floatCurve:SetKeys(keys)
         end
 
-        local function addJointFolders(part, parentFolder)
-            for _, part1 in ipairs(skeleton.childrenByPart0[part] or {}) do
-                local jointFolder = Instance.new("Folder")
-                jointFolder.Name = part1.Name
-                jointFolder.Parent = parentFolder
+        local function addNodeFolder(node, parentFolder)
+            local jointFolder = Instance.new("Folder")
+            jointFolder.Name = node.Name
+            jointFolder.Parent = parentFolder
 
-                local positionCurve = Instance.new("Vector3Curve")
-                positionCurve.Name = "Position"
-                positionCurve.Parent = jointFolder
+            local positionCurve = Instance.new("Vector3Curve")
+            positionCurve.Name = "Position"
+            positionCurve.Parent = jointFolder
 
-                local rotationCurve = Instance.new("EulerRotationCurve")
-                rotationCurve.Name = "Rotation"
-                rotationCurve.RotationOrder = Enum.RotationOrder.XYZ
-                rotationCurve.Parent = jointFolder
+            local rotationCurve = Instance.new("EulerRotationCurve")
+            rotationCurve.Name = "Rotation"
+            rotationCurve.RotationOrder = Enum.RotationOrder.XYZ
+            rotationCurve.Parent = jointFolder
 
-                addCurveKeys(positionCurve:X(), "X", part1.Name, "position")
-                addCurveKeys(positionCurve:Y(), "Y", part1.Name, "position")
-                addCurveKeys(positionCurve:Z(), "Z", part1.Name, "position")
+            addCurveKeys(positionCurve:X(), "X", node.Name, "position")
+            addCurveKeys(positionCurve:Y(), "Y", node.Name, "position")
+            addCurveKeys(positionCurve:Z(), "Z", node.Name, "position")
 
-                addCurveKeys(rotationCurve:X(), "X", part1.Name, "rotation")
-                addCurveKeys(rotationCurve:Y(), "Y", part1.Name, "rotation")
-                addCurveKeys(rotationCurve:Z(), "Z", part1.Name, "rotation")
+            addCurveKeys(rotationCurve:X(), "X", node.Name, "rotation")
+            addCurveKeys(rotationCurve:Y(), "Y", node.Name, "rotation")
+            addCurveKeys(rotationCurve:Z(), "Z", node.Name, "rotation")
 
-                addJointFolders(part1, jointFolder)
+            for _, childNode in ipairs(skeleton.curveChildrenByParent[node] or {}) do
+                addNodeFolder(childNode, jointFolder)
             end
         end
 
-        addJointFolders(skeleton.rootPart, rootFolder)
+        if skeleton.rootPart then
+            for _, rootNode in ipairs(skeleton.curveChildrenByParent[skeleton.rootPart] or {}) do
+                addNodeFolder(rootNode, rootFolder)
+            end
+        else
+            rootFolder:Destroy()
+            for _, rootBone in ipairs(skeleton.boneRoots) do
+                addNodeFolder(rootBone, animation)
+            end
+        end
         return animation
     end)
 
@@ -1671,7 +1716,7 @@ importButton.Activated:Connect(function()
 
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione um rig R6 ou R15 com Motor6D ou AnimationConstraint.", C.red)
+        setStatus("Selecione um Model com Motor6D, AnimationConstraint ou Bone.", C.red)
         return
     end
 
@@ -1713,13 +1758,13 @@ importButton.Activated:Connect(function()
     loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
     setClipControlsEnabled(true)
 
-    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE (EXPERIMENTAL)" or "KEYFRAME"
+    local clipTypeLabel = importedData.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
     rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
     drawTimeline(importedData)
 
     setStatus(
         importedData.clipType == "CurveAnimation"
-            and string.format("%d quadros convertidos. Saída CurveAnimation experimental; confira o rig antes de salvar.", #importedData.frames)
+            and string.format("%d quadros convertidos. Prévia CurveAnimation disponível; confira o comportamento do rig customizado no Studio.", #importedData.frames)
             or string.format("%d quadros convertidos. Prévia, navegação e salvamento disponíveis.", #importedData.frames),
         C.green
     )
@@ -1734,14 +1779,13 @@ exampleButton.Activated:Connect(function()
 
     local ok, result = pcall(function()
         local humanoid = rig:FindFirstChildOfClass("Humanoid")
-        if not humanoid then
-            error("O rig selecionado precisa ter um Humanoid para identificar R6 ou R15.")
-        end
-
         local skeleton = getSkeleton(rig)
-        local rootChildren = skeleton.childrenByPart0[skeleton.rootPart] or {}
+        local rootChildren = skeleton.rootPart
+            and (skeleton.curveChildrenByParent[skeleton.rootPart] or {})
+            or skeleton.boneRoots
+
         if #rootChildren == 0 then
-            error("Não encontrei uma junta conectada à raiz desse rig.")
+            error("Não encontrei uma junta ou Bone ligado à raiz desse rig.")
         end
 
         local jointName = rootChildren[1].Name
@@ -1749,7 +1793,7 @@ exampleButton.Activated:Connect(function()
             format = "POSECODE",
             version = 1,
             name = "Posecode_Sample",
-            rig = humanoid.RigType.Name,
+            rig = humanoid and humanoid.RigType.Name or "CUSTOM",
             fps = 30,
             duration = 0.6,
             looped = false,
@@ -1774,7 +1818,7 @@ exampleButton.Activated:Connect(function()
                             rotation = { 0, 0, 22 },
                         },
                     },
-                    markers = not skeleton.hasAnimationConstraint and {
+                    markers = not skeleton.hasCurveAnimation and {
                         { name = "PosecodeSampleEvent", value = "middle" },
                     } or nil,
                 },
@@ -1798,7 +1842,7 @@ exampleButton.Activated:Connect(function()
     end
 
     sourceBox.Text = result
-    setStatus("Exemplo carregado. Clique em Importar Animação.", C.green)
+    setStatus("Exemplo carregado. Clique em Importar clip.", C.green)
 end)
 
 clearButton.Activated:Connect(function()
