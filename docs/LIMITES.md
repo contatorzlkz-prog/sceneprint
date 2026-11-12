@@ -52,9 +52,13 @@ Durante a prévia, `Animator:StepAnimations()` avança a avaliação no contexto
 
 Consulte [Animator](https://create.roblox.com/docs/reference/engine/classes/Animator), [AnimationController](https://create.roblox.com/docs/reference/engine/classes/AnimationController) e [AnimationClipProvider](https://create.roblox.com/docs/reference/engine/classes/AnimationClipProvider).
 
+## Interface v1.8
+
+A janela separa as ações em três abas: **Importar**, **Prévia** e **Rig**. A aba Importar concentra o JSON e a conversão; Prévia contém a timeline e os controles do clip; Rig contém a análise estrutural. O status permanece no rodapé durante a navegação. Os ícones são desenhados com elementos GUI nativos e não exigem IDs de imagem.
+
 ## Análise do rig
 
-O botão **Analisar rig** verifica a hierarquia antes da importação e informa o perfil detectado, a quantidade de juntas/Bones e a rota de saída prevista. A validação rejeita raízes ambíguas, ciclos, partes fora do Model selecionado, alvos sem conexão e nomes de canal duplicados.
+O botão **Analisar estrutura do rig**, na aba **Rig**, verifica a hierarquia antes da importação e informa o perfil detectado, a quantidade de juntas/Bones e a rota de saída prevista. A validação rejeita raízes ambíguas, ciclos, partes fora do Model selecionado, alvos sem conexão e nomes de canal duplicados.
 
 ## Limites de processamento
 
