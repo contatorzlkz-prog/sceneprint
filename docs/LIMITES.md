@@ -13,7 +13,9 @@ O importador aceita duas estruturas de dados:
 - **V2 (recomendado):** organiza o documento em `metadata`, `rig`, `timeline`, `tracks` e `events`. Cada track declara seu alvo e seus próprios keyframes. Keyframes de tracks diferentes são reunidos em uma timeline comum.
 - **V1 (legado):** mantém a estrutura anterior de `rig`, `fps`, `duration` e `frames`, com `joints` por quadro.
 
-Na versão 2.0, o V2 também pode passar pelo otimizador conservador: somente keyframes intermediários de sequências de três ou mais transformações consecutivas idênticas são removidos; primeiro e último permanecem. A migração V1 → V2 valida o documento legado e o rig antes de gerar o JSON novo.\n\nO V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
+Na versão 2.0, o V2 também pode passar pelo otimizador conservador: somente keyframes intermediários de sequências de três ou mais transformações consecutivas idênticas são removidos; primeiro e último permanecem. A migração V1 → V2 valida o documento legado e o rig antes de gerar o JSON novo.
+
+O V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
 
 No V2, o easing é aplicado por instante global. Se várias tracks tiverem keyframes no mesmo instante, todas precisam usar o mesmo `style` e `direction`. Isso evita resultados ambíguos no pipeline de saída atual.
 
@@ -35,7 +37,7 @@ A estrutura segue a referência de [CurveAnimation](https://create.roblox.com/do
 
 ### AnimationConstraint
 
-A v1.7 mantém a rota experimental para rigs com `AnimationConstraint`, lendo os alvos por `Attachment0` e `Attachment1`. O Roblox usa AnimationConstraint como substituto de Motor6D em novos rigs de avatar, mas a documentação de CurveAnimation não garante explicitamente essa configuração. Por isso, a prévia precisa ser conferida no Studio e o plugin mantém essa saída identificada como experimental.
+A v2.0 mantém a rota experimental para rigs com `AnimationConstraint`, lendo os alvos por `Attachment0` e `Attachment1`. O Roblox usa AnimationConstraint como substituto de Motor6D em novos rigs de avatar, mas a documentação de CurveAnimation não garante explicitamente essa configuração. Por isso, a prévia precisa ser conferida no Studio e o plugin mantém essa saída identificada como experimental.
 
 Não altere os CFrames dos RigAttachments para corrigir o resultado. A documentação de migração recomenda usar as propriedades de Transform e os Attachments conforme o sistema de avatar. Consulte [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint) e a [documentação do Avatar Joint Upgrade](https://devforum.roblox.com/t/avatar-joint-upgrade-aju-phase-2-rollout-updated-migration-recommendations/4656414).
 
