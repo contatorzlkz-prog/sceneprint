@@ -168,11 +168,11 @@ local function drawIcon(parent, iconName, position, size, color)
     return canvas
 end
 
-local function sectionHeader(parent, number, title, iconName, position)
+local function sectionHeader(parent, number, title, iconName, position, textSize)
     drawIcon(parent, iconName, position, 14, C.muted)
     label(parent, number .. "  /  " .. title,
         position + UDim2.fromOffset(20, 0),
-        UDim2.new(1, -20, 0, 15), 9, C.muted, Enum.Font.GothamBold)
+        textSize or UDim2.new(1, -20, 0, 15), 9, C.muted, Enum.Font.GothamBold)
 end
 
 local function button(parent, text, position, size, primary, iconName)
@@ -196,9 +196,13 @@ local function button(parent, text, position, size, primary, iconName)
     if iconName then
         local iconSize = math.min(16, math.max(12, size.Y.Offset - 12))
         local hasText = text ~= nil and text ~= ""
-        local iconX = hasText and 10 or math.floor((size.X.Offset - iconSize) * 0.5)
         local iconY = math.floor((size.Y.Offset - iconSize) * 0.5)
-        drawIcon(object, iconName, UDim2.fromOffset(iconX, iconY), iconSize, primary and C.background or C.text)
+        local iconObject = drawIcon(object, iconName,
+            hasText and UDim2.fromOffset(10, iconY) or UDim2.new(0.5, -iconSize * 0.5, 0, iconY),
+            iconSize, primary and C.background or C.text)
+        if not hasText then
+            iconObject.AnchorPoint = Vector2.new(0.5, 0)
+        end
 
         if hasText then
             label(object, text, UDim2.fromOffset(34, 0), UDim2.new(1, -40, 1, 0),
@@ -326,7 +330,7 @@ local timelinePanel = make("Frame", content, {
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-sectionHeader(timelinePanel, "02", "TIMELINE", "timeline", UDim2.fromOffset(0, 0))
+sectionHeader(timelinePanel, "02", "TIMELINE", "timeline", UDim2.fromOffset(0, 0), UDim2.new(0.38, -20, 0, 15))
 local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
 timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
 
