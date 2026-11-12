@@ -6,6 +6,19 @@ O plugin não interpreta a lógica de scripts Luau arbitrários. Scripts podem c
 
 O POSECODE extrai somente JSON estruturado. Não usa `loadstring` e não executa o conteúdo colado. A entrada tem limite de 256 KB.
 
+## Formatos POSECODE
+
+O importador aceita duas estruturas de dados:
+
+- **V2 (recomendado):** organiza o documento em `metadata`, `rig`, `timeline`, `tracks` e `events`. Cada track declara seu alvo e seus próprios keyframes. Keyframes de tracks diferentes são reunidos em uma timeline comum.
+- **V1 (legado):** mantém a estrutura anterior de `rig`, `fps`, `duration` e `frames`, com `joints` por quadro.
+
+O V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
+
+No V2, o easing é aplicado por instante global. Se várias tracks tiverem keyframes no mesmo instante, todas precisam usar o mesmo `style` e `direction`. Isso evita resultados ambíguos no pipeline de saída atual.
+
+Veja o [guia completo do POSECODE V2](FORMATO_V2.md) e a [referência V1](FORMATO.md).
+
 ## Compatibilidade de rigs
 
 ### Motor6D
