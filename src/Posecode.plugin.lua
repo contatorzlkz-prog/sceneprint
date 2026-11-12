@@ -1109,8 +1109,6 @@ local function normalizeV2Data(data, skeleton)
             frame = {
                 time = time,
                 joints = {},
-                easingStyle = defaultEasingStyle,
-                easingDirection = defaultEasingDirection,
             }
             framesByTime[time] = frame
         end
@@ -1184,13 +1182,17 @@ local function normalizeV2Data(data, skeleton)
             end
 
             local frame = getFrame(time)
-            if frame.easingStyle ~= easingStyle
-                or frame.easingDirection ~= easingDirection then
+            if frame.easingStyle ~= nil
+                and (frame.easingStyle ~= easingStyle
+                    or frame.easingDirection ~= easingDirection) then
                 error(
                     "Tracks com keyframes no mesmo instante precisam usar o mesmo easing. "
                         .. "Ajuste key.easing ou timeline.defaultEasing."
                 )
             end
+            frame.easingStyle = easingStyle
+            frame.easingDirection = easingDirection
+
             if frame.joints[targetName] ~= nil then
                 error('A track "' .. targetName .. '" repetiu um keyframe no mesmo instante.')
             end
@@ -1215,7 +1217,10 @@ local function normalizeV2Data(data, skeleton)
             or #event.name > 64 then
             error("O nome de cada evento precisa ter entre 1 e 64 caracteres.")
         end
-        local value = event.value or ""
+        local value = event.value
+        if value == nil then
+            value = ""
+        end
         if typeof(value) ~= "string" or #value > 256 then
             error("event.value precisa ser texto com até 256 caracteres.")
         end
