@@ -420,8 +420,6 @@ end
 
 local function getSkeleton(rig)
     local jointsByPart1 = {}
-    local nodes = {}
-    local nodeNameCounts = {}
     local childrenByPart0 = {}
     local incomingParts = {}
     local curveChildrenByParent = {}
@@ -441,8 +439,14 @@ local function getSkeleton(rig)
     end
 
     local function registerJointName(name, target)
-        nodeNameCounts[name] = (nodeNameCounts[name] or 0) + 1
-        table.insert(nodes, target)
+        if jointsByPart1[name] then
+            error(
+                'Há mais de uma junta ou Bone com o nome "'
+                    .. name
+                    .. '". Renomeie os alvos para que cada canal seja único.'
+            )
+        end
+        jointsByPart1[name] = target
     end
 
     for _, descendant in ipairs(rig:GetDescendants()) do
@@ -640,50 +644,9 @@ local function getSkeleton(rig)
         error("O rig possui Bones, mas nenhum Bone raiz ligado diretamente a uma BasePart.")
     end
 
-    local channelTargets = {}
-    local nodePaths = {}
-
-    local function getRelativeNodePath(node)
-        local segments = {}
-        local current = node
-        while current and current ~= rig do
-            table.insert(segments, current.Name)
-            current = current.Parent
-        end
-        if current ~= rig then
-            error("Não foi possível resolver o caminho de um canal dentro do Model.")
-        end
-
-        local ordered = {}
-        for index = #segments, 1, -1 do
-            table.insert(ordered, segments[index])
-        end
-        return table.concat(ordered, "/")
-    end
-
-    for _, node in ipairs(nodes) do
-        local path = getRelativeNodePath(node)
-        if channelTargets[path] then
-            error('O caminho de canal "' .. path .. '" não é único dentro do Model.')
-        end
-        channelTargets[path] = node
-        nodePaths[node] = path
-
-        if nodeNameCounts[node.Name] == 1 then
-            channelTargets[node.Name] = node
-        end
-    end
-
-    table.sort(nodes, function(a, b)
-        return nodePaths[a] < nodePaths[b]
-    end)
-
     return {
         rootPart = rootPart,
-        nodes = nodes,
-        nodePaths = nodePaths,
-        channelTargets = channelTargets,
-        jointsByPart1 = channelTargets,
+        jointsByPart1 = jointsByPart1,
         childrenByPart0 = childrenByPart0,
         curveChildrenByParent = curveChildrenByParent,
         boneChildrenByParent = boneChildrenByParent,
@@ -793,23 +756,11 @@ local function readVector3(value, fieldName, limit)
     if value == nil then
         return 0, 0, 0
     end
-    if typeof(value) ~= "table" then
-        error(fieldName .. " precisa ser um array [x, y, z] ou objeto {x, y, z}.")
+    if arrayLength(value, fieldName, 3) ~= 3 then
+        error(fieldName .. " deve conter exatamente três números [x, y, z].")
     end
 
-    local x, y, z
-    if value[1] ~= nil or value[2] ~= nil or value[3] ~= nil then
-        if arrayLength(value, fieldName, 3) ~= 3 then
-            error(fieldName .. " deve conter exatamente três números [x, y, z].")
-        end
-        x, y, z = value[1], value[2], value[3]
-    else
-        x, y, z = value.x, value.y, value.z
-        if x == nil or y == nil or z == nil then
-            error(fieldName .. " precisa conter x, y e z.")
-        end
-    end
-
+    local x, y, z = value[1], value[2], value[3]
     if not isFiniteNumber(x) or math.abs(x) > limit
         or not isFiniteNumber(y) or math.abs(y) > limit
         or not isFiniteNumber(z) or math.abs(z) > limit then
@@ -826,10 +777,8 @@ local function transformFromData(jointData)
         error("Cada junta precisa ser um objeto com position e rotation.")
     end
 
-    local positionData = jointData.position or jointData.translation
-    local rotationData = jointData.rotation or jointData.rotationDegrees or jointData.euler
-    local px, py, pz = readVector3(positionData, "position", MAX_TRANSFORM_OFFSET)
-    local rx, ry, rz = readVector3(rotationData, "rotation", MAX_ROTATION)
+    local px, py, pz = readVector3(jointData.position, "position", MAX_TRANSFORM_OFFSET)
+    local rx, ry, rz = readVector3(jointData.rotation, "rotation", MAX_ROTATION)
 
     return CFrame.new(px, py, pz) * CFrame.fromEulerAnglesXYZ(
         math.rad(rx),
@@ -857,51 +806,56 @@ local function extractPayload(source)
 end
 
 local function validateData(data, rig, skeleton)
-    if typeof(data) ~= "table" then error("O conteúdo precisa ser um objeto JSON.") end
-    if data.format ~= "POSECODE" then error('Campo "format" precisa ser "POSECODE".') end
-    if data.version ~= 1 then error('Versão incompatível. Use "version": 1.') end
-
-    local humanoid = rig:FindFirstChildOfClass("Humanoid")
-    local rigProfile = data.rig or (humanoid and humanoid.RigType.Name) or "CUSTOM"
-    if rigProfile ~= "R6" and rigProfile ~= "R15" and rigProfile ~= "CUSTOM" then
+    if typeof(data) ~= "table" then
+        error("O conteúdo precisa ser um objeto JSON.")
+    end
+    if data.format ~= "POSECODE" then
+        error('Campo "format" precisa ser "POSECODE".')
+    end
+    if data.version ~= 1 then
+        error('Versão incompatível. Use "version": 1.')
+    end
+    if data.rig ~= "R6" and data.rig ~= "R15" and data.rig ~= "CUSTOM" then
         error('Campo "rig" precisa ser "R6", "R15" ou "CUSTOM".')
     end
-    if humanoid and humanoid.RigType.Name ~= rigProfile then
-        error("O script é para " .. rigProfile .. ", mas o rig selecionado é " .. humanoid.RigType.Name .. ".")
+
+    local humanoid = rig:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.RigType.Name ~= data.rig then
+        error("O script é para " .. data.rig .. ", mas o rig selecionado é " .. humanoid.RigType.Name .. ".")
     end
 
-    local fps = data.fps
-    if fps == nil then fps = 30 end
-    if not isFiniteNumber(fps) or fps < 1 or fps > 60 or fps % 1 ~= 0 then
+    if not isFiniteNumber(data.fps) or data.fps < 1 or data.fps > 60 or data.fps % 1 ~= 0 then
         error('"fps" precisa ser um número inteiro entre 1 e 60.')
     end
-
-    local looped = data.looped
-    if looped == nil then looped = false end
-    if typeof(looped) ~= "boolean" then error('"looped" precisa ser true ou false.') end
+    if typeof(data.looped) ~= "boolean" then
+        error('"looped" precisa ser true ou false.')
+    end
     if not isFiniteNumber(data.duration) or data.duration <= 0 or data.duration > MAX_DURATION then
         error('"duration" precisa estar entre 0 e 15 segundos.')
     end
-
     local frameCount = arrayLength(data.frames, "frames", MAX_FRAMES)
-    if frameCount < 1 then error("A animação precisa ter pelo menos um keyframe.") end
+    if frameCount < 1 then
+        error("A animação precisa ter pelo menos um keyframe.")
+    end
 
-    local durationFrames = math.floor(data.duration * fps + 0.5)
-    if durationFrames < 1 then error("A duração precisa ser de pelo menos um quadro no FPS informado.") end
-    local normalizedDuration = durationFrames / fps
+    local durationFrames = math.floor(data.duration * data.fps + 0.5)
+    if durationFrames < 1 then
+        error("A duração precisa ser de pelo menos um quadro no FPS informado.")
+    end
+    local normalizedDuration = durationFrames / data.fps
 
     local priorityName = data.priority or "Action"
     local validPriorities = {
-        Core = true, Idle = true, Movement = true, Action = true,
-        Action2 = true, Action3 = true, Action4 = true,
+        Core = true,
+        Idle = true,
+        Movement = true,
+        Action = true,
+        Action2 = true,
+        Action3 = true,
+        Action4 = true,
     }
     if typeof(priorityName) ~= "string" or not validPriorities[priorityName] then
         error('"priority" precisa ser Core, Idle, Movement, Action, Action2, Action3 ou Action4.')
-    end
-
-    local rotationType = data.rotationType or "Euler"
-    if rotationType ~= "Euler" and rotationType ~= "Quaternion" then
-        error('"rotationType" precisa ser "Euler" ou "Quaternion".')
     end
 
     local frames = {}
@@ -915,58 +869,17 @@ local function validateData(data, rig, skeleton)
         if frameData.time < 0 or frameData.time > data.duration then
             error("O tempo de um keyframe ultrapassa a duração declarada.")
         end
-
-        local normalizedJoints = {}
-        if frameData.joints ~= nil then
-            if typeof(frameData.joints) ~= "table" then
-                error("Keyframe " .. index .. " precisa ter um objeto joints.")
-            end
-            for targetName, jointData in pairs(frameData.joints) do
-                if typeof(targetName) ~= "string" then
-                    error("Os nomes dos canais em joints precisam ser strings.")
-                end
-                normalizedJoints[targetName] = jointData
-            end
-        end
-
-        if frameData.tracks ~= nil then
-            local trackCount = arrayLength(frameData.tracks, "tracks do quadro " .. index, MAX_JOINTS)
-            for trackIndex, trackData in ipairs(frameData.tracks) do
-                if typeof(trackData) ~= "table" then
-                    error("Track " .. trackIndex .. " do quadro " .. index .. " precisa ser um objeto.")
-                end
-                local targetName = trackData.target or trackData.path or trackData.name
-                if typeof(targetName) ~= "string" or targetName:match("^%s*$") then
-                    error("Cada track precisa informar target, path ou name.")
-                end
-                if normalizedJoints[targetName] ~= nil then
-                    error('O canal "' .. targetName .. '" foi informado mais de uma vez no mesmo quadro.')
-                end
-                if trackData.transform ~= nil then
-                    if typeof(trackData.transform) ~= "table" then
-                        error("O campo transform da track precisa ser um objeto.")
-                    end
-                    normalizedJoints[targetName] = trackData.transform
-                else
-                    normalizedJoints[targetName] = {
-                        position = trackData.position or trackData.translation,
-                        rotation = trackData.rotation or trackData.rotationDegrees or trackData.euler,
-                    }
-                end
-            end
-            if trackCount == 0 and frameData.joints == nil then
-                error("Keyframe " .. index .. " precisa conter joints ou tracks.")
-            end
-        elseif frameData.joints == nil then
-            error("Keyframe " .. index .. " precisa conter joints ou tracks.")
+        if typeof(frameData.joints) ~= "table" then
+            error("Keyframe " .. index .. " precisa ter um objeto joints.")
         end
 
         local markers = {}
         if frameData.markers ~= nil then
             local markerCount = arrayLength(frameData.markers, "markers do quadro " .. index, MAX_MARKERS_PER_FRAME)
             if markerCount > 0 and skeleton.hasCurveAnimation then
-                error("Eventos KeyframeMarker exigem saída KeyframeSequence. Remova os markers deste rig CurveAnimation.")
+                error("Eventos KeyframeMarker exigem saída KeyframeSequence. Remova os markers deste rig CurveAnimation experimental.")
             end
+
             for markerIndex, markerData in ipairs(frameData.markers) do
                 if typeof(markerData) ~= "table" then
                     error("Evento " .. markerIndex .. " do quadro " .. index .. " precisa ser um objeto.")
@@ -978,17 +891,22 @@ local function validateData(data, rig, skeleton)
                 if typeof(markerValue) ~= "string" or #markerValue > 256 then
                     error("O valor do evento precisa ser texto com até 256 caracteres.")
                 end
+
                 totalMarkerCount += 1
                 if totalMarkerCount > MAX_MARKERS then
                     error("A animação ultrapassa o limite de " .. MAX_MARKERS .. " eventos.")
                 end
-                table.insert(markers, { name = markerData.name, value = markerValue })
+
+                table.insert(markers, {
+                    name = markerData.name,
+                    value = markerValue,
+                })
             end
         end
 
-        local frameNumber = math.floor(frameData.time * fps + 0.5)
+        local frameNumber = math.floor(frameData.time * data.fps + 0.5)
         if frameNumber > durationFrames then
-            error("Um keyframe ficou depois do fim ao ajustar ao FPS.")
+            error("Um keyframe ficou depois do fim ao ajustar ao FPS informado.")
         end
         if seenFrames[frameNumber] then
             error("Dois keyframes caíram no mesmo quadro depois do ajuste ao FPS.")
@@ -1002,33 +920,34 @@ local function validateData(data, rig, skeleton)
         end
         local easingStyle = Enum.PoseEasingStyle[easingStyleName]
         local easingDirection = Enum.PoseEasingDirection[easingDirectionName]
+
         if not easingStyle then
             error('EasingStyle inválido no keyframe ' .. index .. '. Use Linear, Constant, CubicV2, Elastic ou Bounce.')
         end
         if not easingDirection then
             error('EasingDirection inválido no keyframe ' .. index .. '. Use In, Out ou InOut.')
         end
+
         if skeleton.hasCurveAnimation then
             if easingStyleName == "Elastic" or easingStyleName == "Bounce" then
                 error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
             end
             if easingStyleName == "CubicV2" and easingDirectionName ~= "InOut" then
-                error("CurveAnimation com CubicV2 exige easingDirection InOut.")
+                error("CurveAnimation com CubicV2 exige easingDirection InOut. Ajuste o easingDirection deste quadro.")
             end
         end
 
         local transforms = {}
-        for targetName, jointData in pairs(normalizedJoints) do
-            local target = skeleton.channelTargets[targetName]
-            if not target then
-                error('O canal "' .. tostring(targetName) .. '" não existe ou é ambíguo. Use o caminho completo dentro do Model.')
+        for jointName, jointData in pairs(frameData.joints) do
+            if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
+                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
             end
-            transforms[target] = transformFromData(jointData)
+            transforms[jointName] = transformFromData(jointData)
         end
 
         table.insert(frames, {
-            time = frameNumber / fps,
-            joints = normalizedJoints,
+            time = frameNumber / data.fps,
+            joints = frameData.joints,
             transforms = transforms,
             markers = markers,
             easingStyle = easingStyle,
@@ -1036,11 +955,16 @@ local function validateData(data, rig, skeleton)
         })
     end
 
-    table.sort(frames, function(a, b) return a.time < b.time end)
+    table.sort(frames, function(a, b)
+        return a.time < b.time
+    end)
 
     if frames[1].time > 0 then
         table.insert(frames, 1, {
-            time = 0, joints = {}, transforms = {}, markers = {},
+            time = 0,
+            joints = {},
+            transforms = {},
+            markers = {},
             easingStyle = frames[1].easingStyle,
             easingDirection = frames[1].easingDirection,
         })
@@ -1068,7 +992,8 @@ local function validateData(data, rig, skeleton)
         if estimatedCurveKeys > MAX_CURVE_KEYS then
             error(string.format(
                 "A saída CurveAnimation exigiria %d chaves de curva; o limite seguro é %d. Reduza quadros ou juntas.",
-                estimatedCurveKeys, MAX_CURVE_KEYS
+                estimatedCurveKeys,
+                MAX_CURVE_KEYS
             ))
         end
     else
@@ -1076,25 +1001,27 @@ local function validateData(data, rig, skeleton)
         if estimatedPoseInstances > MAX_POSE_INSTANCES then
             error(string.format(
                 "A saída KeyframeSequence exigiria %d poses; o limite seguro é %d. Reduza quadros ou juntas.",
-                estimatedPoseInstances, MAX_POSE_INSTANCES
+                estimatedPoseInstances,
+                MAX_POSE_INSTANCES
             ))
         end
     end
 
     local cleanName = typeof(data.name) == "string" and data.name or "Posecode_Animation"
     cleanName = cleanName:gsub("[^%w_%-]", "_"):sub(1, 42)
-    if cleanName == "" then cleanName = "Posecode_Animation" end
+    if cleanName == "" then
+        cleanName = "Posecode_Animation"
+    end
 
     return {
         name = cleanName,
         format = data.format,
         version = data.version,
-        rig = rigProfile,
-        fps = fps,
-        looped = looped,
+        rig = data.rig,
+        fps = data.fps,
+        looped = data.looped,
         duration = normalizedDuration,
         priority = Enum.AnimationPriority[priorityName],
-        rotationType = rotationType,
         clipType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence",
         hasBone = skeleton.hasBone,
         hasAnimationConstraint = skeleton.hasAnimationConstraint,
@@ -1102,6 +1029,7 @@ local function validateData(data, rig, skeleton)
         frames = frames,
     }
 end
+
 local function buildKeyframeSequence(data, skeleton)
     local sequence = Instance.new("KeyframeSequence")
     local ok, result = pcall(function()
@@ -1111,8 +1039,8 @@ local function buildKeyframeSequence(data, skeleton)
 
         local currentTransforms = {}
         for index, frameData in ipairs(data.frames) do
-            for target, transform in pairs(frameData.transforms) do
-                currentTransforms[target] = transform
+            for jointName, transform in pairs(frameData.transforms) do
+                currentTransforms[jointName] = transform
             end
 
             local keyframe = Instance.new("Keyframe")
@@ -1136,7 +1064,7 @@ local function buildKeyframeSequence(data, skeleton)
                     local pose = Instance.new("Pose")
                     pose.Name = part1.Name
                     parentPose:AddSubPose(pose)
-                    pose.CFrame = currentTransforms[part1] or CFrame.identity
+                    pose.CFrame = currentTransforms[part1.Name] or CFrame.identity
                     pose.EasingStyle = frameData.easingStyle
                     pose.EasingDirection = frameData.easingDirection
                     addChildren(part1, pose)
@@ -1180,18 +1108,17 @@ local function buildCurveAnimation(data, skeleton)
         local currentTransforms = {}
 
         for index, frameData in ipairs(data.frames) do
-            for target, transform in pairs(frameData.transforms) do
-                currentTransforms[target] = transform
+            for jointName, transform in pairs(frameData.transforms) do
+                currentTransforms[jointName] = transform
             end
 
             local snapshot = {}
-            for _, node in ipairs(skeleton.nodes) do
-                local transform = currentTransforms[node] or CFrame.identity
+            for jointName in pairs(skeleton.jointsByPart1) do
+                local transform = currentTransforms[jointName] or CFrame.identity
                 local rx, ry, rz = transform:ToEulerAnglesXYZ()
-                snapshot[node] = {
+                snapshot[jointName] = {
                     position = transform.Position,
                     rotation = Vector3.new(rx, ry, rz),
-                    cframe = transform,
                 }
             end
             snapshots[index] = snapshot
@@ -1204,11 +1131,11 @@ local function buildCurveAnimation(data, skeleton)
             rootFolder.Parent = animation
         end
 
-        local function addCurveKeys(floatCurve, axisGetter, node, axisKind)
+        local function addCurveKeys(floatCurve, axisGetter, partName, axisKind)
             local keys = {}
 
             local function getValue(index)
-                local pose = snapshots[index][node]
+                local pose = snapshots[index][partName]
                 if axisKind == "position" then
                     return pose.position[axisGetter]
                 end
@@ -1253,37 +1180,18 @@ local function buildCurveAnimation(data, skeleton)
             positionCurve.Name = "Position"
             positionCurve.Parent = jointFolder
 
-            if data.rotationType == "Quaternion" then
-                local rotationCurve = Instance.new("RotationCurve")
-                rotationCurve.Name = "Rotation"
-                rotationCurve.Parent = jointFolder
+            local rotationCurve = Instance.new("EulerRotationCurve")
+            rotationCurve.Name = "Rotation"
+            rotationCurve.RotationOrder = Enum.RotationOrder.XYZ
+            rotationCurve.Parent = jointFolder
 
-                local rotationKeys = {}
-                for index, frameData in ipairs(data.frames) do
-                    table.insert(
-                        rotationKeys,
-                        RotationCurveKey.new(
-                            frameData.time,
-                            snapshots[index][node].cframe.Rotation,
-                            curveInterpolation(frameData)
-                        )
-                    )
-                end
-                rotationCurve:SetKeys(rotationKeys)
-            else
-                local rotationCurve = Instance.new("EulerRotationCurve")
-                rotationCurve.Name = "Rotation"
-                rotationCurve.RotationOrder = Enum.RotationOrder.XYZ
-                rotationCurve.Parent = jointFolder
+            addCurveKeys(positionCurve:X(), "X", node.Name, "position")
+            addCurveKeys(positionCurve:Y(), "Y", node.Name, "position")
+            addCurveKeys(positionCurve:Z(), "Z", node.Name, "position")
 
-                addCurveKeys(rotationCurve:X(), "X", node, "rotation")
-                addCurveKeys(rotationCurve:Y(), "Y", node, "rotation")
-                addCurveKeys(rotationCurve:Z(), "Z", node, "rotation")
-            end
-
-            addCurveKeys(positionCurve:X(), "X", node, "position")
-            addCurveKeys(positionCurve:Y(), "Y", node, "position")
-            addCurveKeys(positionCurve:Z(), "Z", node, "position")
+            addCurveKeys(rotationCurve:X(), "X", node.Name, "rotation")
+            addCurveKeys(rotationCurve:Y(), "Y", node.Name, "rotation")
+            addCurveKeys(rotationCurve:Z(), "Z", node.Name, "rotation")
 
             for _, childNode in ipairs(skeleton.curveChildrenByParent[node] or {}) do
                 addNodeFolder(childNode, jointFolder)
