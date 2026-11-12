@@ -1,75 +1,80 @@
 <div align="center">
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
-  <p>Importador de animações estruturadas para Roblox Studio.</p>
-  <p><sub>ruancr · v1.8 · EM DESENVOLVIMENTO</sub></p>
+  <p>Importador e conversor de animações para Roblox Studio.</p>
+  <p><sub>ruancr · v2.0 · EM DESENVOLVIMENTO</sub></p>
 </div>
 
-![Interface do POSECODE v1.8](assets/posecode-preview.svg)
+![Interface do POSECODE v2.0](assets/posecode-preview.svg)
 
 ## Sobre
 
-O POSECODE converte dados nos formatos POSECODE V2 e V1 em clips editáveis no Roblox Studio. O V2 é o formato recomendado para novas animações; o V1 continua disponível para compatibilidade. O importador valida a hierarquia do rig, converte keyframes, oferece prévia local e salva o resultado no fluxo de animação do Studio.
+O POSECODE transforma documentos POSECODE V2 ou V1 em clips editáveis no Roblox Studio. O V2 é o formato principal, organizado por tracks; o V1 continua disponível para projetos existentes.
 
-O conteúdo colado nunca é executado. A entrada é JSON estruturado, diretamente ou dentro de uma variável `POSECODE`.
+A entrada é validada como JSON estruturado. O conteúdo colado nunca é executado.
 
-## Interface v1.8
+## Destaques da v2.0
 
-A janela foi dividida em três áreas de navegação:
-
-- **Importar:** editor JSON, importação, exemplo e limpeza.
-- **Prévia:** timeline, reprodução, pausa, velocidade, repetição, navegação por quadros e salvamento.
-- **Rig:** análise isolada da estrutura e da rota de saída.
-
-Ao importar um clip com sucesso, o painel abre automaticamente **Prévia**. Os ícones de navegação são desenhados com elementos GUI nativos do plugin; não dependem de IDs de imagem ou uploads externos. O SVG de referência está em [posecode-icons.svg](assets/icons/posecode-icons.svg).
+- **POSECODE V2 nativo:** tracks tipadas, timeline comum, metadados e eventos.
+- **Migração V1 → V2:** converte documentos antigos e devolve o JSON V2 na caixa de entrada para revisão antes da importação.
+- **Otimização conservadora:** remove apenas keyframes intermediários em sequências de três ou mais transformações consecutivas idênticas, mantendo o primeiro e o último.
+- **Diagnóstico de rig:** discrimina contagens de Motor6D, AnimationConstraint e Bone, além da rota de saída.
+- **JSON Schema:** especificação formal para validar documentos V2 em ferramentas externas.
+- **Interface por etapas:** Importar, Prévia e Rig, com os controles separados.
 
 ## Formatos
 
-- **POSECODE V2:** estrutura recomendada com `metadata`, `rig`, `timeline`, `tracks` e `events`.
-- **POSECODE V1:** formato anterior, mantido para projetos existentes.
+- **POSECODE V2:** formato recomendado. Estrutura com \`metadata\`, \`rig\`, \`timeline\`, \`tracks\` e \`events\`.
+- **POSECODE V1:** formato legado, aceito para compatibilidade e com migração assistida.
 
-Veja o [guia POSECODE V2](docs/FORMATO_V2.md), o [JSON Schema V2](schemas/posecode-v2.schema.json) e a [referência do V1](docs/FORMATO.md).
+Documentação: [guia V2](docs/FORMATO_V2.md) · [JSON Schema](schemas/posecode-v2.schema.json) · [referência V1](docs/FORMATO.md).
 
 ## Compatibilidade
 
-- **Motor6D:** gera `KeyframeSequence`.
-- **Bone:** gera `CurveAnimation`, incluindo esqueletos de malhas skinned.
+- **Motor6D:** gera \`KeyframeSequence\`.
+- **Bone:** gera \`CurveAnimation\`, incluindo esqueletos de malhas skinned.
 - **Motor6D + Bone:** usa a hierarquia de curvas para manter os dois tipos no mesmo clip.
-- **AnimationConstraint:** possui uma rota `CurveAnimation` experimental; confira o resultado no Studio.
-- **CUSTOM:** permite descrever rigs sem `Humanoid`.
+- **AnimationConstraint:** possui uma rota \`CurveAnimation\` experimental; confira o resultado no Studio.
+- **CUSTOM:** permite descrever rigs sem \`Humanoid\`.
 
 ## Como usar
 
 1. Selecione o Model do rig no Studio.
-2. Abra **Rig** e use **Analisar estrutura do rig** para conferir a estrutura e a rota de saída.
-3. Abra **Importar**, gere os dados no [formato POSECODE V2](docs/FORMATO_V2.md) e cole o JSON.
-4. Selecione **Importar clip**. Após a conversão, o POSECODE abre **Prévia** automaticamente.
-5. Confira a timeline e a animação; use os controles de reprodução e salve o clip no Studio.
-6. Publique pelo Editor de Animação.
+2. Abra **Rig** e use **Analisar estrutura do rig**.
+3. Abra **Importar** e cole um documento POSECODE V2.
+4. Use **Importar clip** para validar e converter.
+5. O painel abre **Prévia** após uma importação bem-sucedida.
+6. Revise a timeline, teste a animação e salve o clip no Studio.
+7. Publique pelo Editor de Animação.
+
+Para projetos V1, cole o documento antigo e use **Converter V1 para V2**. O texto convertido aparece na caixa para que você confira e importe quando estiver pronto.
 
 ## Instalação
 
 1. Habilite **Plugin Debugging Enabled** nas configurações do Roblox Studio.
-2. Crie um Script em `ServerStorage` e cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua).
+2. Crie um Script em \`ServerStorage\` e cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua).
 3. Com o Script selecionado no Explorer, use **Plugins → Save as Local Plugin**.
-4. Depois de salvar, remova o Script original de `ServerStorage` e use a cópia do plugin em `PluginDebugService`.
+4. Depois de salvar, remova o Script original de \`ServerStorage\` e use a cópia do plugin em \`PluginDebugService\`.
 
 Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs/studio/plugins).
 
 ## Limites
 
-- Não interpreta scripts Luau arbitrários, TweenService ou lógica condicionada.
-- Entrada máxima de 256 KB, até 120 quadros normalizados, duração máxima de 15 segundos e 256 juntas/Bones.
-- Eventos: até 8 por quadro e 128 por animação; disponíveis apenas na saída `KeyframeSequence`.
+- Entrada máxima de 256 KB.
+- Até 256 tracks/alvos e 120 instantes de keyframe normalizados.
+- Duração máxima de 15 segundos, FPS de 1 a 60.
+- Até 128 eventos e 8 por quadro; eventos disponíveis apenas em \`KeyframeSequence\`.
+- Posição local de até 5 studs por componente e rotação de até 720 graus por componente.
 - Orçamento de saída: 18.000 poses ou 24.000 chaves de curva.
-- O nome de cada junta ou Bone usado no JSON precisa ser único dentro do rig.
+- O nome de cada alvo usado nas tracks precisa ser único dentro do rig.
 - Movimento global da raiz e edição independente de tracks ainda não fazem parte do plugin.
 - A prévia usa um ID temporário válido apenas no Studio. A publicação continua pelo Editor de Animação.
 
-## Documentação
+## Arquivos
 
-- [Formato POSECODE V2](docs/FORMATO_V2.md)
-- [Formato POSECODE V1 (legado)](docs/FORMATO.md)
-- [Limites técnicos e publicação](docs/LIMITES.md)
 - [Código do plugin](src/Posecode.plugin.lua)
+- [Formato POSECODE V2](docs/FORMATO_V2.md)
+- [JSON Schema V2](schemas/posecode-v2.schema.json)
+- [Formato POSECODE V1 (legado)](docs/FORMATO.md)
+- [Limites técnicos](docs/LIMITES.md)
 - [Histórico de versões](CHANGELOG.md)
