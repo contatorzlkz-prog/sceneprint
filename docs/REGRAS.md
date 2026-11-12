@@ -1,93 +1,35 @@
-# Regras de análise
+# O que o Sceneprint procura
 
-Sceneprint usa verificações estáticas simples. Ele observa propriedades e relações entre instâncias, não tenta adivinhar a intenção de quem construiu o mapa.
+A versão 0.2.0 tem duas verificações. O objetivo é manter a leitura curta e evitar avisos sem contexto.
 
-## Como interpretar os níveis
+## Colisão escondida
 
-- **Revisar:** a configuração pode ser válida, mas merece uma conferida.
-- **Nota:** informação de organização que pode ou não exigir ação.
+Aparece quando uma BasePart tem Transparency maior ou igual a 0.95 e CanCollide ativo.
 
-Nenhum resultado é tratado como erro garantido. Os limites abaixo destacam casos que costumam justificar uma olhada, não padrões universais.
+O plugin ignora personagens e objetos cujo nome, ou o nome de um ancestral, contém termos comuns de uso intencional: Hitbox, Hurtbox, Trigger, Collider, Collision, Boundary, Bounds.
 
-## PHY-01 · Conjunto físico não ancorado
+Isso reduz ruído, mas não entende a intenção do projeto. Uma peça chamada WallInvisible ainda pode ser legítima e aparecer na lista.
 
-**Detecção:** considera a raiz de cada assembly que não está ancorada e que não pertence a um Model com Humanoid.
+## Peça sem ancoragem
 
-**Motivo:** objetos da cena que deveriam ficar parados podem cair, deslizar ou reagir a colisões.
+Aparece uma vez por conjunto físico quando a raiz do conjunto não está ancorada e tem CanCollide ativo.
 
-**Falso positivo possível:** portas, veículos, mecanismos, props físicos e objetos que devem ser empurrados.
+Personagens são ignorados. Objetos com nomes que indicam mecanismos e partes móveis também são ignorados: Vehicle, Wheel, Door, Gate, Ragdoll, Projectile, Physics e Moving.
 
-## COL-01 · Colisão em peça invisível
+Uma porta física, veículo ou objeto empurrável pode ser totalmente intencional. O aviso serve para chamar sua atenção, não para mandar ancorar a peça.
 
-**Detecção:** **Transparency >= 0.98** junto com **CanCollide == true**.
+## Escopo
 
-**Motivo:** uma peça quase invisível pode bloquear o personagem sem deixar isso claro visualmente.
+O plugin só percorre BaseParts dentro dos objetos selecionados no Explorer. Selecionar um Model inclui suas peças descendentes. Selecionar vários objetos relacionados não duplica a leitura de peças.
 
-**Falso positivo possível:** paredes invisíveis, limites do mapa, gatilhos com colisão ou estruturas de gameplay. O plugin não altera CanCollide.
+O Workspace inteiro não é analisado automaticamente. A seleção é uma escolha deliberada para manter a ferramenta rápida e previsível.
 
-## FX-01 · Emissão intensa de partículas
+## Limites
 
-**Detecção:** **ParticleEmitter.Rate > 180**.
+- Não lê o código de Scripts, LocalScripts ou ModuleScripts.
+- Não mede FPS, memória ou desempenho real.
+- Não muda propriedades nem oferece correção automática.
+- Não substitui teste no jogo.
+- A filtragem por nomes pode esconder uma peça que merecia revisão.
 
-**Motivo:** taxas elevadas podem aumentar o trabalho de renderização, principalmente quando vários emissores estão ativos ao mesmo tempo.
-
-**Falso positivo possível:** efeitos curtos, controlados por script, que raramente aparecem juntos. A taxa sozinha não representa o custo completo de um efeito.
-
-## LGT-01 · Luz com alcance amplo
-
-**Detecção:** **Brightness >= 5** e **Range >= 48** para PointLight, SpotLight e SurfaceLight.
-
-**Motivo:** muitas luzes com alcance amplo podem aumentar o custo visual e dificultar o controle da iluminação.
-
-**Falso positivo possível:** cenas noturnas, fachadas, holofotes e cenários que dependem desse alcance.
-
-## AUD-01 · Áudio com alcance longo
-
-**Detecção:** **Sound.RollOffMaxDistance >= 350**.
-
-**Motivo:** sons distantes podem ser ouvidos em áreas maiores do que o necessário.
-
-**Falso positivo possível:** música ambiente, alarmes e sons globais intencionais.
-
-## GEO-01 · Colisão precisa em MeshPart
-
-**Detecção:** **CollisionFidelity == PreciseConvexDecomposition**.
-
-**Motivo:** colisões detalhadas podem custar mais do que alternativas simplificadas, dependendo da malha e da quantidade de objetos.
-
-**Falso positivo possível:** modelos cuja forma de colisão precisa acompanhar detalhes importantes. Compare com Hull e Box antes de mudar.
-
-## UX-01 · Prompt com alcance elevado
-
-**Detecção:** **ProximityPrompt.MaxActivationDistance > 30**.
-
-**Motivo:** o jogador pode ativar a interação de uma distância maior do que a esperada pela composição visual.
-
-**Falso positivo possível:** interações feitas para serem acessíveis de longe ou acionadas em áreas abertas.
-
-## ORG-01 · Pasta vazia
-
-**Detecção:** Folder sem filhos.
-
-**Motivo:** pode ser uma estrutura provisória esquecida durante a organização.
-
-**Falso positivo possível:** pastas reservadas para uso futuro ou preenchidas por scripts durante a execução.
-
-## STR-01 · Workspace grande sem streaming
-
-**Detecção:** a análise está no escopo Workspace, foram encontradas ao menos 2.500 BaseParts e **Workspace.StreamingEnabled** está desativado.
-
-**Motivo:** mapas grandes podem se beneficiar de uma estratégia de carregamento adequada.
-
-**Falso positivo possível:** experiências pequenas em área, mapas compactos com muitas peças ou projetos que já têm outra estratégia de otimização. Ativar streaming muda o comportamento de carregamento e deve ser testado no contexto do jogo.
-
-## Limitações conhecidas
-
-- A análise percorre instâncias descendentes do escopo escolhido.
-- O conteúdo dos scripts não é lido.
-- A ferramenta não calcula FPS, memória, draw calls ou custo real de rede.
-- Não existe correção automática.
-- O resultado depende das propriedades disponíveis no momento da leitura.
-- Scripts podem criar e modificar objetos durante ou depois da análise.
-
-Para validar desempenho, teste a experiência em dispositivos e condições de rede semelhantes às do público esperado.
+O desenvolvedor decide o que é intencional.
