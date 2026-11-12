@@ -1,44 +1,23 @@
-# Decisões de projeto
+# Decisões do Sceneprint
 
-## O problema
+## Uma tarefa, não um painel de métricas
 
-Em mapas Roblox, pequenos detalhes podem ficar escondidos no Explorer: uma peça física que deveria estar ancorada, uma colisão invisível que bloqueia uma passagem ou um efeito com emissão muito alta. O desenvolvedor normalmente percebe isso enquanto testa o jogo, ou quando outra pessoa encontra o problema.
+A primeira versão tentava observar iluminação, áudio, partículas, streaming, organização e física ao mesmo tempo. O resultado era uma lista grande, cheia de situações que dependiam demais do contexto do jogo.
 
-Sceneprint tenta encurtar esse caminho. Ele faz uma leitura rápida de propriedades que podem merecer atenção e mantém cada observação ligada ao objeto original.
+A versão 0.2.0 fica em dois sinais simples: colisão quase invisível e conjunto físico sem ancoragem.
 
-## Por que não corrigir automaticamente?
+## Por que analisar a seleção?
 
-A mesma configuração pode ser certa em um jogo e errada em outro. Uma parede invisível pode ser necessária. Um objeto sem ancoragem pode ser uma porta física. Um ParticleEmitter intenso pode fazer parte de uma habilidade que quase nunca é usada.
+Um mapa inteiro pode ter milhares de peças. Na prática, muitas vezes a dúvida está em uma construção específica que acabou de ser montada. A seleção deixa claro o que será lido e evita que o plugin pareça estar julgando a experiência toda.
 
-Alterar essas propriedades sem conhecer a intenção do jogo seria mais perigoso do que útil. Por isso, Sceneprint só observa e seleciona.
+## Por que não corrigir?
 
-## Por que não dar uma nota ao mapa?
-
-Uma pontuação única esconderia contexto. Dez alertas pequenos não significam necessariamente que uma cena é pior do que outra com um único problema importante. O painel mostra verificações separadas e explica cada uma.
-
-## Escopo de leitura
-
-- **Workspace:** foco no conteúdo do mapa.
-- **Place inteiro:** percorre os descendentes do DataModel para incluir estruturas fora do Workspace.
-
-O escopo completo pode demorar mais em experiências grandes. A leitura pode ser cancelada.
+O mesmo valor de propriedade pode ser correto em um jogo e incorreto em outro. O Sceneprint encontra o objeto e explica o motivo do aviso. A decisão continua com quem está construindo o mapa.
 
 ## Interface
 
-O painel usa uma hierarquia curta: identidade, ação principal, resumo, filtros e resultados. A cor roxa identifica a ação e a identidade do produto; âmbar marca itens para revisão e cinza-azulado marca notas.
+A interface usa fundo quase preto, texto claro e roxo discreto, seguindo a identidade visual do perfil do autor. Não há cards de pontuação, gráficos ou filtros: o fluxo tem uma ação principal e uma lista curta de resultados.
 
-Cada resultado mantém o código da regra visível. Isso permite procurar a mesma regra na documentação sem depender da cor.
+## Autoria
 
-## Limites técnicos
-
-Sceneprint é uma primeira versão focada em leitura de propriedades. Não lê o código de scripts, não calcula FPS e não substitui o MicroProfiler, os testes de dispositivo ou a revisão manual. A análise também não observa mudanças futuras feitas por scripts durante o jogo.
-
-## Próximos passos possíveis
-
-- Exportar relatório Markdown para compartilhar uma revisão.
-- Permitir regras personalizadas por experiência.
-- Adicionar exclusões persistentes para objetos intencionais.
-- Comparar duas leituras e destacar mudanças.
-- Criar testes automatizados para cada regra.
-
-Esses itens são ideias futuras, não recursos presentes na versão 0.1.0.
+Criado por Ruan Carlos, usuário ruancr. O código é Luau e o projeto é distribuído sob a licença MIT.
