@@ -709,14 +709,12 @@ local function buildKeyframeSequence(data, skeleton)
 
             local rootPose = Instance.new("Pose")
             rootPose.Name = skeleton.rootPart.Name
-            rootPose.Weight = 0
 
             local function addChildren(part, parentPose)
                 for _, part1 in ipairs(skeleton.childrenByPart0[part] or {}) do
                     local pose = Instance.new("Pose")
                     pose.Name = part1.Name
                     pose.CFrame = currentTransforms[part1.Name] or CFrame.identity
-                    pose.Weight = 1
                     pose.EasingStyle = frameData.easingStyle
                     pose.EasingDirection = frameData.easingDirection
                     parentPose:AddSubPose(pose)
