@@ -28,7 +28,7 @@ Ao importar um clip com sucesso, o painel abre automaticamente **Prévia**. Os �
 - **POSECODE V2:** estrutura recomendada com `metadata`, `rig`, `timeline`, `tracks` e `events`.
 - **POSECODE V1:** formato anterior, mantido para projetos existentes.
 
-Veja o [guia POSECODE V2](docs/FORMATO_V2.md) e a [referência do V1](docs/FORMATO.md).
+Veja o [guia POSECODE V2](docs/FORMATO_V2.md), o [JSON Schema V2](schemas/posecode-v2.schema.json) e a [referência do V1](docs/FORMATO.md).
 
 ## Compatibilidade
 
