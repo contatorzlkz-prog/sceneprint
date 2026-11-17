@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1 · Perfil exclusivo Mesh Rig 2016
+
+- Direciona o plugin ao perfil estrutural Mesh Rig 2016 (R15).
+- Exige as 15 MeshParts corporais com nomes padrão, HumanoidRootPart e hierarquia das 15 juntas.
+- Aceita somente rigs com 15 AnimationConstraint ou 15 Motor6D; rejeita Bones, rigs genéricos, R6, rigs avançados com juntas extras e hierarquias mistas.
+- Adiciona timeline.rotationSpace: joint mantém eixos locais; character converte eixos do personagem para o referencial de cada junta usando Attachment0/C0.
+- Troca o exemplo genérico por um aceno de braço/antebraço/mão para Mesh Rig 2016.
+- Mantém a prévia temporária com AnimationClipProvider:RegisterAnimationClip.
+
+
 ## 2.0 · Formato V2 nativo, migração e otimização
 
 - Promove o **POSECODE V2** a formato principal do plugin.
