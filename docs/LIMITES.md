@@ -23,27 +23,29 @@ Veja o [guia completo do POSECODE V2](FORMATO_V2.md) e a [referência V1](FORMAT
 
 ## Compatibilidade de rigs
 
-### Motor6D
+O POSECODE 2.1 aceita somente o perfil estrutural **Mesh Rig 2016 (R15)**. A validação exige:
 
-Rigs que usam apenas `Motor6D` geram uma `KeyframeSequence` com uma árvore de `Pose`. Cada Pose corresponde à peça conectada pela junta.
+- Um Humanoid com RigType = R15.
+- As 15 MeshParts corporais: Head, UpperTorso, LowerTorso, braços, mãos, pernas e pés com os nomes padrão R15.
+- HumanoidRootPart como raiz.
+- As 15 juntas na hierarquia R15 esperada.
+- Todas as juntas do mesmo tipo: 15 AnimationConstraint ou 15 Motor6D.
 
-### Bone e malhas skinned
-
-Rigs com `Bone` geram `CurveAnimation`. A estrutura de pastas acompanha a hierarquia dos Bones, com canais locais `Position` e `Rotation`. Rigs que misturam Motor6D e Bone também seguem a rota de curvas para preservar os dois tipos de canal.
-
-O perfil `CUSTOM` permite importar Models sem Humanoid. Cada nome usado em `joints` precisa ser único dentro do Model selecionado.
-
-A estrutura segue a referência de [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation) e [Bone](https://create.roblox.com/docs/reference/engine/classes/Bone), que documenta curvas para canais de Motor6D e Bones.
+Rigs R6, rigs genéricos, rigs com Bone, hierarquias avançadas com juntas extras, juntas misturadas e modelos incompletos são recusados. A validação identifica a estrutura; não consegue comprovar a opção exata do Rig Builder que criou um Model com estrutura idêntica.
 
 ### AnimationConstraint
 
-A v2.0 mantém a rota experimental para rigs com `AnimationConstraint`, lendo os alvos por `Attachment0` e `Attachment1`. O Roblox usa AnimationConstraint como substituto de Motor6D em novos rigs de avatar, mas a documentação de CurveAnimation não garante explicitamente essa configuração. Por isso, a prévia precisa ser conferida no Studio e o plugin mantém essa saída identificada como experimental.
+Quando o Mesh Rig 2016 usa AnimationConstraint, o plugin lê Attachment0 e Attachment1 para construir a hierarquia de juntas e gera uma CurveAnimation. O Roblox documenta AnimationConstraint.Transform como o transform usado durante a animação e equivalente ao comportamento de Motor6D.Transform quando IsKinematic = true.
 
-Não altere os CFrames dos RigAttachments para corrigir o resultado. A documentação de migração recomenda usar as propriedades de Transform e os Attachments conforme o sistema de avatar. Consulte [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint) e a [documentação do Avatar Joint Upgrade](https://devforum.roblox.com/t/avatar-joint-upgrade-aju-phase-2-rollout-updated-migration-recommendations/4656414).
+A documentação de CurveAnimation descreve curvas em hierarquias de juntas Motor6D/Bone; o uso com AnimationConstraint depende da compatibilidade do pipeline de avatar atual. Por isso, a prévia local no Studio continua sendo a verificação necessária antes de publicar.
+
+### Motor6D
+
+Se a mesma estrutura Mesh Rig 2016 usar 15 Motor6D, o plugin gera uma KeyframeSequence com uma árvore de Pose. O plugin não aceita uma mistura de Motor6D e AnimationConstraint no mesmo rig.
 
 ## Rotações e tempo
 
-As rotações POSECODE são expressas em graus locais na ordem XYZ e convertidas para CFrame ou curvas Euler XYZ.
+As rotações POSECODE são expressas em graus na ordem XYZ. Por padrão, rotationSpace = joint usa os eixos locais da junta. Com rotationSpace = character, o plugin converte a rotação a partir dos eixos do HumanoidRootPart para a referência local de cada junta, calculada pelo Attachment0 ou C0. A posição continua local à junta.
 
 Os tempos são arredondados para o quadro mais próximo segundo FPS. O importador rejeita colisões após o arredondamento. Um quadro neutro é acrescentado em 0 quando necessário e o último quadro é prolongado até duration. O limite de 120 inclui os quadros automáticos; a duração máxima é 15 segundos.
 
@@ -59,7 +61,7 @@ Consulte [KeyframeMarker](https://create.roblox.com/docs/reference/engine/classe
 
 ## Prévia no Studio
 
-A prévia registra o clip temporariamente com `AnimationClipProvider:RegisterActiveAnimationClip` e usa o ID temporário em um objeto `Animation`. Esse ID serve apenas para teste local no Studio; não é um asset publicado.
+A prévia registra o clip temporariamente com `AnimationClipProvider:RegisterAnimationClip` e usa o ID temporário em um objeto `Animation`. Esse ID serve apenas para teste local no Studio; não é um asset publicado.
 
 O plugin usa `Animator:LoadAnimation()`, não os métodos de carregamento depreciados de Humanoid/AnimationController. Se necessário, cria temporariamente um AnimationController e Animator no Model e remove os objetos temporários ao encerrar. O Animator precisa estar no Workspace antes do carregamento.
 
@@ -73,7 +75,7 @@ A janela separa as ações em três abas: **Importar**, **Prévia** e **Rig**. A
 
 ## Análise do rig
 
-O botão **Analisar estrutura do rig**, na aba **Rig**, verifica a hierarquia antes da importação e informa o perfil detectado, a quantidade de juntas/Bones e a rota de saída prevista. A validação rejeita raízes ambíguas, ciclos, partes fora do Model selecionado, alvos sem conexão e nomes de canal duplicados.
+O botão **Analisar estrutura do rig**, na aba **Rig**, valida as 15 MeshParts e as 15 juntas do Mesh Rig 2016, confere a raiz e a árvore corporal e informa a rota de saída prevista. A validação rejeita raízes ambíguas, ciclos, partes fora do Model selecionado, alvos sem conexão e nomes de canal duplicados.
 
 ## Limites de processamento
 
@@ -93,11 +95,11 @@ O botão **Salvar clip no Studio** preserva o clip em `ServerStorage.RBX_ANIMSAV
 
 Para publicar, abra o clip no Editor de Animação e use **Publish to Roblox**. O ID temporário da prévia não substitui um ID de asset.
 
-## Limites da v2.0
+## Limites da v2.1
 
 - Não converte código arbitrário, TweenService ou lógica condicionada.
 - Não implementa movimento global da raiz como um canal independente.
 - Não oferece edição independente de tracks/keyframes dentro do plugin.
 - Markers só são gerados na saída KeyframeSequence.
-- A saída CurveAnimation para AnimationConstraint continua experimental.
-- Rigs customizados precisam ter uma hierarquia conectada e nomes de canal únicos.
+- A prévia com AnimationConstraint precisa ser conferida no Studio antes da publicação.
+- O plugin não aceita rigs fora da assinatura estrutural do Mesh Rig 2016.
