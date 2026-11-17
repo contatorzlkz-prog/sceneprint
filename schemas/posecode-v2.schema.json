@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/contatorzlkz-prog/sceneprint/blob/main/schemas/posecode-v2.schema.json",
   "title": "POSECODE V2",
-  "description": "Schema do formato de animação POSECODE V2 importado pelo plugin POSECODE.",
+  "description": "Schema do formato POSECODE V2 usado pelo perfil estrutural Mesh Rig 2016 (R15).",
   "type": "object",
   "required": [
     "format",
@@ -77,9 +77,7 @@
       "properties": {
         "profile": {
           "enum": [
-            "R6",
-            "R15",
-            "CUSTOM"
+            "R15"
           ]
         }
       },
@@ -167,6 +165,14 @@
             }
           },
           "additionalProperties": false
+        },
+        "rotationSpace": {
+          "enum": [
+            "joint",
+            "character"
+          ],
+          "default": "joint",
+          "description": "joint usa os eixos locais da junta; character usa os eixos do HumanoidRootPart e converte pelo Attachment0/C0."
         }
       },
       "additionalProperties": false
@@ -181,8 +187,7 @@
         "type": {
           "enum": [
             "Motor6D",
-            "AnimationConstraint",
-            "Bone"
+            "AnimationConstraint"
           ]
         },
         "name": {
