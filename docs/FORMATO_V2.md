@@ -121,25 +121,20 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
 
 ## Rig
 
-`rig.profile` aceita:
+`rig.profile` aceita somente `R15`. O Model precisa passar pela validação estrutural do Mesh Rig 2016: Humanoid R15, 15 MeshParts corporais, HumanoidRootPart e 15 juntas na hierarquia padronizada.
 
-- `R6`
-- `R15`
-- `CUSTOM`, para Models sem Humanoid.
-
-Quando o Model selecionado possui um Humanoid, o plugin confere se o perfil corresponde ao RigType real.
+R6, rigs CUSTOM, rigs genéricos, rigs baseados em Bone e árvores de juntas incompletas são recusados.
 
 ### Alvos tipados
 
-Cada track declara o tipo de alvo, evitando depender apenas de um nome sem contexto:
+Cada track declara o tipo de alvo:
 
 | `target.type` | Como `target.name` é resolvido |
 |---|---|
-| `Motor6D` | Nome da BasePart conectada em `Part1`. |
-| `AnimationConstraint` | Nome da BasePart que é Parent de `Attachment1`. A saída continua experimental. |
-| `Bone` | Nome da instância `Bone`. |
+| `Motor6D` | Nome da MeshPart conectada em `Part1`. |
+| `AnimationConstraint` | Nome da MeshPart ligada ao `Attachment1`. |
 
-Os nomes precisam existir no Model selecionado e ser únicos dentro dos canais reconhecidos pelo plugin. O valor de `target.type` precisa corresponder ao tipo real detectado. Não use o nome do objeto Motor6D no lugar do nome de sua peça `Part1`.
+Os nomes precisam corresponder às 15 MeshParts corporais do Mesh Rig 2016 e ser únicos. O tipo declarado precisa corresponder ao tipo real de junta encontrado no rig.
 
 ## Timeline
 
@@ -149,6 +144,7 @@ Os nomes precisam existir no Model selecionado e ser únicos dentro dos canais r
 | `duration` | Obrigatório. Maior que zero e até 15 segundos. |
 | `looped` | Opcional. Booleano; padrão `false`. |
 | `priority` | Opcional. Padrão `Action`. |
+| `rotationSpace` | Opcional. `joint` (padrão) ou `character`; define a referência dos eixos de rotação. |
 | `defaultEasing` | Opcional. Padrão Linear / InOut. |
 
 Prioridades aceitas: `Core`, `Idle`, `Movement`, `Action`, `Action2`, `Action3` e `Action4`.
@@ -157,12 +153,12 @@ Prioridades aceitas: `Core`, `Idle`, `Movement`, `Action`, `Action2`, `Action3` 
 
 ### Espaço de rotação
 
-timeline.rotationSpace controla como o POSECODE interpreta os três ângulos:
+`timeline.rotationSpace` controla como o POSECODE interpreta os três ângulos:
 
-- joint (padrão): XYZ local da junta, sem conversão.
-- character: XYZ alinhado à orientação do HumanoidRootPart. O plugin converte a rotação para o referencial de cada junta usando Attachment0 em AnimationConstraint ou C0 em Motor6D.
+- `joint` (padrão): XYZ local da junta, sem conversão.
+- `character`: XYZ alinhado à orientação do `HumanoidRootPart`. O plugin converte a rotação para o referencial de cada junta usando `Attachment0` em `AnimationConstraint` ou `C0` em `Motor6D`.
 
-O campo position continua local à junta nos dois modos. Para uma animação gerada especificamente para o Mesh Rig 2016, character facilita descrever movimentos relativos ao corpo sem presumir que cada attachment tenha a mesma orientação.
+O campo `position` continua local à junta nos dois modos. Para animações do Mesh Rig 2016, `character` facilita descrever movimentos relativos ao corpo sem presumir que cada attachment tenha a mesma orientação.
 ## Tracks e keyframes
 
 Cada item de `tracks` possui:
