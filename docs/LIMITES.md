@@ -55,7 +55,7 @@ A saída KeyframeSequence aceita Linear, Constant, CubicV2, Elastic e Bounce com
 
 Na saída `KeyframeSequence`, o campo `markers` é convertido para `KeyframeMarker`. A prévia registra `AnimationTrack:GetMarkerReachedSignal()` para cada nome presente e mostra o evento alcançado. Os limites são 8 eventos por quadro, 128 por animação, nomes de até 64 caracteres e valores de até 256 caracteres.
 
-A rota CurveAnimation não recebe markers neste plugin. A importação é recusada quando o rig contém Bone ou AnimationConstraint e o JSON inclui eventos, para evitar perda silenciosa.
+A rota CurveAnimation não recebe markers neste plugin. A importação é recusada quando o rig usa AnimationConstraint e o JSON inclui eventos, para evitar perda silenciosa.
 
 Consulte [KeyframeMarker](https://create.roblox.com/docs/reference/engine/classes/KeyframeMarker), [AnimationTrack](https://create.roblox.com/docs/reference/engine/classes/AnimationTrack) e [eventos de animação](https://create.roblox.com/docs/animation/events).
 
@@ -65,7 +65,7 @@ A prévia registra o clip temporariamente com `AnimationClipProvider:RegisterAni
 
 O plugin usa `Animator:LoadAnimation()`, não os métodos de carregamento depreciados de Humanoid/AnimationController. Se necessário, cria temporariamente um AnimationController e Animator no Model e remove os objetos temporários ao encerrar. O Animator precisa estar no Workspace antes do carregamento.
 
-Durante a prévia, `Animator:StepAnimations()` avança a avaliação no contexto de plugin. O usuário pode pausar, retomar, parar, alterar a velocidade (0.5×, 1×, 1.5× ou 2×), controlar a repetição, arrastar o cursor e navegar entre quadros. Ao encerrar, o plugin restaura os valores de Transform capturados, inclusive para Bones.
+Durante a prévia, `Animator:StepAnimations()` avança a avaliação no contexto de plugin. O usuário pode pausar, retomar, parar, alterar a velocidade (0.5×, 1×, 1.5× ou 2×), controlar a repetição, arrastar o cursor e navegar entre quadros. Ao encerrar, o plugin restaura os valores de Transform capturados para as 15 juntas suportadas.
 
 Consulte [Animator](https://create.roblox.com/docs/reference/engine/classes/Animator), [AnimationController](https://create.roblox.com/docs/reference/engine/classes/AnimationController) e [AnimationClipProvider](https://create.roblox.com/docs/reference/engine/classes/AnimationClipProvider).
 
@@ -82,7 +82,7 @@ O botão **Analisar estrutura do rig**, na aba **Rig**, valida as 15 MeshParts e
 - Entrada: 256 KB.
 - Quadros normalizados: 120.
 - Duração: 15 segundos.
-- Juntas e Bones: 256 no total.
+- Juntas: exatamente 15 na estrutura validada.
 - Saída KeyframeSequence: até 18.000 instâncias Pose estimadas.
 - Saída CurveAnimation: até 24.000 chaves de curva estimadas.
 - Markers: até 8 por quadro e 128 por animação.
