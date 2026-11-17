@@ -6,7 +6,7 @@ O plugin POSECODE 2.1 importa V2 como formato principal e continua aceitando doc
 
 ## Exemplo completo
 
-Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existentes no rig selecionado.
+Este exemplo demonstra a estrutura para um Mesh Rig 2016 com AnimationConstraint. Em rigs que usam Motor6D, troque o target.type de todas as tracks para Motor6D.
 
 ```json
 {
@@ -63,7 +63,7 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
     },
     {
       "target": {
-        "type": "Motor6D",
+        "type": "AnimationConstraint",
         "name": "LeftUpperArm"
       },
       "keys": [
@@ -89,13 +89,6 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
           }
         }
       ]
-    }
-  ],
-  "events": [
-    {
-      "time": 0.4,
-      "name": "Footstep",
-      "value": "left"
     }
   ]
 }
@@ -144,7 +137,6 @@ Os nomes precisam corresponder às 15 MeshParts corporais do Mesh Rig 2016 e ser
 | `duration` | Obrigatório. Maior que zero e até 15 segundos. |
 | `looped` | Opcional. Booleano; padrão `false`. |
 | `priority` | Opcional. Padrão `Action`. |
-| `rotationSpace` | Opcional. `joint` (padrão) ou `character`. |
 | `rotationSpace` | Opcional. `joint` (padrão) ou `character`; define a referência dos eixos de rotação. |
 | `defaultEasing` | Opcional. Padrão Linear / InOut. |
 
