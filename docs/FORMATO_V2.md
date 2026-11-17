@@ -213,7 +213,7 @@ A migração não cria nem salva um clip automaticamente. Ela gera somente o nov
 ## Limites de segurança
 
 - JSON de até 256 KB.
-- Até 256 tracks/alvos.
+- Até 15 tracks/alvos, uma por junta corporal.
 - Até 120 keyframes por track e 120 instantes após combinar e normalizar.
 - Duração máxima de 15 segundos e FPS de 1 a 60.
 - Posição local de até 5 studs por componente.
