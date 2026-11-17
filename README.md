@@ -71,7 +71,7 @@ Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs
 ## Limites
 
 - Entrada máxima de 256 KB.
-- Até 256 tracks/alvos e 120 instantes de keyframe normalizados.
+- Até 15 tracks/alvos e 120 instantes de keyframe normalizados.
 - Duração máxima de 15 segundos, FPS de 1 a 60.
 - Até 128 eventos e 8 por quadro; eventos disponíveis apenas em \`KeyframeSequence\`.
 - Posição local de até 5 studs por componente e rotação de até 720 graus por componente.
