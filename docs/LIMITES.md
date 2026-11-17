@@ -13,9 +13,9 @@ O importador aceita duas estruturas de dados:
 - **V2 (recomendado):** organiza o documento em `metadata`, `rig`, `timeline`, `tracks` e `events`. Cada track declara seu alvo e seus próprios keyframes. Keyframes de tracks diferentes são reunidos em uma timeline comum.
 - **V1 (legado):** mantém a estrutura anterior de `rig`, `fps`, `duration` e `frames`, com `joints` por quadro.
 
-Na versão 2.0, o V2 também pode passar pelo otimizador conservador: somente keyframes intermediários de sequências de três ou mais transformações consecutivas idênticas são removidos; primeiro e último permanecem. A migração V1 → V2 valida o documento legado e o rig antes de gerar o JSON novo.
+Na versão 2.1, o V2 também pode passar pelo otimizador conservador: somente keyframes intermediários de sequências de três ou mais transformações consecutivas idênticas são removidos; primeiro e último permanecem. A migração V1 → V2 valida o documento legado e o rig antes de gerar o JSON novo.
 
-O V2 declara o tipo de cada alvo (`Motor6D`, `AnimationConstraint` ou `Bone`) e o plugin confere o tipo com a estrutura real do rig. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
+O V2 declara o tipo de cada alvo (`Motor6D` ou `AnimationConstraint`) e o plugin confere o tipo com a estrutura do Mesh Rig 2016. Os tempos são arredondados para o quadro mais próximo conforme o FPS. Colisões dentro de uma mesma track são recusadas; keyframes de tracks diferentes podem compartilhar o mesmo instante.
 
 No V2, o easing é aplicado por instante global. Se várias tracks tiverem keyframes no mesmo instante, todas precisam usar o mesmo `style` e `direction`. Isso evita resultados ambíguos no pipeline de saída atual.
 
@@ -45,7 +45,7 @@ Se a mesma estrutura Mesh Rig 2016 usar 15 Motor6D, o plugin gera uma KeyframeSe
 
 ## Rotações e tempo
 
-As rotações POSECODE são expressas em graus na ordem XYZ. Por padrão, rotationSpace = joint usa os eixos locais da junta. Com rotationSpace = character, o plugin converte a rotação a partir dos eixos do HumanoidRootPart para a referência local de cada junta, calculada pelo Attachment0 ou C0. A posição continua local à junta.
+As rotações POSECODE são expressas em graus na ordem XYZ. Por padrão, `rotationSpace = joint` usa os eixos locais da junta. Com `rotationSpace = character`, o plugin converte a rotação a partir dos eixos do `HumanoidRootPart` para a referência local de cada junta, calculada pelo `Attachment0` ou `C0`. A posição continua local à junta.
 
 Os tempos são arredondados para o quadro mais próximo segundo FPS. O importador rejeita colisões após o arredondamento. Um quadro neutro é acrescentado em 0 quando necessário e o último quadro é prolongado até duration. O limite de 120 inclui os quadros automáticos; a duração máxima é 15 segundos.
 
