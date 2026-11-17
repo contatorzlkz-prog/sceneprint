@@ -2,10 +2,10 @@
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
   <p>Importador e conversor de animações para Roblox Studio.</p>
-  <p><sub>ruancr · v2.0 · EM DESENVOLVIMENTO</sub></p>
+  <p><sub>ruancr · v2.1 · MESH RIG 2016</sub></p>
 </div>
 
-![Interface do POSECODE v2.0](assets/posecode-preview.svg)
+![Interface do POSECODE v2.1](assets/posecode-preview.svg)
 
 ## Sobre
 
@@ -13,12 +13,14 @@ O POSECODE transforma documentos POSECODE V2 ou V1 em clips editáveis no Roblox
 
 A entrada é validada como JSON estruturado. O conteúdo colado nunca é executado.
 
-## Destaques da v2.0
+## Destaques da v2.1
 
 - **POSECODE V2 nativo:** tracks tipadas, timeline comum, metadados e eventos.
 - **Migração V1 → V2:** converte documentos antigos e devolve o JSON V2 na caixa de entrada para revisão antes da importação.
 - **Otimização conservadora:** remove apenas keyframes intermediários em sequências de três ou mais transformações consecutivas idênticas, mantendo o primeiro e o último.
-- **Diagnóstico de rig:** discrimina contagens de Motor6D, AnimationConstraint e Bone, além da rota de saída.
+- **Perfil Mesh Rig 2016:** valida R15, as 15 MeshParts corporais, HumanoidRootPart e a hierarquia exata das 15 juntas.
+- **Eixos de rotação:** aceita rotação no espaço local da junta ou no espaço do personagem, convertendo pelo C0/Attachment0 de cada junta.
+- **Exemplo integrado:** gera um aceno com braço, antebraço e mão para o Mesh Rig 2016.
 - **JSON Schema:** especificação formal para validar documentos V2 em ferramentas externas.
 - **Interface por etapas:** Importar, Prévia e Rig, com os controles separados.
 
@@ -31,16 +33,24 @@ Documentação: [guia V2](docs/FORMATO_V2.md) · [JSON Schema](schemas/posecode-
 
 ## Compatibilidade
 
-- **Motor6D:** gera \`KeyframeSequence\`.
-- **Bone:** gera \`CurveAnimation\`, incluindo esqueletos de malhas skinned.
-- **Motor6D + Bone:** usa a hierarquia de curvas para manter os dois tipos no mesmo clip.
-- **AnimationConstraint:** possui uma rota \`CurveAnimation\` experimental; confira o resultado no Studio.
-- **CUSTOM:** permite descrever rigs sem \`Humanoid\`.
+O POSECODE 2.1 é direcionado ao **perfil estrutural do Mesh Rig 2016**: Humanoid R15, 15 MeshParts corporais com nomes padronizados, HumanoidRootPart e uma árvore corporal de 15 juntas.
+
+- **15 AnimationConstraint:** gera CurveAnimation, usada pela prévia local.
+- **15 Motor6D:** gera KeyframeSequence.
+- **Juntas mistas, rig R6, rigs genéricos, rigs de Bone e modelos incompletos:** recusados antes da importação.
+
+A validação reconhece a estrutura do rig; ela não consegue provar qual opção histórica do Rig Builder originou um Model estruturalmente idêntico. A estrutura corporal validada segue a especificação R15 do Roblox.
+
+timeline.rotationSpace pode ser joint (padrão, eixos locais da junta) ou character (eixos alinhados ao HumanoidRootPart). A posição continua sendo expressa localmente.
+
+AnimationConstraint é reconhecido como o tipo de junta usado pelo Avatar Joint Upgrade. A prévia local deve ser conferida no Studio antes de publicar o clip.
+
+POSECODE V1 continua disponível para documentos antigos, mas agora também exige o perfil de rig aceito pelo POSECODE 2.1.
 
 ## Como usar
 
-1. Selecione o Model do rig no Studio.
-2. Abra **Rig** e use **Analisar estrutura do rig**.
+1. Insira e selecione o Mesh Rig 2016 no Studio.
+2. Abra **Rig** e use **Analisar estrutura do rig**. O painel confirma as 15 MeshParts e as 15 juntas.
 3. Abra **Importar** e cole um documento POSECODE V2.
 4. Use **Importar clip** para validar e converter.
 5. O painel abre **Prévia** após uma importação bem-sucedida.
