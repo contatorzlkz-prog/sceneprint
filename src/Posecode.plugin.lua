@@ -1957,7 +1957,7 @@ local function beginPreview()
             end
         end
 
-        local temporaryId = AnimationClipProvider:RegisterActiveAnimationClip(importedSequence)
+        local temporaryId = AnimationClipProvider:RegisterAnimationClip(importedSequence)
         local animation = Instance.new("Animation")
         previewAnimation = animation
         animation.Name = "PosecodePreview"
