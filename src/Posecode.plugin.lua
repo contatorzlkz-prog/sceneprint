@@ -2566,81 +2566,84 @@ exampleButton.Activated:Connect(function()
     end
 
     local ok, result = pcall(function()
-        local humanoid = rig:FindFirstChildOfClass("Humanoid")
         local skeleton = getSkeleton(rig)
-        local rootChildren = skeleton.rootPart
-            and (skeleton.curveChildrenByParent[skeleton.rootPart] or {})
-            or skeleton.boneRoots
 
-        if #rootChildren == 0 then
-            error("Não encontrei uma junta ou Bone ligado à raiz desse rig.")
+        local function makeKey(time, rotation)
+            return {
+                time = time,
+                transform = {
+                    position = { 0, 0, 0 },
+                    rotation = rotation,
+                },
+            }
         end
 
-        local jointName = rootChildren[1].Name
-        local targetType = skeleton.jointKindsByName[jointName]
-        if not targetType then
-            error("Não consegui identificar o tipo do primeiro alvo do rig.")
+        local function makeTrack(targetName, keys)
+            local targetType = skeleton.jointKindsByName[targetName]
+            if not targetType then
+                error("O Mesh Rig 2016 não possui a junta " .. targetName .. ".")
+            end
+            return {
+                target = {
+                    type = targetType,
+                    name = targetName,
+                },
+                keys = keys,
+            }
         end
 
         local sample = {
             format = "POSECODE",
             version = 2,
             metadata = {
-                name = "Posecode_Sample",
+                name = "MeshRig2016_Wave",
                 author = "POSECODE",
-                description = "Exemplo gerado para o rig selecionado.",
+                description = "Exemplo de aceno calibrado para o espaço do personagem.",
             },
             rig = {
-                profile = humanoid and humanoid.RigType.Name or "CUSTOM",
+                profile = "R15",
             },
             timeline = {
                 fps = 30,
-                duration = 0.6,
-                looped = false,
+                duration = 1.2,
+                looped = true,
                 priority = "Action",
+                rotationSpace = "character",
                 defaultEasing = {
                     style = "CubicV2",
                     direction = "InOut",
                 },
             },
             tracks = {
-                {
-                    target = {
-                        type = targetType,
-                        name = jointName,
-                    },
-                    keys = {
-                        {
-                            time = 0,
-                            transform = {
-                                position = { 0, 0, 0 },
-                                rotation = { 0, 0, 0 },
-                            },
-                        },
-                        {
-                            time = 0.3,
-                            transform = {
-                                position = { 0, 0, 0 },
-                                rotation = { 0, 0, 22 },
-                            },
-                        },
-                        {
-                            time = 0.6,
-                            transform = {
-                                position = { 0, 0, 0 },
-                                rotation = { 0, 0, 0 },
-                            },
-                        },
-                    },
-                },
+                makeTrack("RightUpperArm", {
+                    makeKey(0.0, { 0, 0, 0 }),
+                    makeKey(0.2, { 0, 0, 62 }),
+                    makeKey(0.4, { 0, 0, 68 }),
+                    makeKey(0.6, { 0, 0, 58 }),
+                    makeKey(0.8, { 0, 0, 68 }),
+                    makeKey(1.0, { 0, 0, 62 }),
+                    makeKey(1.2, { 0, 0, 0 }),
+                }),
+                makeTrack("RightLowerArm", {
+                    makeKey(0.0, { 0, 0, 0 }),
+                    makeKey(0.2, { 42, 0, 0 }),
+                    makeKey(0.4, { 50, 0, 0 }),
+                    makeKey(0.6, { 35, 0, 0 }),
+                    makeKey(0.8, { 50, 0, 0 }),
+                    makeKey(1.0, { 42, 0, 0 }),
+                    makeKey(1.2, { 0, 0, 0 }),
+                }),
+                makeTrack("RightHand", {
+                    makeKey(0.0, { 0, 0, 0 }),
+                    makeKey(0.2, { 0, 0, -12 }),
+                    makeKey(0.4, { 0, 0, 12 }),
+                    makeKey(0.6, { 0, 0, -12 }),
+                    makeKey(0.8, { 0, 0, 12 }),
+                    makeKey(1.0, { 0, 0, 0 }),
+                    makeKey(1.2, { 0, 0, 0 }),
+                }),
             },
         }
-
-        if not skeleton.hasCurveAnimation then
-            sample.events = {
-                { time = 0.3, name = "PosecodeSampleEvent", value = "middle" },
-            }
-        end
 
         return HttpService:JSONEncode(sample)
     end)
@@ -2651,7 +2654,7 @@ exampleButton.Activated:Connect(function()
     end
 
     sourceBox.Text = result
-    setStatus("Exemplo POSECODE V2 carregado. Clique em Importar clip.", C.green)
+    setStatus("Exemplo de aceno para Mesh Rig 2016 carregado. Clique em Importar clip.", C.green)
 end)
 
 
