@@ -144,6 +144,7 @@ Os nomes precisam corresponder às 15 MeshParts corporais do Mesh Rig 2016 e ser
 | `duration` | Obrigatório. Maior que zero e até 15 segundos. |
 | `looped` | Opcional. Booleano; padrão `false`. |
 | `priority` | Opcional. Padrão `Action`. |
+| `rotationSpace` | Opcional. `joint` (padrão) ou `character`. |
 | `rotationSpace` | Opcional. `joint` (padrão) ou `character`; define a referência dos eixos de rotação. |
 | `defaultEasing` | Opcional. Padrão Linear / InOut. |
 
@@ -166,7 +167,7 @@ Cada item de `tracks` possui:
 - `target`: objeto com `type` e `name`.
 - `keys`: array de keyframes daquele alvo.
 
-Uma track precisa ter ao menos um keyframe. Um mesmo alvo não pode aparecer em duas tracks. O limite é de 256 tracks.
+Uma track precisa ter ao menos um keyframe. Um mesmo alvo não pode aparecer em duas tracks. O limite é de 15 tracks, uma por junta corporal do Mesh Rig 2016.
 
 Cada keyframe contém:
 
@@ -195,7 +196,7 @@ Keyframes de tracks diferentes podem compartilhar o mesmo tempo e serão combina
 - `name`: identificador de 1 a 64 caracteres.
 - `value`: texto opcional de até 256 caracteres; padrão vazio.
 
-São aceitos até 128 eventos no total e 8 eventos por quadro normalizado. Os eventos são convertidos em `KeyframeMarker` e, por isso, estão disponíveis somente na saída `KeyframeSequence`. Se o rig usar Bone ou AnimationConstraint e o documento tiver eventos, o importador recusa a conversão para evitar perda silenciosa.
+São aceitos até 128 eventos no total e 8 eventos por quadro normalizado. Os eventos são convertidos em `KeyframeMarker` e, por isso, estão disponíveis somente na saída `KeyframeSequence`. Se o rig usar AnimationConstraint e o documento tiver eventos, o importador recusa a conversão para evitar perda silenciosa.
 
 ## Tempo, combinação e normalização
 
@@ -233,4 +234,4 @@ O plugin valida a entrada como JSON estruturado. Não executa scripts Luau, cham
 
 O V1 continua aceito para projetos existentes. O V2 é recomendado para novos documentos porque separa metadados, rig, timeline e canais, declara o tipo de cada alvo e permite escrever keyframes por track. O plugin normaliza V2 internamente para o mesmo pipeline validado usado para criar clips; isso preserva as rotas atuais de saída sem manter dois conversores de animação independentes.
 
-Veja também [Formato POSECODE V1 (legado)](FORMATO.md), [limites técnicos](LIMITES.md) e a documentação oficial de [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation), [Bone](https://create.roblox.com/docs/reference/engine/classes/Bone) e [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint).
+Veja também [Formato POSECODE V1 (legado)](FORMATO.md), [limites técnicos](LIMITES.md) e a documentação oficial de [CurveAnimation](https://create.roblox.com/docs/reference/engine/classes/CurveAnimation), [AnimationConstraint](https://create.roblox.com/docs/reference/engine/classes/AnimationConstraint).
