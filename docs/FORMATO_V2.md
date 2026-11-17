@@ -1,8 +1,8 @@
 # Formato POSECODE V2
 
-O **POSECODE V2** é o formato recomendado para novas animações e o formato principal do POSECODE 2.0. Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
+O **POSECODE V2** é o formato principal do POSECODE 2.1, direcionado ao perfil estrutural Mesh Rig 2016 (R15). Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
 
-O plugin POSECODE 2.0 importa V2 como formato principal e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
+O plugin POSECODE 2.1 importa V2 como formato principal e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
 
 ## Exemplo completo
 
@@ -23,6 +23,7 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
   "timeline": {
     "fps": 30,
     "duration": 0.8,
+    "rotationSpace": "character",
     "looped": true,
     "priority": "Movement",
     "defaultEasing": {
@@ -33,7 +34,7 @@ Este exemplo usa nomes de alvo ilustrativos. Troque-os pelos nomes exatos existe
   "tracks": [
     {
       "target": {
-        "type": "Motor6D",
+        "type": "AnimationConstraint",
         "name": "RightUpperArm"
       },
       "keys": [
@@ -154,6 +155,14 @@ Prioridades aceitas: `Core`, `Idle`, `Movement`, `Action`, `Action2`, `Action3` 
 
 `defaultEasing` contém `style` e `direction`. Os estilos aceitos são `Linear`, `Constant`, `CubicV2`, `Elastic` e `Bounce`; as direções são `In`, `Out` e `InOut`. A rota CurveAnimation aceita Linear, Constant ou CubicV2 com InOut. Elastic e Bounce não têm correspondência direta e são recusados nessa rota.
 
+### Espaço de rotação
+
+timeline.rotationSpace controla como o POSECODE interpreta os três ângulos:
+
+- joint (padrão): XYZ local da junta, sem conversão.
+- character: XYZ alinhado à orientação do HumanoidRootPart. O plugin converte a rotação para o referencial de cada junta usando Attachment0 em AnimationConstraint ou C0 em Motor6D.
+
+O campo position continua local à junta nos dois modos. Para uma animação gerada especificamente para o Mesh Rig 2016, character facilita descrever movimentos relativos ao corpo sem presumir que cada attachment tenha a mesma orientação.
 ## Tracks e keyframes
 
 Cada item de `tracks` possui:
