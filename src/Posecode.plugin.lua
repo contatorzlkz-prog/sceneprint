@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 2.0
+    Version: 2.1
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -17,13 +17,13 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "2.0"
+local VERSION = "2.1"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
 local MAX_TRANSFORM_OFFSET = 5
 local MAX_ROTATION = 720
-local MAX_JOINTS = 256
+local MAX_JOINTS = 15
 local MAX_MARKERS = 128
 local MAX_MARKERS_PER_FRAME = 8
 local MAX_POSE_INSTANCES = 18000
@@ -266,7 +266,7 @@ local statusDot = make("Frame", footer, {
     BorderSizePixel = 0,
 })
 make("UICorner", statusDot, { CornerRadius = UDim.new(1, 0) })
-local statusLabel = label(footer, "Selecione um rig R6 ou R15.", UDim2.fromOffset(29, 6), UDim2.new(1, -43, 0, 27), 9, C.muted)
+local statusLabel = label(footer, "Selecione o Mesh Rig 2016.", UDim2.fromOffset(29, 6), UDim2.new(1, -43, 0, 27), 9, C.muted)
 statusLabel.TextWrapped = true
 statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
@@ -590,16 +590,111 @@ local function drawTimeline(data)
 
     local clipTypeLabel = "KEYFRAMES"
     if data.clipType == "CurveAnimation" then
-        clipTypeLabel = data.hasAnimationConstraint and "CURVAS*" or "CURVAS / BONE"
+        clipTypeLabel = data.hasAnimationConstraint and "CURVAS / MESH 2016" or "KEYFRAMES"
     end
     timelineInfo.Text = string.format("%d quadros · %d eventos · %.2fs · %s", #data.frames, totalMarkers, data.duration, clipTypeLabel)
     updateTimelineCursor(0)
 end
 
+local MESH_RIG_2016_PARTS = {
+    "Head", "UpperTorso", "LowerTorso",
+    "LeftUpperArm", "LeftLowerArm", "LeftHand",
+    "RightUpperArm", "RightLowerArm", "RightHand",
+    "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+    "RightUpperLeg", "RightLowerLeg", "RightFoot",
+}
+
+local MESH_RIG_2016_PARENT = {
+    LowerTorso = "HumanoidRootPart",
+    UpperTorso = "LowerTorso",
+    Head = "UpperTorso",
+    LeftUpperArm = "UpperTorso",
+    LeftLowerArm = "LeftUpperArm",
+    LeftHand = "LeftLowerArm",
+    RightUpperArm = "UpperTorso",
+    RightLowerArm = "RightUpperArm",
+    RightHand = "RightLowerArm",
+    LeftUpperLeg = "LowerTorso",
+    LeftLowerLeg = "LeftUpperLeg",
+    LeftFoot = "LeftLowerLeg",
+    RightUpperLeg = "LowerTorso",
+    RightLowerLeg = "RightUpperLeg",
+    RightFoot = "RightLowerLeg",
+}
+
+local MESH_RIG_2016_PART_SET = {}
+for _, partName in ipairs(MESH_RIG_2016_PARTS) do
+    MESH_RIG_2016_PART_SET[partName] = true
+end
+
+local function validateMeshRig2016(rig, skeleton)
+    local humanoid = rig:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.RigType ~= Enum.HumanoidRigType.R15 then
+        error("O POSECODE 2.1 aceita somente o Mesh Rig 2016 R15. Selecione esse rig no Explorer.")
+    end
+
+    local meshParts = {}
+    for _, descendant in ipairs(rig:GetDescendants()) do
+        if descendant:IsA("MeshPart") and MESH_RIG_2016_PART_SET[descendant.Name] then
+            if meshParts[descendant.Name] then
+                error("O rig possui mais de uma MeshPart chamada " .. descendant.Name .. ".")
+            end
+            meshParts[descendant.Name] = descendant
+        end
+    end
+
+    for _, partName in ipairs(MESH_RIG_2016_PARTS) do
+        if not meshParts[partName] then
+            error("Mesh Rig 2016 incompleto: não encontrei a MeshPart " .. partName .. ".")
+        end
+    end
+
+    if not skeleton.rootPart or skeleton.rootPart.Name ~= "HumanoidRootPart" then
+        error("Mesh Rig 2016 precisa ter HumanoidRootPart como raiz.")
+    end
+    if skeleton.hasBone or skeleton.boneCount > 0 then
+        error("Este POSECODE não aceita rigs de Bones. Ele é exclusivo do Mesh Rig 2016 articulado por juntas.")
+    end
+    if skeleton.partJointCount ~= 15 or skeleton.jointCount ~= 15 then
+        error("Estrutura incompatível: o Mesh Rig 2016 precisa ter exatamente 15 juntas corporais.")
+    end
+
+    local usesAnimationConstraints = skeleton.animationConstraintCount == 15 and skeleton.motor6DCount == 0
+    local usesMotor6D = skeleton.motor6DCount == 15 and skeleton.animationConstraintCount == 0
+    if not usesAnimationConstraints and not usesMotor6D then
+        error("As 15 juntas precisam ser todas AnimationConstraint ou todas Motor6D. Juntas misturadas não são aceitas.")
+    end
+
+    for _, partName in ipairs(MESH_RIG_2016_PARTS) do
+        local part = meshParts[partName]
+        local parentName = MESH_RIG_2016_PARENT[partName]
+        local expectedParent = parentName == "HumanoidRootPart"
+            and skeleton.rootPart
+            or meshParts[parentName]
+
+        if skeleton.jointsByPart1[partName] ~= part
+            or skeleton.parentByPart1[part] ~= expectedParent then
+            error(
+                "Hierarquia incompatível em "
+                    .. partName
+                    .. ". Esperado: "
+                    .. parentName
+                    .. " -> "
+                    .. partName
+                    .. "."
+            )
+        end
+    end
+
+    return {
+        meshParts = meshParts,
+        jointType = usesAnimationConstraints and "AnimationConstraint" or "Motor6D",
+    }
+end
+
 local function isSupportedJoint(instance)
     return instance:IsA("Motor6D")
         or instance:IsA("AnimationConstraint")
-        or instance:IsA("Bone")
 end
 
 local function selectedRig()
@@ -625,6 +720,8 @@ local function getSkeleton(rig)
     local jointKindsByName = {}
     local childrenByPart0 = {}
     local incomingParts = {}
+    local parentByPart1 = {}
+    local jointInstancesByPart1 = {}
     local curveChildrenByParent = {}
     local boneChildrenByParent = {}
     local boneRoots = {}
@@ -734,6 +831,8 @@ local function getSkeleton(rig)
             childrenByPart0[part0] = childrenByPart0[part0] or {}
             table.insert(childrenByPart0[part0], part1)
             incomingParts[part1] = true
+            parentByPart1[part1] = part0
+            jointInstancesByPart1[part1.Name] = descendant
             addCurveChild(part0, part1)
         end
 
@@ -856,11 +955,13 @@ local function getSkeleton(rig)
         error("O rig possui Bones, mas nenhum Bone raiz ligado diretamente a uma BasePart.")
     end
 
-    return {
+    local skeleton = {
         rootPart = rootPart,
         jointsByPart1 = jointsByPart1,
         jointKindsByName = jointKindsByName,
         childrenByPart0 = childrenByPart0,
+        parentByPart1 = parentByPart1,
+        jointInstancesByPart1 = jointInstancesByPart1,
         curveChildrenByParent = curveChildrenByParent,
         boneChildrenByParent = boneChildrenByParent,
         boneRoots = boneRoots,
@@ -874,6 +975,9 @@ local function getSkeleton(rig)
         hasBone = hasBone,
         hasCurveAnimation = hasAnimationConstraint or hasBone,
     }
+
+    validateMeshRig2016(rig, skeleton)
+    return skeleton
 end
 
 local selectedRigCache = nil
@@ -903,7 +1007,7 @@ refreshSelectionHint()
 local function analyzeSelectedRig()
     local rig = selectedRigCache
     if not rig then
-        setStatus("Selecione um Model com juntas ou Bones antes de analisar.", C.red)
+        setStatus("Selecione o Mesh Rig 2016 no Explorer antes de analisar.", C.red)
         return
     end
 
@@ -911,33 +1015,19 @@ local function analyzeSelectedRig()
         return getSkeleton(rig)
     end)
     if not ok then
-        setStatus("Rig inválido: " .. tostring(skeleton), C.red)
+        setStatus("Rig incompatível: " .. tostring(skeleton), C.red)
         return
     end
 
-    local humanoid = rig:FindFirstChildOfClass("Humanoid")
-    local profile = humanoid and humanoid.RigType.Name or "CUSTOM"
-    local details = {}
-    if skeleton.motor6DCount > 0 then
-        table.insert(details, string.format("%d Motor6D", skeleton.motor6DCount))
-    end
-    if skeleton.animationConstraintCount > 0 then
-        table.insert(details, string.format("%d AnimationConstraint", skeleton.animationConstraintCount))
-    end
-    if skeleton.boneCount > 0 then
-        table.insert(details, string.format("%d Bones", skeleton.boneCount))
-    end
+    local jointType = skeleton.animationConstraintCount == 15
+        and "15 AnimationConstraint"
+        or "15 Motor6D"
+    local outputType = skeleton.hasAnimationConstraint
+        and "CurveAnimation"
+        or "KeyframeSequence"
 
-    local outputType = "KeyframeSequence"
-    if skeleton.hasBone then
-        outputType = "CurveAnimation / Bone"
-    end
-    if skeleton.hasAnimationConstraint then
-        outputType = "CurveAnimation / Constraint (experimental)"
-    end
-
-    rigInfo.Text = string.format("RIG: %s  /  %d ELEMENTOS  /  %s", profile, skeleton.jointCount, outputType)
-    setStatus("Rig compatível: " .. (#details > 0 and table.concat(details, " + ") or "sem canais") .. ". Saída: " .. outputType .. ".", C.green)
+    rigInfo.Text = string.format("MESH RIG 2016  /  15 MESHPARTS  /  %s", jointType)
+    setStatus("Mesh Rig 2016 reconhecido. Saída: " .. outputType .. ". Hierarquia corporal validada.", C.green)
 end
 
 rigCheckButton.Activated:Connect(analyzeSelectedRig)
@@ -1006,6 +1096,39 @@ local function transformFromData(jointData)
     )
 end
 
+local function transformCharacterRotationToJointSpace(transform, jointName, skeleton)
+    local joint = skeleton.jointInstancesByPart1[jointName]
+    if not joint then
+        error("Não encontrei a junta do alvo " .. jointName .. ".")
+    end
+
+    local jointWorldFrame
+    if joint:IsA("AnimationConstraint") then
+        local attachment0 = joint.Attachment0
+        if not attachment0 or not attachment0.Parent or not attachment0.Parent:IsA("BasePart") then
+            error("A junta " .. jointName .. " não possui Attachment0 válido.")
+        end
+        jointWorldFrame = attachment0.WorldCFrame
+    elseif joint:IsA("Motor6D") then
+        if not joint.Part0 then
+            error("A junta " .. jointName .. " não possui Part0 válido.")
+        end
+        jointWorldFrame = joint.Part0.CFrame * joint.C0
+    else
+        error("Tipo de junta não suportado para conversão de eixos.")
+    end
+
+    local characterBasis = skeleton.rootPart.CFrame.Rotation
+    local requestedWorldRotation = characterBasis
+        * transform.Rotation
+        * characterBasis:Inverse()
+    local jointLocalRotation = jointWorldFrame.Rotation:Inverse()
+        * requestedWorldRotation
+        * jointWorldFrame.Rotation
+
+    return CFrame.new(transform.Position) * jointLocalRotation
+end
+
 local function extractPayload(source)
     local fence = string.rep(string.char(96), 3)
     source = source:gsub("^%s*" .. fence .. "[%w_-]*%s*", "")
@@ -1057,8 +1180,8 @@ local function normalizeV2Data(data, skeleton)
     end
 
     local rigProfile = rigData.profile
-    if rigProfile ~= "R6" and rigProfile ~= "R15" and rigProfile ~= "CUSTOM" then
-        error('rig.profile precisa ser "R6", "R15" ou "CUSTOM".')
+    if rigProfile ~= "R15" then
+        error('O POSECODE 2.1 aceita somente rig.profile = "R15" no Mesh Rig 2016.')
     end
 
     if not isFiniteNumber(timeline.fps)
@@ -1077,6 +1200,11 @@ local function normalizeV2Data(data, skeleton)
     end
     if timeline.priority ~= nil and typeof(timeline.priority) ~= "string" then
         error("timeline.priority precisa ser texto.")
+    end
+
+    local rotationSpace = timeline.rotationSpace or "joint"
+    if rotationSpace ~= "joint" and rotationSpace ~= "character" then
+        error('timeline.rotationSpace precisa ser "joint" ou "character".')
     end
 
     local defaultEasing = timeline.defaultEasing
@@ -1134,10 +1262,8 @@ local function normalizeV2Data(data, skeleton)
 
         local targetType = track.target.type
         local targetName = track.target.name
-        if targetType ~= "Motor6D"
-            and targetType ~= "AnimationConstraint"
-            and targetType ~= "Bone" then
-            error('Track ' .. trackIndex .. ' tem target.type inválido. Use "Motor6D", "AnimationConstraint" ou "Bone".')
+        if targetType ~= "Motor6D" and targetType ~= "AnimationConstraint" then
+            error('Track ' .. trackIndex .. ' tem target.type inválido. Use "Motor6D" ou "AnimationConstraint".')
         end
         if typeof(targetName) ~= "string" or targetName:match("^%s*$") then
             error("Track " .. trackIndex .. " precisa informar target.name.")
@@ -1309,6 +1435,7 @@ local function normalizeV2Data(data, skeleton)
         rig = rigProfile,
         fps = timeline.fps,
         duration = timeline.duration,
+        rotationSpace = rotationSpace,
         looped = timeline.looped == true,
         priority = timeline.priority or "Action",
         easingStyle = defaultEasingStyle,
@@ -1328,8 +1455,8 @@ local function validateData(data, rig, skeleton)
     if data.version ~= 1 then
         error('Versão incompatível. Use "version": 1.')
     end
-    if data.rig ~= "R6" and data.rig ~= "R15" and data.rig ~= "CUSTOM" then
-        error('Campo "rig" precisa ser "R6", "R15" ou "CUSTOM".')
+    if data.rig ~= "R15" then
+        error('O POSECODE 2.1 aceita somente Mesh Rig 2016 com rig = "R15".')
     end
 
     local humanoid = rig:FindFirstChildOfClass("Humanoid")
@@ -1356,6 +1483,11 @@ local function validateData(data, rig, skeleton)
         error("A duração precisa ser de pelo menos um quadro no FPS informado.")
     end
     local normalizedDuration = durationFrames / data.fps
+
+    local rotationSpace = data.rotationSpace or "joint"
+    if rotationSpace ~= "joint" and rotationSpace ~= "character" then
+        error('rotationSpace precisa ser "joint" ou "character".')
+    end
 
     local priorityName = data.priority or "Action"
     local validPriorities = {
@@ -1455,7 +1587,11 @@ local function validateData(data, rig, skeleton)
             if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
                 error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
             end
-            transforms[jointName] = transformFromData(jointData)
+            local transform = transformFromData(jointData)
+            if rotationSpace == "character" then
+                transform = transformCharacterRotationToJointSpace(transform, jointName, skeleton)
+            end
+            transforms[jointName] = transform
         end
 
         table.insert(frames, {
@@ -1533,6 +1669,7 @@ local function validateData(data, rig, skeleton)
         rig = data.rig,
         fps = data.fps,
         looped = data.looped,
+        rotationSpace = rotationSpace,
         duration = normalizedDuration,
         priority = Enum.AnimationPriority[priorityName],
         clipType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence",
@@ -2347,7 +2484,7 @@ importButton.Activated:Connect(function()
 
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione um Model com Motor6D, AnimationConstraint ou Bone.", C.red)
+        setStatus("Selecione o Mesh Rig 2016 no Explorer.", C.red)
         return
     end
 
@@ -2397,9 +2534,9 @@ importButton.Activated:Connect(function()
 
     local clipTypeLabel = "KEYFRAME"
     if importedData.clipType == "CurveAnimation" then
-        clipTypeLabel = importedData.hasAnimationConstraint and "CURVE* / CONSTRAINT" or "CURVE / BONE"
+        clipTypeLabel = importedData.hasAnimationConstraint and "CURVE / MESH 2016" or "KEYFRAME"
     end
-    rigInfo.Text = string.format("RIG: %s  /  %s  /  %s", importedData.rig, rig.Name, clipTypeLabel)
+    rigInfo.Text = string.format("MESH RIG 2016  /  %s  /  %s", rig.Name, clipTypeLabel)
     drawTimeline(importedData)
     showPage("preview")
 
@@ -2409,7 +2546,7 @@ importButton.Activated:Connect(function()
         or ""
     setStatus(
         importedData.hasAnimationConstraint
-            and string.format("%s: %d quadros convertidos.%s A saída com AnimationConstraint ainda é experimental; confira a prévia no Studio.", sourceFormatLabel, #importedData.frames, optimizationNote)
+            and string.format("%s: %d quadros convertidos.%s Curvas preparadas para o Mesh Rig 2016.", sourceFormatLabel, #importedData.frames, optimizationNote)
             or string.format(
                 "%s: %d quadros convertidos.%s %s Prévia, navegação e salvamento disponíveis.",
                 sourceFormatLabel,
@@ -2424,7 +2561,7 @@ end)
 exampleButton.Activated:Connect(function()
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione um rig antes de carregar o exemplo.", C.red)
+        setStatus("Selecione o Mesh Rig 2016 antes de carregar o exemplo.", C.red)
         return
     end
 
@@ -2521,7 +2658,7 @@ end)
 migrateButton.Activated:Connect(function()
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione o rig de destino antes de converter o V1.", C.red)
+        setStatus("Selecione o Mesh Rig 2016 antes de converter o V1.", C.red)
         return
     end
     if #sourceBox.Text > MAX_SOURCE_LENGTH then
