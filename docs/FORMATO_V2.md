@@ -94,6 +94,12 @@ Este exemplo demonstra a estrutura para um Mesh Rig 2016 com AnimationConstraint
 }
 ```
 
+## Geração pelo POSECODE 3.0
+
+A aba **Gerar** cria documentos V2 diretamente. O motor combina um movimento-base com modificadores discretos, produz tracks tipadas para as juntas do Mesh Rig 2016 e encaminha o resultado para a mesma normalização e validação descritas abaixo. O JSON gerado continua sendo POSECODE V2; não há uma segunda linguagem executável.
+
+Os movimentos-base atuais são walk, run, sprint, sneak, tiptoe, march, limp e idle. As combinações paramétricas ajustam ritmo, intensidade, passada, movimento dos braços, inclinação do tronco, balanço, direção e interpolação. Referências aprovadas podem ser guardadas na biblioteca local do plugin e usadas como ponto de partida para gerações semelhantes.
+
 ## Estrutura
 
 | Campo | Obrigatório | Descrição |
