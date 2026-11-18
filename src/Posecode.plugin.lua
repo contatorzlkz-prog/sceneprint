@@ -17,8 +17,6 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local VERSION = "3.2"
-local MOTION_BASE_COUNT = 20
-local MOTION_VARIATION_COUNT = MOTION_BASE_COUNT * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3 * 17
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_TRANSFORM_OFFSET = 5
@@ -251,12 +249,12 @@ make("UIPadding", promptBox, {
 
 label(content, "IDEIAS RÁPIDAS", UDim2.fromOffset(0, 128), UDim2.new(1, 0, 0, 12), 8, C.muted, Enum.Font.GothamMedium)
 local quickPrompts = {
-    { "WALK · TIRED", "walk cansado e lento" },
-    { "RUN · PROUD", "run confiante com passos largos" },
-    { "SNEAK", "sneak furtivo sem quicar" },
-    { "WAVE", "wave friendly" },
-    { "JUMP", "jump energetic" },
-    { "DANCE", "dance playful" },
+    { "WALK + WAVE", "walk natural e acenar com o braço esquerdo" },
+    { "RUN + POINT", "run confiante e apontar com o braço direito" },
+    { "SNEAK + LOOK", "sneak furtivo olhando para esquerda" },
+    { "LIMP · LEFT", "limp com a perna esquerda, lento" },
+    { "IDLE + NOD", "idle relaxado e concordar com a cabeça" },
+    { "DANCE · PLAYFUL", "dance playful com braços amplos" },
 }
 for index, preset in ipairs(quickPrompts) do
     local column = (index - 1) % 3
@@ -1693,7 +1691,7 @@ function motionEngine.buildDocument(recipe, skeleton)
         local gaitPhase = base.reverseStride and -phase or phase
         local sine = math.sin(phase)
         local cosine = math.cos(phase)
-        local gesturePhase = phase * ((base.periodFrames or 36) / (gestureBase.periodFrames or 36))
+        local gesturePhase = phase
         local gestureSine = math.sin(gesturePhase)
         local progress = step / MOTION_SEGMENTS
         local actionPulse = math.sin(math.pi * progress)
