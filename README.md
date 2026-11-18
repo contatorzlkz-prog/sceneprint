@@ -13,7 +13,7 @@ O POSECODE 3.0 é um gerador procedural de animações para o Mesh Rig 2016. Voc
 
 A animação gerada é convertida internamente para POSECODE V2 e passa pelo mesmo validador, prévia e salvamento do importador. A ferramenta também continua aceitando documentos POSECODE V2 e V1 existentes. Texto de usuário é tratado como descrição: o plugin não executa código colado.
 
-O motor possui 15 movimentos-base e 720.000 combinações paramétricas discretas. Isso não significa 720 mil arquivos prontos: cada clip é calculado no momento da geração. Isso não significa 384 mil arquivos pré-gravados: as combinações são sintetizadas na hora. Você pode aprovar uma geração e guardá-la como referência; a biblioteca local persiste entre sessões do Studio e é consultada em gerações futuras com o mesmo tipo de movimento.
+O motor possui 15 movimentos-base e 720.000 combinações paramétricas discretas. Isso não significa 720 mil arquivos pré-gravados: cada clip é calculado no momento da geração. Você pode aprovar uma geração e guardá-la como referência; a biblioteca local persiste entre sessões do Studio e é consultada em gerações futuras com o mesmo tipo de movimento.
 
 ## Destaques da v3.0
 
@@ -32,7 +32,7 @@ O motor possui 15 movimentos-base e 720.000 combinações paramétricas discreta
 - **POSECODE V2:** formato recomendado. Estrutura com \`metadata\`, \`rig\`, \`timeline\`, \`tracks\` e \`events\`.
 - **POSECODE V1:** formato legado, aceito para compatibilidade e com migração assistida.
 
-Documentação: [guia V2](docs/FORMATO_V2.md) · [JSON Schema](schemas/posecode-v2.schema.json) · [referência V1](docs/FORMATO.md).
+Documentação: [guia do gerador](docs/GERADOR.md) · [guia V2](docs/FORMATO_V2.md) · [JSON Schema](schemas/posecode-v2.schema.json) · [referência V1](docs/FORMATO.md).
 
 ## Compatibilidade
 
