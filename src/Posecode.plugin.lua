@@ -1456,6 +1456,29 @@ function motionEngine.persistLibrary()
         setStatus("Não consegui gravar a biblioteca local: " .. tostring(message), C.red)
         return false
     end
+
+    local verifyOk, stored = pcall(function()
+        return plugin:GetSetting(MOTION_LIBRARY_SETTING)
+    end)
+    if not verifyOk
+        or typeof(stored) ~= "table"
+        or tonumber(stored.count) ~= #motionEngine.recipes then
+        setStatus("O Studio não confirmou a gravação da biblioteca. Tente novamente.", C.red)
+        return false
+    end
+
+    if #motionEngine.recipes > 0 then
+        local firstSaved = stored.entry1
+        local firstExpected = motionEngine.recipes[1]
+        if typeof(firstSaved) ~= "table"
+            or firstSaved.prompt ~= firstExpected.prompt
+            or firstSaved.base ~= firstExpected.base
+            or tonumber(firstSaved.seed) ~= tonumber(firstExpected.seed) then
+            setStatus("A biblioteca foi gravada, mas a leitura de confirmação não bateu. Tente novamente.", C.red)
+            return false
+        end
+    end
+
     return true
 end
 
