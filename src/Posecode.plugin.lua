@@ -1776,7 +1776,9 @@ end
 
 function motionEngine.saveCurrentReference()
     local recipe = motionEngine.lastGeneratedRecipe
-    if not recipe or sourceBox.Text ~= motionEngine.lastGeneratedDocument then
+    if not recipe
+        or sourceBox.Text ~= motionEngine.lastGeneratedDocument
+        or motionEngine.cleanPrompt(promptBox.Text) ~= recipe.prompt then
         setStatus("Gere e confira uma animação antes de guardar a referência.", C.red)
         return
     end
@@ -1878,6 +1880,7 @@ local function refreshActionButtons()
     local hasPrompt = promptBox.Text:match("^%s*$") == nil
     local generatedIsCurrent = motionEngine.lastGeneratedRecipe ~= nil
         and motionEngine.lastGeneratedDocument == sourceBox.Text
+        and motionEngine.cleanPrompt(promptBox.Text) == motionEngine.lastGeneratedRecipe.prompt
 
     setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
     setButtonState(exampleButton, selectedRigCache ~= nil, false)
