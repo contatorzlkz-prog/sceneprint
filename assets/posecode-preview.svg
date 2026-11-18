@@ -3,7 +3,7 @@
   <rect x="1" y="1" width="958" height="698" rx="7" stroke="#414449"/>
   <text x="30" y="37" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="19" font-weight="700">POSECODE</text>
   <text x="31" y="54" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" letter-spacing=".9">PROCEDURAL MOTION SYSTEM</text>
-  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v3.1</text>
+  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v3.2</text>
   <path d="M24 69H936" stroke="#414449"/>
   <rect x="24" y="83" width="912" height="42" rx="3" fill="#303236"/>
   <circle cx="42" cy="104" r="4" fill="#85AC8B"/>
@@ -48,6 +48,6 @@
   <text x="928" y="605" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="9">0 / 48</text>
   <rect x="24" y="617" width="912" height="2" rx="1" fill="#414449"/>
   <rect x="24" y="617" width="0" height="2" fill="#53779E"/>
-  <text x="28" y="654" fill="#969BA2" font-family="Arial,sans-serif" font-size="9">20 MOTION BASES · 16.32M PARAMETER COMBINATIONS · MESH RIG 2016</text>
+  <text x="28" y="654" fill="#969BA2" font-family="Arial,sans-serif" font-size="9">20 MOTION BASES · 21 ATTITUDES · SEMANTIC MOTION LAYERS · MESH RIG 2016</text>
   <path d="M24 674H936" stroke="#414449"/>
 </svg>
