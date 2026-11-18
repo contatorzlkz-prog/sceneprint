@@ -18,6 +18,7 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local VERSION = "3.0"
+local MOTION_VARIATION_COUNT = 8 * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -1153,8 +1154,6 @@ local EASING_OPTIONS = {
     [2] = { style = "CubicV2", direction = "InOut" },
     [3] = { style = "Constant", direction = "InOut" },
 }
-local MOTION_VARIATION_COUNT = 8 * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
-
 function motionEngine.cleanPrompt(value)
     local result = tostring(value or "")
     result = result:gsub("[\r\n\t]", " ")
