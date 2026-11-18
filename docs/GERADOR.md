@@ -27,11 +27,11 @@ O POSECODE recebe uma descrição curta e extrai quatro grupos de intenção: a�
 | Stretch | `stretch`, `stretching`, `alongar`, `alongando`, `espreguiçar` |
 | Shrug | `shrug`, `shrugging`, `dar de ombros`, `encolher os ombros` |
 
-O interpretador prioriza uma ação de locomoção quando ela aparece junto de um gesto. Quando não existe locomoção, usa o primeiro gesto identificado como ação principal.
+O interpretador escolhe a ação de locomoção como principal quando há locomoção e gesto na mesma frase. Se não houver locomoção, usa apenas a primeira ação identificada como ação principal.
 
 ## 2. Combinar movimentos
 
-Use duas ações na mesma descrição: uma principal e um gesto secundário. O motor mantém a cadência da ação principal e aplica o gesto em uma camada separada.
+Use uma ação de locomoção e um gesto na mesma descrição. O motor mantém a cadência da locomoção e aplica o gesto em uma camada separada. Quando a descrição contém apenas gestos (por exemplo, wave e point), o motor executa somente a primeira ação reconhecida.
 
 | Descrição | Resultado pretendido |
 |---|---|
@@ -40,10 +40,9 @@ Use duas ações na mesma descrição: uma principal e um gesto secundário. O m
 | `run + point` | Corre enquanto aponta |
 | `sneak + wave` | Move-se furtivamente enquanto acena |
 | `walk + clap` | Caminha e bate palmas |
-| `wave + point` | Combina dois gestos sem ciclo de locomoção |
 | `idle + shrug` | Fica parado e dá de ombros |
 
-No máximo um gesto secundário é aplicado. Descrições como “andar, acenar, bater palmas e depois apontar” não viram uma sequência de quatro etapas; escolha duas ações ou gere cada etapa separadamente.
+No máximo um gesto secundário é aplicado sobre a locomoção. Descrições como “andar, acenar, bater palmas e depois apontar” não viram uma sequência de quatro etapas; escolha uma locomoção e um gesto por geração.
 
 ## 3. Atitudes
 
