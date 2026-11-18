@@ -1,83 +1,133 @@
-# Guia do gerador procedural
+# POSECODE 3.2 — guia do gerador
 
-O POSECODE recebe uma descrição curta e converte a intenção reconhecida em parâmetros de movimento. O motor gera as poses diretamente para o Mesh Rig 2016; o usuário não precisa escrever código ou colar JSON.
+O POSECODE recebe uma descrição curta e extrai quatro grupos de intenção: ação principal, gesto secundário opcional, atitude e modificadores direcionais. O motor usa esses parâmetros para gerar poses diretamente para o Mesh Rig 2016.
 
-## Movimentos-base
+## 1. Ações principais
 
-| Movimento | Vocabulário reconhecido |
+| Movimento | Termos reconhecidos |
 |---|---|
-| Walk | `walk`, `walking`, `andar`, `andando`, `caminhar`, `caminhada` |
-| Run | `run`, `running`, `jog`, `jogging`, `correr`, `correndo`, `corrida` |
-| Sprint | `sprint`, `sprinting`, `sprintar`, `corrida rápida`, `correr rápido` |
-| Sneak | `sneak`, `sneaking`, `stealth`, `agachar`, `agachado`, `furtivo`, `esgueirar` |
-| Tiptoe | `tiptoe`, `tiptoeing`, `na ponta`, `ponta dos pés` |
-| March | `march`, `marching`, `marchar`, `marcha` |
-| Limp | `limp`, `limping`, `mancar`, `mancando`, `manco` |
-| Idle | `idle`, `standing idle`, `still`, `parado`, `respirando`, `em pé` |
-| Wave | `wave`, `waving`, `acenar`, `aceno`, `tchau` |
-| Salute | `salute`, `saluting`, `continência`, `saudação militar` |
-| Jump | `jump`, `jumping`, `pular`, `pulando`, `salto` |
-| Bow | `bow`, `bowing`, `reverência`, `reverenciar` |
-| Point | `point`, `pointing`, `apontar`, `apontando` |
-| Clap | `clap`, `clapping`, `bater palmas`, `aplaudir` |
+| Walk | `walk`, `walking`, `andar`, `andando`, `caminhar`, `caminhada`, `passo natural` |
+| Run | `run`, `running`, `jog`, `jogging`, `correr`, `correndo`, `corrida`, `trotar`, `trote` |
+| Sprint | `sprint`, `sprinting`, `sprintar`, `corrida rápida`, `correr rápido`, `disparar correndo` |
+| Sneak | `sneak`, `stealth`, `agachar`, `agachado`, `furtivo`, `esgueirar`, `andar sem fazer barulho` |
+| Tiptoe | `tiptoe`, `na ponta`, `ponta dos pés`, `andar na ponta dos pés` |
+| March | `march`, `marchar`, `marcha`, `passo militar`, `desfilar` |
+| Limp | `limp`, `limping`, `mancar`, `mancando`, `andar mancando` |
+| Idle | `idle`, `standing idle`, `still`, `stand`, `parado`, `respirando`, `em pé`, `ficar parado` |
+| Wave | `wave`, `waving`, `acenar`, `aceno`, `tchau`, `dar tchau`, `acenar com a mão` |
+| Salute | `salute`, `saluting`, `continência`, `prestar continência`, `saudação militar` |
+| Jump | `jump`, `jumping`, `pular`, `pulando`, `salto`, `saltando` |
+| Bow | `bow`, `bowing`, `reverência`, `reverenciar`, `curvar o corpo` |
+| Point | `point`, `pointing`, `apontar`, `apontando`, `aponta` |
+| Clap | `clap`, `clapping`, `bater palmas`, `aplaudir`, `palmas` |
 | Dance | `dance`, `dancing`, `dançar`, `dançando`, `dança` |
 | Crawl | `crawl`, `crawling`, `rastejar`, `rastejando`, `engatinhar` |
-| Strafe | `strafe`, `strafing`, `side step`, `sideways walk`, `andar de lado`, `passo lateral` |
-| Backpedal | `backpedal`, `backpedaling`, `walk backwards`, `andar de costas`, `recuar andando` |
-| Stretch | `stretch`, `stretching`, `alongar`, `espreguiçar` |
+| Strafe | `strafe`, `side step`, `sideways walk`, `andar de lado`, `passo lateral` |
+| Backpedal | `backpedal`, `walk backwards`, `andar de costas`, `andar para trás`, `recuar andando` |
+| Stretch | `stretch`, `stretching`, `alongar`, `alongando`, `espreguiçar` |
 | Shrug | `shrug`, `shrugging`, `dar de ombros`, `encolher os ombros` |
 
-## Atitudes
+O interpretador prioriza uma ação de locomoção quando ela aparece junto de um gesto. Quando não existe locomoção, usa o primeiro gesto identificado como ação principal.
 
-O motor dispõe de 16 perfis de atitude e um estado neutro: cansado, feliz, confiante, intenso/irritado, pesado, triste, robótico, exagerado, casual, sonolento, nervoso, orgulhoso, curioso, brincalhão, sério e relaxado.
+## 2. Combinar movimentos
 
-Exemplos: `walk cansado`, `run confiante`, `sneak nervoso`, `wave friendly`, `jump energetic`, `dance brincalhão`.
+Use duas ações na mesma descrição: uma principal e um gesto secundário. O motor mantém a cadência da ação principal e aplica o gesto em uma camada separada.
 
-## Modificadores
+| Descrição | Resultado pretendido |
+|---|---|
+| `walk + wave` | Caminha enquanto acena |
+| `walk and wave with left arm` | Caminha e acena com o braço esquerdo |
+| `run + point` | Corre enquanto aponta |
+| `sneak + wave` | Move-se furtivamente enquanto acena |
+| `walk + clap` | Caminha e bate palmas |
+| `wave + point` | Combina dois gestos sem ciclo de locomoção |
+| `idle + shrug` | Fica parado e dá de ombros |
 
-A descrição também pode especificar:
+No máximo um gesto secundário é aplicado. Descrições como “andar, acenar, bater palmas e depois apontar” não viram uma sequência de quatro etapas; escolha duas ações ou gere cada etapa separadamente.
 
-- **Ritmo:** muito devagar, devagar, rápido, muito rápido.
-- **Intensidade:** sutil, suave, leve, forte, intenso, exagerado.
-- **Passada:** curta, muito curta, longa ou larga.
-- **Braços:** soltos, relaxados, leves ou fortes.
-- **Postura:** ereta, neutra, inclinada ou curvada.
-- **Balanço:** sem quicar, pouco quique ou saltitante.
-- **Direção:** de costas / para trás.
-- **Interpolação:** linear/robótica, travada ou suave/fluida.
+## 3. Atitudes
 
-O parser usa apenas os termos reconhecidos. Uma frase sem movimento-base reconhecido recebe uma mensagem explicando que o tipo de movimento precisa ser informado, em vez de gerar uma caminhada por padrão.
+O motor tem 21 perfis de atitude e um estado neutro:
 
-## Como o motor compõe a animação
+- **Cansado:** `cansado`, `exausto`, `tired`
+- **Feliz:** `feliz`, `alegre`, `animado`, `happy`, `friendly`, `energetic`
+- **Confiante:** `confiante`, `seguro`, `confident`
+- **Irritado:** `bravo`, `irritado`, `furioso`, `angry`, `aggressive`
+- **Pesado:** `pesado`, `heavy`
+- **Triste:** `triste`, `abatido`, `sad`
+- **Robótico:** `robótico`, `mecânico`, `robotic`, `mechanical`
+- **Exagerado:** `exagerado`, `over the top`
+- **Casual:** `casual`, `natural`, `normal`
+- **Sonolento:** `sonolento`, `com sono`, `sleepy`
+- **Nervoso:** `nervoso`, `ansioso`, `nervous`, `anxious`
+- **Orgulhoso:** `orgulhoso`, `peito estufado`, `proud`
+- **Curioso:** `curioso`, `intrigado`, `curious`
+- **Brincalhão:** `brincalhão`, `divertido`, `playful`
+- **Sério:** `sério`, `formal`, `serious`
+- **Relaxado:** `relaxado`, `tranquilo`, `calmo`, `relaxed`
+- **Assustado:** `assustado`, `com medo`, `scared`, `fearful`
+- **Tímido:** `tímido`, `envergonhado`, `shy`
+- **Determinado:** `determinado`, `decidido`, `determined`
+- **Arrogante:** `arrogante`, `convencido`, `arrogant`
+- **Confuso:** `confuso`, `perdido`, `sem entender`, `confused`
 
-A geração combina:
+Exemplos: `walk cansado`, `run confiante`, `sneak nervoso`, `wave friendly`, `dance brincalhão`, `walk assustado`.
 
-1. **Motion:** o padrão biomecânico ou gesto-base.
-2. **Blend:** atitude e parâmetros de velocidade, intensidade, passada, braços, postura, balanço, direção e easing.
-3. **Pose:** as transformações calculadas para as 15 juntas do Mesh Rig 2016.
+## 4. Modificadores
 
-A interface mostra esse caminho como MOTION → BLEND → POSE. A composição é calculada localmente e não depende de uma API ou de um modelo de linguagem.
+### Ritmo e amplitude
+- **Velocidade:** `muito devagar`, `devagar`, `rápido`, `muito rápido`.
+- **Intensidade:** `sutil`, `leve`, `forte`, `intenso`, `extremo`.
+- **Passada:** `passos muito curtos`, `passos curtos`, `passo longo`, `passada larga`.
+- **Braços:** `braços soltos`, `braços suaves`, `braços fortes`, `braços amplos`.
+- **Postura:** `postura ereta`, `postura neutra`, `inclinado`, `muito curvado`.
+- **Balanço:** `sem quicar`, `pouco quique`, `saltitante`.
 
-O espaço paramétrico contém 20 bases, 5 níveis de velocidade, 5 de intensidade, 5 de passada, 4 de braço, 4 de postura, 4 de balanço, 2 direções, 3 interpolações e 17 estados de atitude (16 perfis mais neutro): **16.320.000 combinações de parâmetros**. São configurações teóricas calculadas sob demanda, não 16,32 milhões de arquivos ou movimentos únicos garantidos.
+### Direção e partes do corpo
+- **Braço do gesto:** `braço esquerdo`, `braço direito`, `ambos os braços`.
+- **Cabeça:** `olhar para esquerda`, `olhar para direita`, `olhar para cima`, `olhar para baixo`.
+- **Cabeça em movimento:** `balançar a cabeça` (não) ou `fazer que sim` / `nod` (sim).
+- **Travar partes:** `braços parados` / `arms still`; `cabeça parada` / `head still`.
+- **Assimetria:** `perna esquerda` ou `perna direita` para o movimento `limp`.
+- **Espelhar:** `espelhado`, `mirror` ou `invertido`.
+- **Interpolação:** `robótico` / `linear`, `travado` / `constant`, `suave` / `smooth`.
+- **Direção de marcha:** `de costas`, `para trás`, `backwards` ou `recuando`.
 
-## Variações e biblioteca
+Exemplos completos:
 
-**Outra variação** altera a semente para produzir uma nova realização do mesmo pedido. Depois de conferir o resultado, **Guardar referência** salva a receita localmente. A biblioteca mantém até 48 receitas aprovadas e pode reutilizar os parâmetros de uma referência parecida quando o novo pedido não define explicitamente aquele modificador.
+```text
+walk cansado, passos curtos, braços soltos
+run determinado, passos largos, olhando para frente
+walk + wave com o braço esquerdo, cabeça parada
+sneak assustado, olhando para direita, sem quicar
+limp com a perna direita, lento e muito curvado
+idle confuso, balançar a cabeça
+```
 
-As referências ficam nas configurações locais do plugin no Roblox Studio. Não são enviadas ao GitHub nem compartilhadas com outros usuários.
+## 5. Como o motor trabalha
 
-## Fluxo recomendado
+1. **Normalização:** remove diferenças de caixa, acentos e pontuação para comparar sinônimos.
+2. **Interpretação:** localiza as ações e escolhe uma ação principal; quando possível, identifica um gesto adicional.
+3. **Camadas de estilo:** aplica atitude, velocidade, intensidade, passada, postura e controles direcionais.
+4. **Síntese:** calcula os canais das 15 juntas em cada quadro.
+5. **Validação e saída:** valida o documento e cria o clip apropriado para o tipo de junta reconhecido no Mesh Rig 2016.
 
-1. Selecione o Mesh Rig 2016 no Explorer.
-2. Confira se o indicador de rig está verde.
-3. Escreva uma descrição com um movimento-base e, quando necessário, atitude e modificadores.
-4. Gere e veja a prévia no mesmo rig selecionado.
-5. Peça uma variação ou guarde uma referência aprovada.
-6. Salve o clip no Studio e revise-o no Editor de Animação antes de publicar.
+O interpretador é local e baseado em regras. Ele não chama um LLM nem uma API, por isso não entende qualquer frase possível. Use pelo menos um nome de ação reconhecido e termos do vocabulário deste guia.
 
-## Limites atuais
+## 6. Variações e biblioteca
+
+**Outra variação** altera a semente para produzir uma nova realização do mesmo pedido. Depois de conferir a prévia, **Guardar referência** salva a receita localmente. A biblioteca mantém até 48 receitas e pode reutilizar parâmetros de uma referência com a mesma ação e atitude quando o novo pedido não define explicitamente determinado modificador.
+
+As referências ficam nas configurações locais do plugin do Studio. Não são enviadas ao GitHub nem compartilhadas com outros usuários.
+
+## 7. Instalação e atualização
+
+Habilite **Plugin Debugging Enabled**, salve o Script como Local Plugin e edite a cópia dentro de `PluginDebugService`. Para aplicar uma alteração, use **Save and Reload Plugin** no menu de contexto dessa cópia. Não continue editando o Script de instalação em `ServerStorage`: ele não é a instância que está sendo executada pelo Studio.
+
+## 8. Limites
 
 - Exclusivo do Mesh Rig 2016 R15 validado estruturalmente.
-- 15 canais de juntas; dedos individuais não são canais independentes.
-- Vocabulário procedural conhecido, não linguagem livre ilimitada.
-- A prévia precisa ser conferida no Roblox Studio; esta atualização não substitui um teste no rig real.
+- Uma ação principal mais, no máximo, um gesto secundário.
+- Não há sequenciamento temporal livre em uma única descrição.
+- Dedos individuais não possuem canais independentes.
+- A geração e a prévia precisam ser conferidas no Roblox Studio antes de publicar.
