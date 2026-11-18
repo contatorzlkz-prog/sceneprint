@@ -13,13 +13,13 @@ O POSECODE 3.0 é um gerador procedural de animações para o Mesh Rig 2016. Voc
 
 A animação gerada é convertida internamente para POSECODE V2 e passa pelo mesmo validador, prévia e salvamento do importador. A ferramenta também continua aceitando documentos POSECODE V2 e V1 existentes. Texto de usuário é tratado como descrição: o plugin não executa código colado.
 
-O motor possui 8 movimentos-base e 384.000 combinações paramétricas discretas. Isso não significa 384 mil arquivos pré-gravados: as combinações são sintetizadas na hora. Você pode aprovar uma geração e guardá-la como referência; a biblioteca local persiste entre sessões do Studio e é consultada em gerações futuras com o mesmo tipo de movimento.
+O motor possui 15 movimentos-base e 720.000 combinações paramétricas discretas. Isso não significa 720 mil arquivos prontos: cada clip é calculado no momento da geração. Isso não significa 384 mil arquivos pré-gravados: as combinações são sintetizadas na hora. Você pode aprovar uma geração e guardá-la como referência; a biblioteca local persiste entre sessões do Studio e é consultada em gerações futuras com o mesmo tipo de movimento.
 
 ## Destaques da v3.0
 
-- **Gerador por descrição:** interpreta pedidos como `walk cansado`, `run confiante`, `sneak lento` e `march robotico`.
-- **Oito movimentos-base:** walk, run, sprint, sneak, tiptoe, march, limp e idle.
-- **384.000 combinações paramétricas:** cruza ritmo, intensidade, passada, braços, postura, balanço, direção e interpolação; são receitas sintetizadas, não arquivos pré-gravados.
+- **Gerador por descrição:** interpreta pedidos como `walk cansado`, `run confiante`, `sneak lento`, `wave`, `jump`, `salute` e `dance`.
+- **Quinze movimentos-base:** walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap e dance.
+- **720.000 combinações paramétricas:** cruza ritmo, intensidade, passada, braços, postura, balanço, direção e interpolação; são receitas sintetizadas, não arquivos pré-gravados.
 - **Variações instantâneas:** gera outra versão com uma nova semente sem perder a intenção e o estilo do pedido.
 - **Biblioteca local:** guarda referências aprovadas e reutiliza os parâmetros em futuras gerações semelhantes.
 - **POSECODE V2 como saída:** cada animação é construída em tracks tipadas e segue pelo pipeline existente de validação e conversão.
