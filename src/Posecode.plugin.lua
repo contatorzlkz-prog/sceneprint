@@ -1,14 +1,13 @@
 --[[
     POSECODE
-    Generate procedural R15 motion and import POSECODE animation clips.
+    Procedural character animation generator for Roblox Studio.
     Handle: ruancr
-    Version: 3.0
-    The plugin never executes pasted source; it only extracts and validates JSON.
+    Version: 3.1
+    Generates motion directly from procedural profiles. No code import.
 ]]
 
 assert(plugin, "Abra este arquivo como um plugin do Roblox Studio.")
 
-local HttpService = game:GetService("HttpService")
 local Selection = game:GetService("Selection")
 local ServerStorage = game:GetService("ServerStorage")
 local ChangeHistoryService = game:GetService("ChangeHistoryService")
@@ -17,12 +16,11 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "3.0"
-local MOTION_BASE_COUNT = 15
-local MOTION_VARIATION_COUNT = MOTION_BASE_COUNT * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
+local VERSION = "3.1"
+local MOTION_BASE_COUNT = 20
+local MOTION_VARIATION_COUNT = MOTION_BASE_COUNT * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3 * 17
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
-local MAX_SOURCE_LENGTH = 262144
 local MAX_TRANSFORM_OFFSET = 5
 local MAX_ROTATION = 720
 local MAX_JOINTS = 15
@@ -40,8 +38,10 @@ local C = {
     line = Color3.fromRGB(61, 63, 67),
     text = Color3.fromRGB(232, 233, 235),
     muted = Color3.fromRGB(157, 160, 165),
-    accent = Color3.fromRGB(83, 119, 158),
-    accentHover = Color3.fromRGB(96, 132, 171),
+    accent = Color3.fromRGB(93, 132, 158),
+    accentHover = Color3.fromRGB(108, 148, 171),
+    nodeA = Color3.fromRGB(90, 132, 164),
+    nodeB = Color3.fromRGB(94, 151, 139),
     event = Color3.fromRGB(202, 164, 91),
     disabled = Color3.fromRGB(39, 40, 42),
     disabledText = Color3.fromRGB(106, 108, 112),
@@ -57,10 +57,10 @@ local widgetInfo = DockWidgetPluginGuiInfo.new(
     Enum.InitialDockState.Right,
     false,
     false,
-    410,
-    650,
-    330,
-    420
+    360,
+    640,
+    300,
+    440
 )
 
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Posecode.Main", widgetInfo)
@@ -119,277 +119,214 @@ local function button(parent, text, position, size, primary)
     return object
 end
 
+
+local motionEngine = {
+    recipes = {},
+    lastGeneratedRecipe = nil,
+    lastGeneratedPrompt = nil,
+}
+local selectedRigCache = nil
+
+local importedData = nil
+local importedSequence = nil
+local importedRig = nil
+local previewTrack = nil
+local previewAnimation = nil
+local previewHost = nil
+local previewAnimator = nil
+local temporaryHost = false
+local temporaryAnimator = false
+local previewStepConnection = nil
+local previewJointSnapshot = {}
+local previewPaused = false
+local previewSpeed = 1
+local previewLooped = false
+local speedOptions = { 0.5, 1, 1.5, 2 }
+local speedOptionIndex = 2
+local previewMarkerConnections = {}
+
 local root = make("Frame", widget, {
     Name = "PosecodeRoot",
     BackgroundColor3 = C.background,
     BorderSizePixel = 0,
     Size = UDim2.fromScale(1, 1),
 })
-
 local header = make("Frame", root, {
     Name = "Header",
     BackgroundColor3 = C.background,
     BorderSizePixel = 0,
-    Size = UDim2.new(1, 0, 0, 50),
+    Size = UDim2.new(1, 0, 0, 48),
 })
-
-label(header, "POSECODE", UDim2.fromOffset(14, 8), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
-label(header, "GERADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
-local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
+label(header, "POSECODE", UDim2.fromOffset(13, 6), UDim2.new(1, -70, 0, 21), 15, C.text, Enum.Font.GothamBold)
+label(header, "PROCEDURAL MOTION", UDim2.fromOffset(14, 28), UDim2.new(1, -70, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
+local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -52, 0, 15), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
-
 make("Frame", root, {
-    Position = UDim2.fromOffset(14, 49),
-    Size = UDim2.new(1, -28, 0, 1),
+    Position = UDim2.fromOffset(12, 48),
+    Size = UDim2.new(1, -24, 0, 1),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
 })
 
-local function vectorIcon(parent, kind, color, position)
-    local canvas = make("Frame", parent, {
-        Name = "VectorIcon",
-        Position = position,
-        Size = UDim2.fromOffset(16, 16),
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-    })
-
-    local function line(x, y, width, height)
-        make("Frame", canvas, {
-            Position = UDim2.fromOffset(x, y),
-            Size = UDim2.fromOffset(width, height),
-            BackgroundColor3 = color,
-            BorderSizePixel = 0,
-        })
-    end
-
-    if kind == "file" then
-        line(3, 1, 8, 1)
-        line(2, 2, 1, 12)
-        line(3, 14, 11, 1)
-        line(13, 6, 1, 8)
-        line(11, 2, 1, 4)
-        line(12, 5, 2, 1)
-        line(5, 8, 6, 1)
-        line(5, 11, 6, 1)
-    elseif kind == "timeline" then
-        line(1, 8, 14, 1)
-        line(2, 5, 1, 7)
-        line(5, 3, 1, 11)
-        line(8, 6, 1, 5)
-        line(11, 2, 1, 13)
-        line(14, 5, 1, 7)
-    elseif kind == "generate" then
-        line(7, 1, 2, 4)
-        line(7, 11, 2, 4)
-        line(1, 7, 4, 2)
-        line(11, 7, 4, 2)
-        line(4, 4, 2, 2)
-        line(10, 10, 2, 2)
-    elseif kind == "rig" then
-        line(2, 2, 5, 1)
-        line(2, 2, 1, 5)
-        line(9, 2, 5, 1)
-        line(13, 2, 1, 5)
-        line(2, 13, 5, 1)
-        line(2, 9, 1, 5)
-        line(9, 13, 5, 1)
-        line(13, 9, 1, 5)
-    end
-
-    return canvas
-end
-
-local function recolorIcon(icon, color)
-    for _, child in ipairs(icon:GetChildren()) do
-        if child:IsA("Frame") then
-            child.BackgroundColor3 = color
-        end
-    end
-end
-
-local navBar = make("Frame", root, {
-    Name = "Navigation",
-    Position = UDim2.fromOffset(14, 55),
-    Size = UDim2.new(1, -28, 0, 34),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-})
-
 local scroll = make("ScrollingFrame", root, {
-    Name = "PageScroll",
-    Position = UDim2.fromOffset(0, 96),
-    Size = UDim2.new(1, 0, 1, -136),
+    Name = "GeneratorScroll",
+    Position = UDim2.fromOffset(0, 54),
+    Size = UDim2.new(1, 0, 1, -98),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
-    CanvasSize = UDim2.fromOffset(0, 350),
+    CanvasSize = UDim2.fromOffset(0, 596),
     ScrollBarThickness = 3,
     ScrollBarImageColor3 = C.muted,
     ScrollingDirection = Enum.ScrollingDirection.Y,
     Active = true,
 })
-
 local content = make("Frame", scroll, {
-    Name = "ImportPage",
-    Position = UDim2.fromOffset(16, 0),
-    Size = UDim2.new(1, -32, 0, 350),
+    Name = "GeneratorContent",
+    Position = UDim2.fromOffset(12, 0),
+    Size = UDim2.new(1, -24, 0, 596),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
 
-local previewPage = make("Frame", scroll, {
-    Name = "PreviewPage",
-    Position = UDim2.fromOffset(16, 0),
-    Size = UDim2.new(1, -32, 0, 270),
-    BackgroundTransparency = 1,
+local rigPanel = make("Frame", content, {
+    Position = UDim2.fromOffset(0, 0),
+    Size = UDim2.new(1, 0, 0, 37),
+    BackgroundColor3 = C.panel,
     BorderSizePixel = 0,
-    Visible = false,
 })
-
-local rigPage = make("Frame", scroll, {
-    Name = "RigPage",
-    Position = UDim2.fromOffset(16, 0),
-    Size = UDim2.new(1, -32, 0, 220),
-    BackgroundTransparency = 1,
+make("UICorner", rigPanel, { CornerRadius = UDim.new(0, 3) })
+local rigDot = make("Frame", rigPanel, {
+    Position = UDim2.fromOffset(10, 15),
+    Size = UDim2.fromOffset(7, 7),
+    BackgroundColor3 = C.muted,
     BorderSizePixel = 0,
-    Visible = false,
 })
+make("UICorner", rigDot, { CornerRadius = UDim.new(1, 0) })
+local rigInfo = label(rigPanel, "SELECIONE O MESH RIG 2016", UDim2.fromOffset(25, 4), UDim2.new(1, -88, 1, -8), 9, C.muted, Enum.Font.GothamMedium)
+rigInfo.TextWrapped = true
+local refreshRigButton = button(rigPanel, "↻", UDim2.new(1, -34, 0, 5), UDim2.fromOffset(27, 27), false)
+refreshRigButton.TextSize = 15
 
-local generatorPage = make("Frame", scroll, {
-    Name = "GeneratorPage",
-    Position = UDim2.fromOffset(16, 0),
-    Size = UDim2.new(1, -32, 0, 370),
-    BackgroundTransparency = 1,
-    BorderSizePixel = 0,
-    Visible = false,
-})
-label(generatorPage, "DESCREVA O MOVIMENTO", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
-label(generatorPage, "Escreva em linguagem natural. Ex.: walk cansado, corrida confiante.", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 24), 9, C.muted).TextWrapped = true
-
-local promptBox = make("TextBox", generatorPage, {
-    Position = UDim2.fromOffset(0, 52),
-    Size = UDim2.new(1, 0, 0, 74),
+label(content, "DESCREVA O MOVIMENTO", UDim2.fromOffset(0, 47), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.GothamMedium)
+local promptBox = make("TextBox", content, {
+    Position = UDim2.fromOffset(0, 65),
+    Size = UDim2.new(1, 0, 0, 56),
     BackgroundColor3 = C.field,
     BorderSizePixel = 0,
     ClearTextOnFocus = false,
     Font = Enum.Font.Gotham,
     Text = "walk natural",
-    PlaceholderText = "Ex.: walk cansado, run confiante, sneak lento...",
+    PlaceholderText = "Ex.: walk cansado, run confiante, dance feliz...",
     PlaceholderColor3 = C.muted,
     TextColor3 = C.text,
     TextSize = 11,
     TextWrapped = true,
     TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top,
+    TextYAlignment = Enum.TextYAlignment.Center,
     MultiLine = true,
 })
-make("UICorner", promptBox, { CornerRadius = UDim.new(0, 4) })
-make("UIStroke", promptBox, {
-    Color = C.line,
-    Thickness = 1,
-    Transparency = 0.2,
-})
+make("UICorner", promptBox, { CornerRadius = UDim.new(0, 3) })
+make("UIStroke", promptBox, { Color = C.line, Thickness = 1, Transparency = 0.1 })
 make("UIPadding", promptBox, {
-    PaddingTop = UDim.new(0, 9),
+    PaddingTop = UDim.new(0, 7),
     PaddingBottom = UDim.new(0, 7),
-    PaddingLeft = UDim.new(0, 10),
-    PaddingRight = UDim.new(0, 10),
+    PaddingLeft = UDim.new(0, 9),
+    PaddingRight = UDim.new(0, 9),
 })
 
-local generateButton = button(generatorPage, "Gerar animação", UDim2.fromOffset(0, 137), UDim2.new(1, 0, 0, 36), true)
-local variationButton = button(generatorPage, "Outra variação", UDim2.fromOffset(0, 181), UDim2.new(0.5, -4, 0, 30), false)
-local saveReferenceButton = button(generatorPage, "Guardar referência", UDim2.new(0.5, 4, 0, 181), UDim2.new(0.5, -4, 0, 30), false)
+label(content, "IDEIAS RÁPIDAS", UDim2.fromOffset(0, 128), UDim2.new(1, 0, 0, 12), 8, C.muted, Enum.Font.GothamMedium)
+local quickPrompts = {
+    { "WALK · TIRED", "walk cansado e lento" },
+    { "RUN · PROUD", "run confiante com passos largos" },
+    { "SNEAK", "sneak furtivo sem quicar" },
+    { "WAVE", "wave friendly" },
+    { "JUMP", "jump energetic" },
+    { "DANCE", "dance playful" },
+}
+for index, preset in ipairs(quickPrompts) do
+    local column = (index - 1) % 3
+    local row = math.floor((index - 1) / 3)
+    local chip = button(content, preset[1], UDim2.fromOffset(column * 108, 145 + row * 27), UDim2.new(1 / 3, -5, 0, 22), false)
+    chip.TextSize = 8
+    chip.Activated:Connect(function()
+        promptBox.Text = preset[2]
+    end)
+end
 
-local libraryHeading = label(generatorPage, "BIBLIOTECA LOCAL · 0 REFERÊNCIAS", UDim2.fromOffset(0, 222), UDim2.new(1, 0, 0, 15), 8, C.muted, Enum.Font.GothamMedium)
-local libraryList = make("Frame", generatorPage, {
+local graphPanel = make("Frame", content, {
+    Position = UDim2.fromOffset(0, 203),
+    Size = UDim2.new(1, 0, 0, 48),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+})
+local function graphNode(parent, position, width, titleText, subtitle, tint)
+    local node = make("Frame", parent, {
+        Position = position,
+        Size = UDim2.new(width, 0, 1, 0),
+        BackgroundColor3 = C.panel,
+        BorderSizePixel = 0,
+    })
+    make("UICorner", node, { CornerRadius = UDim.new(0, 3) })
+    make("UIStroke", node, { Color = tint, Thickness = 1, Transparency = 0.25 })
+    make("Frame", node, {
+        Position = UDim2.fromOffset(7, 8),
+        Size = UDim2.fromOffset(3, 3),
+        BackgroundColor3 = tint,
+        BorderSizePixel = 0,
+    })
+    label(node, titleText, UDim2.fromOffset(15, 4), UDim2.new(1, -19, 0, 13), 8, C.text, Enum.Font.GothamBold)
+    label(node, subtitle, UDim2.fromOffset(7, 22), UDim2.new(1, -12, 0, 14), 7, C.muted)
+    return node
+end
+graphNode(graphPanel, UDim2.fromScale(0, 0), 0.29, "MOTION", "base cycle", C.nodeA)
+make("Frame", graphPanel, {
+    Position = UDim2.new(0.29, 3, 0.5, -1),
+    Size = UDim2.new(0.035, 0, 0, 2),
+    BackgroundColor3 = C.nodeA,
+    BorderSizePixel = 0,
+})
+graphNode(graphPanel, UDim2.new(0.33, 0, 0, 0), 0.31, "BLEND", "style layers", C.nodeB)
+make("Frame", graphPanel, {
+    Position = UDim2.new(0.64, 3, 0.5, -1),
+    Size = UDim2.new(0.035, 0, 0, 2),
+    BackgroundColor3 = C.nodeB,
+    BorderSizePixel = 0,
+})
+graphNode(graphPanel, UDim2.new(0.68, 0, 0, 0), 0.32, "POSE", "15 joints", C.accent)
+
+local generateButton = button(content, "GERAR ANIMAÇÃO", UDim2.fromOffset(0, 260), UDim2.new(1, 0, 0, 35), true)
+generateButton.TextSize = 11
+local variationButton = button(content, "OUTRA VARIAÇÃO", UDim2.fromOffset(0, 302), UDim2.new(0.5, -4, 0, 29), false)
+variationButton.TextSize = 8
+local saveReferenceButton = button(content, "GUARDAR REFERÊNCIA", UDim2.new(0.5, 4, 0, 302), UDim2.new(0.5, -4, 0, 29), false)
+saveReferenceButton.TextSize = 8
+
+label(content, "BIBLIOTECA LOCAL", UDim2.fromOffset(0, 343), UDim2.new(0.58, 0, 0, 13), 8, C.text, Enum.Font.GothamMedium)
+local libraryHeading = label(content, "0 / 48", UDim2.new(0.58, 0, 0, 343), UDim2.new(0.42, 0, 0, 13), 8, C.muted, Enum.Font.GothamMedium)
+libraryHeading.TextXAlignment = Enum.TextXAlignment.Right
+local libraryList = make("Frame", content, {
     Name = "SavedMotionList",
-    Position = UDim2.fromOffset(0, 242),
-    Size = UDim2.new(1, 0, 0, 84),
+    Position = UDim2.fromOffset(0, 360),
+    Size = UDim2.new(1, 0, 0, 72),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-local librarySummary = label(generatorPage, string.format("%d movimentos-base · %d mil combinações.", MOTION_BASE_COUNT, math.floor(MOTION_VARIATION_COUNT / 1000)), UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
-librarySummary.TextWrapped = true
 
-local footer = make("Frame", root, {
-    Name = "StatusFooter",
-    Position = UDim2.new(0, 0, 1, -40),
-    Size = UDim2.new(1, 0, 0, 40),
-    BackgroundColor3 = C.background,
-    BorderSizePixel = 0,
-})
-make("Frame", footer, {
-    Position = UDim2.fromOffset(14, 0),
-    Size = UDim2.new(1, -28, 0, 1),
-    BackgroundColor3 = C.line,
-    BorderSizePixel = 0,
-})
-local statusDot = make("Frame", footer, {
-    Position = UDim2.fromOffset(16, 16),
-    Size = UDim2.fromOffset(6, 6),
-    BackgroundColor3 = C.muted,
-    BorderSizePixel = 0,
-})
-make("UICorner", statusDot, { CornerRadius = UDim.new(1, 0) })
-local statusLabel = label(footer, "Selecione o Mesh Rig 2016.", UDim2.fromOffset(29, 6), UDim2.new(1, -43, 0, 27), 9, C.muted)
-statusLabel.TextWrapped = true
-statusLabel.TextYAlignment = Enum.TextYAlignment.Top
-
-label(content, "ENTRADA", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
-label(content, "Cole o JSON ou a variável POSECODE.", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 14), 9, C.muted)
-
-local sourceBox = make("TextBox", content, {
-    Position = UDim2.fromOffset(0, 43),
-    Size = UDim2.new(1, 0, 0, 190),
-    BackgroundColor3 = C.field,
-    BorderSizePixel = 0,
-    ClearTextOnFocus = false,
-    Font = Enum.Font.Code,
-    Text = "",
-    PlaceholderText = '{ "format": "POSECODE", "version": 2, ... }',
-    PlaceholderColor3 = C.muted,
-    TextColor3 = C.text,
-    TextSize = 10,
-    TextWrapped = false,
-    TextXAlignment = Enum.TextXAlignment.Left,
-    TextYAlignment = Enum.TextYAlignment.Top,
-    MultiLine = true,
-})
-make("UICorner", sourceBox, { CornerRadius = UDim.new(0, 4) })
-make("UIStroke", sourceBox, {
-    Color = C.line,
-    Thickness = 1,
-    Transparency = 0.2,
-})
-make("UIPadding", sourceBox, {
-    PaddingTop = UDim.new(0, 9),
-    PaddingBottom = UDim.new(0, 9),
-    PaddingLeft = UDim.new(0, 10),
-    PaddingRight = UDim.new(0, 10),
-})
-
-local importButton = button(content, "Importar clip", UDim2.fromOffset(0, 244), UDim2.new(1, 0, 0, 36), true)
-local exampleButton = button(content, "Carregar exemplo", UDim2.fromOffset(0, 289), UDim2.new(0.5, -4, 0, 30), false)
-local clearButton = button(content, "Limpar", UDim2.new(0.5, 4, 0, 289), UDim2.new(0.5, -4, 0, 30), false)
-local migrateButton = button(content, "Converter V1 para V2", UDim2.fromOffset(0, 329), UDim2.new(1, 0, 0, 30), false)
-label(content, "Entrada validada como JSON; nenhum código colado é executado.", UDim2.fromOffset(0, 366), UDim2.new(1, 0, 0, 15), 8, C.muted)
-
-label(previewPage, "PRÉVIA DO CLIP", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
-
-local timelinePanel = make("Frame", previewPage, {
+label(content, "PRÉVIA NO RIG", UDim2.fromOffset(0, 441), UDim2.new(1, 0, 0, 13), 8, C.text, Enum.Font.GothamMedium)
+local timelinePanel = make("Frame", content, {
     Name = "Timeline",
-    Position = UDim2.fromOffset(0, 27),
-    Size = UDim2.new(1, 0, 0, 76),
-    BackgroundTransparency = 1,
+    Position = UDim2.fromOffset(0, 459),
+    Size = UDim2.new(1, 0, 0, 53),
+    BackgroundColor3 = C.panel,
     BorderSizePixel = 0,
 })
-label(timelinePanel, "LINHA DO TEMPO", UDim2.fromOffset(0, 0), UDim2.new(0.38, 0, 0, 14), 9, C.text, Enum.Font.GothamMedium)
-local timelineInfo = label(timelinePanel, "SEM DADOS", UDim2.new(0.38, 0, 0, 0), UDim2.new(0.62, 0, 0, 14), 8, C.muted, Enum.Font.GothamMedium)
-timelineInfo.TextXAlignment = Enum.TextXAlignment.Right
-
+make("UICorner", timelinePanel, { CornerRadius = UDim.new(0, 3) })
+local timelineInfo = label(timelinePanel, "SEM ANIMAÇÃO", UDim2.fromOffset(8, 4), UDim2.new(0.62, 0, 0, 12), 7, C.muted, Enum.Font.GothamMedium)
+local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.new(0.62, -4, 0, 4), UDim2.new(0.38, -4, 0, 12), 7, C.text, Enum.Font.Code)
+timelineTime.TextXAlignment = Enum.TextXAlignment.Right
 local timelineTrack = make("Frame", timelinePanel, {
-    Position = UDim2.fromOffset(0, 23),
-    Size = UDim2.new(1, 0, 0, 24),
+    Position = UDim2.fromOffset(8, 25),
+    Size = UDim2.new(1, -16, 0, 18),
     BackgroundTransparency = 1,
 })
 make("Frame", timelineTrack, {
@@ -397,11 +334,10 @@ make("Frame", timelineTrack, {
     Size = UDim2.new(1, 0, 0, 2),
     BackgroundColor3 = C.line,
     BorderSizePixel = 0,
-    ZIndex = 1,
 })
 local timelineHitbox = make("TextButton", timelineTrack, {
     Name = "TimelineInput",
-    Active = true,
+    Active = false,
     Size = UDim2.fromScale(1, 1),
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
@@ -413,157 +349,52 @@ local timelineCursor = make("Frame", timelineTrack, {
     Name = "Playhead",
     AnchorPoint = Vector2.new(0.5, 0.5),
     Position = UDim2.new(0, 0, 0.5, 0),
-    Size = UDim2.fromOffset(2, 22),
+    Size = UDim2.fromOffset(2, 16),
     BackgroundColor3 = C.text,
     BorderSizePixel = 0,
     ZIndex = 5,
 })
-local timelineTime = label(timelinePanel, "00:00.00 / 00:00.00", UDim2.fromOffset(0, 52), UDim2.new(1, 0, 0, 14), 9, C.text, Enum.Font.Code)
 
-local previewButton = button(previewPage, "Reproduzir", UDim2.fromOffset(0, 115), UDim2.new(0.25, -4, 0, 32), true)
-local pauseButton = button(previewPage, "Pausar", UDim2.new(0.25, 2, 0, 115), UDim2.new(0.25, -4, 0, 32), false)
-local stopButton = button(previewPage, "Parar", UDim2.new(0.5, 2, 0, 115), UDim2.new(0.25, -4, 0, 32), false)
-local speedButton = button(previewPage, "1×", UDim2.new(0.75, 2, 0, 115), UDim2.new(0.25, -2, 0, 32), false)
+local previewButton = button(content, "PLAY", UDim2.fromOffset(0, 520), UDim2.new(0.23, -3, 0, 27), true)
+local pauseButton = button(content, "PAUSE", UDim2.new(0.23, 1, 0, 520), UDim2.new(0.23, -3, 0, 27), false)
+local stopButton = button(content, "STOP", UDim2.new(0.46, 2, 0, 520), UDim2.new(0.23, -3, 0, 27), false)
+local speedButton = button(content, "1×", UDim2.new(0.69, 3, 0, 520), UDim2.new(0.31, -3, 0, 27), false)
+local loopButton = button(content, "LOOP OFF", UDim2.fromOffset(0, 553), UDim2.new(0.34, -4, 0, 27), false)
+local saveButton = button(content, "SALVAR NO STUDIO", UDim2.new(0.34, 4, 0, 553), UDim2.new(0.66, -4, 0, 27), true)
+saveButton.TextSize = 8
+label(content, "20 BASES · 16,3 M CONFIGURAÇÕES · MESH RIG 2016", UDim2.fromOffset(0, 583), UDim2.new(1, 0, 0, 13), 7, C.muted)
 
-local previousKeyButton = button(previewPage, "Anterior", UDim2.fromOffset(0, 154), UDim2.new(0.5, -4, 0, 28), false)
-local nextKeyButton = button(previewPage, "Próximo", UDim2.new(0.5, 4, 0, 154), UDim2.new(0.5, -4, 0, 28), false)
-local loopButton = button(previewPage, "Repetir: OFF", UDim2.fromOffset(0, 191), UDim2.new(0.34, -4, 0, 34), false)
-local saveButton = button(previewPage, "Salvar clip no Studio", UDim2.new(0.34, 4, 0, 191), UDim2.new(0.66, -4, 0, 34), true)
-label(previewPage, "A publicação é feita pelo Editor de Animação.", UDim2.fromOffset(0, 234), UDim2.new(1, 0, 0, 15), 8, C.muted)
+local footer = make("Frame", root, {
+    Name = "StatusFooter",
+    Position = UDim2.new(0, 0, 1, -40),
+    Size = UDim2.new(1, 0, 0, 40),
+    BackgroundColor3 = C.background,
+    BorderSizePixel = 0,
+})
+make("Frame", footer, {
+    Position = UDim2.fromOffset(12, 0),
+    Size = UDim2.new(1, -24, 0, 1),
+    BackgroundColor3 = C.line,
+    BorderSizePixel = 0,
+})
+local statusDot = make("Frame", footer, {
+    Position = UDim2.fromOffset(15, 16),
+    Size = UDim2.fromOffset(6, 6),
+    BackgroundColor3 = C.muted,
+    BorderSizePixel = 0,
+})
+make("UICorner", statusDot, { CornerRadius = UDim.new(1, 0) })
+local statusLabel = label(footer, "Selecione o Mesh Rig 2016 no Explorer.", UDim2.fromOffset(27, 5), UDim2.new(1, -39, 0, 30), 8, C.muted)
+statusLabel.TextWrapped = true
+statusLabel.TextYAlignment = Enum.TextYAlignment.Top
 
-label(rigPage, "RIG SELECIONADO", UDim2.fromOffset(0, 7), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
-local rigInfo = label(rigPage, "RIG: —", UDim2.fromOffset(0, 30), UDim2.new(1, 0, 0, 36), 10, C.muted, Enum.Font.GothamMedium)
-rigInfo.TextWrapped = true
-rigInfo.TextYAlignment = Enum.TextYAlignment.Top
-local rigCheckButton = button(rigPage, "Analisar estrutura do rig", UDim2.fromOffset(0, 78), UDim2.new(1, 0, 0, 36), true)
-label(rigPage, "Confere conexões, quantidade de juntas e Bones e a rota de saída prevista.", UDim2.fromOffset(0, 124), UDim2.new(1, 0, 0, 38), 9, C.muted).TextWrapped = true
-
-local pageTabs = {}
-local activePage = "import"
-local showPage
-
-local function createTab(name, title, iconKind, position, size)
-    local tab = make("TextButton", navBar, {
-        Name = name .. "Tab",
-        Position = position,
-        Size = size,
-        BackgroundColor3 = C.background,
-        BorderSizePixel = 0,
-        AutoButtonColor = false,
-        Text = "",
-        Selectable = true,
-    })
-    local icon = vectorIcon(tab, iconKind, C.muted, UDim2.fromOffset(10, 9))
-    local tabLabel = label(tab, title, UDim2.fromOffset(31, 0), UDim2.new(1, -35, 1, 0), 9, C.muted, Enum.Font.GothamMedium)
-    local indicator = make("Frame", tab, {
-        Name = "SelectedIndicator",
-        Position = UDim2.new(0, 8, 1, -2),
-        Size = UDim2.new(1, -16, 0, 2),
-        BackgroundColor3 = C.accent,
-        BorderSizePixel = 0,
-        Visible = false,
-    })
-
-    tab.MouseEnter:Connect(function()
-        if activePage ~= name then
-            tab.BackgroundColor3 = C.surface
-        end
-    end)
-    tab.MouseLeave:Connect(function()
-        if activePage ~= name then
-            tab.BackgroundColor3 = C.background
-        end
-    end)
-    tab.Activated:Connect(function()
-        showPage(name)
-    end)
-
-    pageTabs[name] = {
-        button = tab,
-        icon = icon,
-        label = tabLabel,
-        indicator = indicator,
-    }
+local function setStatus(message, color)
+    local statusColor = color or C.muted
+    statusLabel.Text = message
+    statusLabel.TextColor3 = statusColor
+    statusDot.BackgroundColor3 = statusColor
 end
 
-createTab("import", "Importar", "file", UDim2.fromScale(0, 0), UDim2.new(0.25, -3, 1, 0))
-createTab("generate", "Gerar", "generate", UDim2.new(0.25, 1, 0, 0), UDim2.new(0.25, -3, 1, 0))
-createTab("preview", "Prévia", "timeline", UDim2.new(0.5, 2, 0, 0), UDim2.new(0.25, -3, 1, 0))
-createTab("rig", "Rig", "rig", UDim2.new(0.75, 3, 0, 0), UDim2.new(0.25, -3, 1, 0))
-
-showPage = function(pageName)
-    activePage = pageName
-    content.Visible = pageName == "import"
-    generatorPage.Visible = pageName == "generate"
-    previewPage.Visible = pageName == "preview"
-    rigPage.Visible = pageName == "rig"
-
-    local pageHeights = {
-        import = 390,
-        generate = 370,
-        preview = 270,
-        rig = 220,
-    }
-    scroll.CanvasSize = UDim2.fromOffset(0, pageHeights[pageName] or 350)
-    scroll.CanvasPosition = Vector2.zero
-
-    for name, tab in pairs(pageTabs) do
-        local selected = name == pageName
-        tab.button.BackgroundColor3 = selected and C.surface or C.background
-        tab.label.TextColor3 = selected and C.text or C.muted
-        tab.indicator.Visible = selected
-        recolorIcon(tab.icon, selected and C.text or C.muted)
-    end
-end
-
-showPage("import")
-
-local motionEngine = {
-    recipes = {},
-    lastGeneratedRecipe = nil,
-    lastGeneratedDocument = nil,
-}
-
-local importDocument
-
-local importedData = nil
-local importedSequence = nil
-local importedRig = nil
-local previewTrack = nil
-local previewAnimation = nil
-local previewHost = nil
-local previewAnimator = nil
-local temporaryHost = false
-local temporaryAnimator = false
-local previewStepConnection = nil
-local previewJointSnapshot = {}
-local previewPaused = false
-local previewSpeed = 1
-local previewLooped = false
-local speedOptions = { 0.5, 1, 1.5, 2 }
-local speedOptionIndex = 2
-local isScrubbing = false
-local timelineInputConnections = {}
-local previewMarkerConnections = {}
-local importedData = nil
-local importedSequence = nil
-local importedRig = nil
-local previewTrack = nil
-local previewAnimation = nil
-local previewHost = nil
-local previewAnimator = nil
-local temporaryHost = false
-local temporaryAnimator = false
-local previewStepConnection = nil
-local previewJointSnapshot = {}
-local previewPaused = false
-local previewSpeed = 1
-local previewLooped = false
-local speedOptions = { 0.5, 1, 1.5, 2 }
-local speedOptionIndex = 2
-local isScrubbing = false
-local timelineInputConnections = {}
-local previewMarkerConnections = {}
 local function setButtonState(target, enabled, primary)
     target.Active = enabled
     target.Selectable = enabled
@@ -576,7 +407,7 @@ local function setButtonState(target, enabled, primary)
 end
 
 local function setPreviewRunning(enabled)
-    pauseButton.Text = previewPaused and "Continuar" or "Pausar"
+    pauseButton.Text = previewPaused and "RESUME" or "PAUSE"
     setButtonState(pauseButton, enabled, false)
     setButtonState(stopButton, enabled, false)
 end
@@ -584,8 +415,6 @@ end
 local function setClipControlsEnabled(enabled)
     setButtonState(previewButton, enabled, true)
     setButtonState(speedButton, enabled, false)
-    setButtonState(previousKeyButton, enabled, false)
-    setButtonState(nextKeyButton, enabled, false)
     setButtonState(loopButton, enabled, false)
     setButtonState(saveButton, enabled, true)
     timelineHitbox.Active = enabled
@@ -593,24 +422,13 @@ local function setClipControlsEnabled(enabled)
     setPreviewRunning(false)
 end
 
-local function setStatus(message, color)
-    local statusColor = color or C.muted
-    statusLabel.Text = message
-    statusLabel.TextColor3 = statusColor
-    statusDot.BackgroundColor3 = statusColor
-end
-
-setClipControlsEnabled(false)
-setButtonState(importButton, false, true)
-setButtonState(exampleButton, false, false)
-
 local function clearTimeline()
     for _, child in ipairs(timelineTrack:GetChildren()) do
         if child.Name == "KeyMarker" or child.Name == "EventMarker" then
             child:Destroy()
         end
     end
-    timelineInfo.Text = "SEM DADOS"
+    timelineInfo.Text = "SEM ANIMAÇÃO"
     timelineTime.Text = "00:00.00 / 00:00.00"
     timelineCursor.Position = UDim2.new(0, 0, 0.5, 0)
 end
@@ -631,47 +449,24 @@ end
 
 local function drawTimeline(data)
     clearTimeline()
-    if not data or #data.frames == 0 then
-        return
-    end
-
+    if not data or #data.frames == 0 then return end
     local duration = math.max(data.duration, 0.001)
-    local totalMarkers = 0
     for _, frameData in ipairs(data.frames) do
         local marker = make("Frame", timelineTrack, {
             Name = "KeyMarker",
             AnchorPoint = Vector2.new(0.5, 0.5),
             Position = UDim2.new(math.clamp(frameData.time / duration, 0, 1), 0, 0.5, 0),
-            Size = UDim2.fromOffset(5, 16),
+            Size = UDim2.fromOffset(3, 10),
             BackgroundColor3 = C.accent,
             BorderSizePixel = 0,
             ZIndex = 2,
         })
-        make("UICorner", marker, { CornerRadius = UDim.new(0, 2) })
-
-        for markerIndex, markerData in ipairs(frameData.markers or {}) do
-            totalMarkers += 1
-            local eventMarker = make("Frame", timelineTrack, {
-                Name = "EventMarker",
-                AnchorPoint = Vector2.new(0.5, 0.5),
-                Position = UDim2.new(math.clamp(frameData.time / duration, 0, 1), 0, 0.5, -8 - ((markerIndex - 1) * 2)),
-                Size = UDim2.fromOffset(7, 7),
-                BackgroundColor3 = C.event,
-                BorderSizePixel = 0,
-                ZIndex = 3,
-            })
-            make("UICorner", eventMarker, { CornerRadius = UDim.new(0, 1) })
-        end
+        make("UICorner", marker, { CornerRadius = UDim.new(0, 1) })
     end
-
-    local clipTypeLabel = "KEYFRAMES"
-    if data.clipType == "CurveAnimation" then
-        clipTypeLabel = data.hasAnimationConstraint and "CURVAS / MESH 2016" or "KEYFRAMES"
-    end
-    timelineInfo.Text = string.format("%d quadros · %d eventos · %.2fs · %s", #data.frames, totalMarkers, data.duration, clipTypeLabel)
+    local clipType = data.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
+    timelineInfo.Text = string.format("%s · %d FRAMES · %.2fs", clipType, #data.frames, data.duration)
     updateTimelineCursor(0)
 end
-
 local MESH_RIG_2016_PARTS = {
     "Head", "UpperTorso", "LowerTorso",
     "LeftUpperArm", "LeftLowerArm", "LeftHand",
@@ -1058,7 +853,7 @@ end
 
 local MOTION_LIBRARY_SETTING = "PosecodeMotionLibrary"
 local MOTION_SEED_SETTING = "PosecodeMotionSeed"
-local MAX_SAVED_MOTIONS = 24
+local MAX_SAVED_MOTIONS = 48
 local MOTION_FPS = 30
 local MOTION_SEGMENTS = 12
 
@@ -1182,6 +977,11 @@ local MOTION_CATALOG = {
         gesture = "dance", danceArmRaise = 38, handWave = 9,
         looped = true, priority = "Action",
     },
+   local MOTION_STYLE_ORDER = {
+    "sprint", "run", "backpedal", "strafe", "crawl", "march",
+    "sneak", "tiptoe", "limp", "salute", "wave", "jump",
+    "bow", "point", "clap", "dance", "stretch", "shrug",
+    "idle", "walk",
 }
 
 local MOTION_STYLE_ORDER = {
@@ -1199,6 +999,13 @@ local MOOD_PROFILES = {
     robotic = { speed = 3, intensity = 3, stride = 3, arms = 2, torso = 2, bounce = 1, easing = 1 },
     exaggerated = { speed = 3, intensity = 5, stride = 5, arms = 4, torso = 4, bounce = 4 },
     casual = { speed = 3, intensity = 2, stride = 3, arms = 2, torso = 2, bounce = 2 },
+    sleepy = { speed = 1, intensity = 1, stride = 2, arms = 1, torso = 4, bounce = 1, easing = 2 },
+    nervous = { speed = 4, intensity = 2, stride = 2, arms = 3, torso = 3, bounce = 2 },
+    proud = { speed = 3, intensity = 3, stride = 4, arms = 3, torso = 1, bounce = 2 },
+    curious = { speed = 2, intensity = 2, stride = 2, arms = 2, torso = 2, bounce = 1 },
+    playful = { speed = 4, intensity = 3, stride = 4, arms = 4, torso = 2, bounce = 4 },
+    serious = { speed = 3, intensity = 2, stride = 3, arms = 1, torso = 1, bounce = 0 },
+    relaxed = { speed = 2, intensity = 1, stride = 3, arms = 1, torso = 2, bounce = 1 },
 }
 local MOOD_LABELS = {
     tired = "cansado",
@@ -1210,6 +1017,13 @@ local MOOD_LABELS = {
     robotic = "robotico",
     exaggerated = "exagerado",
     casual = "casual",
+    sleepy = "sonolento",
+    nervous = "nervoso",
+    proud = "orgulhoso",
+    curious = "curioso",
+    playful = "brincalhao",
+    serious = "serio",
+    relaxed = "relaxado",
 }
 local SPEED_FACTORS = { 1.66, 1.33, 1, 0.67, 0.4 }
 local INTENSITY_FACTORS = { 0.55, 0.75, 1, 1.2, 1.4 }
@@ -1294,11 +1108,16 @@ function motionEngine.parsePrompt(prompt)
         values = {},
     }
 
+    local recognizedBase = false
     for _, styleName in ipairs(MOTION_STYLE_ORDER) do
         if motionEngine.hasAny(text, MOTION_CATALOG[styleName].aliases) then
             result.base = styleName
+            recognizedBase = true
             break
         end
+    end
+    if not recognizedBase then
+        error("Não reconheci o movimento. Tente walk, run, sprint, sneak, crawl, wave, jump, dance ou outro tipo da biblioteca.")
     end
 
     local moodAliases = {
@@ -1310,7 +1129,14 @@ function motionEngine.parsePrompt(prompt)
         { "sad", { "triste", "abatido", "abatida", "sad" } },
         { "robotic", { "robotico", "robotica", "mecanico", "mecanica", "robotic" } },
         { "exaggerated", { "exagerado", "exagerada", "exagerado", "exaggerated" } },
-        { "casual", { "casual", "relaxado", "relaxada" } },
+        { "casual", { "casual" } },
+        { "sleepy", { "sleepy", "sonolento", "sonolenta", "com sono" } },
+        { "nervous", { "nervous", "nervoso", "nervosa", "ansioso", "ansiosa" } },
+        { "proud", { "proud", "orgulhoso", "orgulhosa", "peito estufado" } },
+        { "curious", { "curious", "curioso", "curiosa" } },
+        { "playful", { "playful", "brincalhao", "brincalhona", "divertido" } },
+        { "serious", { "serious", "serio", "seria" } },
+        { "relaxed", { "relaxed", "relaxado", "relaxada", "tranquilo", "tranquila" } },
     }
     for _, moodEntry in ipairs(moodAliases) do
         if motionEngine.hasAny(text, moodEntry[2]) then
@@ -1324,11 +1150,11 @@ function motionEngine.parsePrompt(prompt)
         result.explicit[name] = true
     end
 
-    if motionEngine.hasAny(text, { "muito devagar", "bem devagar", "bem lento", "very slow" }) then
+    if motionEngine.hasAny(text, { "muito devagar", "bem devagar", "bem lento", "quase parando", "very slow", "extremely slow" }) then
         setValue("speed", 1)
     elseif motionEngine.hasAny(text, { "devagar", "lento", "lenta", "slow" }) then
         setValue("speed", 2)
-    elseif motionEngine.hasAny(text, { "muito rapido", "muito veloz", "super rapido", "very fast" }) then
+    elseif motionEngine.hasAny(text, { "muito rapido", "muito veloz", "super rapido", "explosivo", "very fast", "extremely fast" }) then
         setValue("speed", 5)
     elseif motionEngine.hasAny(text, { "rapido", "rapida", "veloz", "fast" }) then
         setValue("speed", 4)
@@ -1354,7 +1180,7 @@ function motionEngine.parsePrompt(prompt)
         setValue("stride", 4)
     end
 
-    if motionEngine.hasAny(text, { "bracos soltos", "bracos relaxados", "relaxed arms" }) then
+    if motionEngine.hasAny(text, { "bracos soltos", "bracos relaxados", "relaxed arms", "arms loose" }) then
         setValue("arms", 1)
     elseif motionEngine.hasAny(text, { "bracos leves", "soft arm swing" }) then
         setValue("arms", 2)
@@ -1362,7 +1188,7 @@ function motionEngine.parsePrompt(prompt)
         setValue("arms", 4)
     end
 
-    if motionEngine.hasAny(text, { "postura ereta", "corpo ereto", "upright" }) then
+    if motionEngine.hasAny(text, { "postura ereta", "corpo ereto", "upright", "peito aberto" }) then
         setValue("torso", 1)
     elseif motionEngine.hasAny(text, { "postura neutra", "corpo neutro", "neutral torso" }) then
         setValue("torso", 2)
@@ -1380,7 +1206,7 @@ function motionEngine.parsePrompt(prompt)
         setValue("bounce", 4)
     end
 
-    if motionEngine.hasAny(text, { "de costas", "para tras", "backwards", "backward" }) then
+    if motionEngine.hasAny(text, { "de costas", "para tras", "backwards", "backward", "reverse" }) then
         setValue("direction", -1)
     end
 
@@ -1658,7 +1484,7 @@ function motionEngine.buildDocument(recipe, skeleton)
     local legAmplitude = base.leg * intensity * stride * swingVariance
     local kneeAmplitude = base.knee * intensity * stride
     local armAmplitude = base.arm * intensity * arms * swingVariance
-    local leanAngle = (base.lean * torso + moodLean) * leanVariance
+    local leanAngle = (base.lean * torso + moodLean) * leanVariance * (base.leanDirection or 1)
     local asymmetry = base.asymmetry or 0
     if recipe.mood == "tired" then
         asymmetry += 0.08
@@ -1673,10 +1499,12 @@ function motionEngine.buildDocument(recipe, skeleton)
         local cosine = math.cos(phase)
         local progress = step / MOTION_SEGMENTS
         local actionPulse = math.sin(math.pi * progress)
-        local rightSwing = sine * legAmplitude * (1 + asymmetry)
-        local leftSwing = -sine * legAmplitude * (1 - asymmetry)
-        local rightKnee = math.max(0, math.sin(phase + math.pi * 0.5)) * kneeAmplitude
-        local leftKnee = math.max(0, math.sin(phase - math.pi * 0.5)) * kneeAmplitude
+        local gaitPhase = base.reverseStride and -phase or phase
+        local gaitSine = math.sin(gaitPhase)
+        local rightSwing = gaitSine * legAmplitude * (1 + asymmetry)
+        local leftSwing = -gaitSine * legAmplitude * (1 - asymmetry)
+        local rightKnee = math.max(0, math.sin(gaitPhase + math.pi * 0.5)) * kneeAmplitude
+        local leftKnee = math.max(0, math.sin(gaitPhase - math.pi * 0.5)) * kneeAmplitude
         local armSwingRight = -sine * armAmplitude
         local armSwingLeft = sine * armAmplitude
         local armBendRight = base.armBend + math.max(0, math.sin(phase + math.pi * 0.5)) * base.armBend * 0.42
@@ -1720,17 +1548,27 @@ function motionEngine.buildDocument(recipe, skeleton)
             leftArmRaise = math.max(0, sine) * (base.danceArmRaise or 0) * arms
             rightArmRaise = math.max(0, -sine) * (base.danceArmRaise or 0) * arms
             handWave = math.sin(phase * 2) * (base.handWave or 0)
+        elseif base.gesture == "stretch" then
+            leftArmRaise = -(base.stretchRaise or 0) * arms * actionPulse
+            rightArmRaise = (base.stretchRaise or 0) * arms * actionPulse
+            torsoAction = -(base.stretchArch or 0) * torso * actionPulse
+        elseif base.gesture == "shrug" then
+            leftArmRaise = -(base.shrugRaise or 0) * arms * actionPulse
+            rightArmRaise = (base.shrugRaise or 0) * arms * actionPulse
+            leftElbowBias = (base.shrugElbow or 0) * arms * actionPulse
+            rightElbowBias = (base.shrugElbow or 0) * arms * actionPulse
         end
 
+        local torsoYaw = base.sideways and math.sin(phase) * 12 * (recipe.direction or 1) or 0
         local bodySway = sine * base.sway * intensity
         local bodyRoll = cosine * base.sway * 0.42
         local rightFoot = -rightSwing * 0.18 - (rightKnee + kneeAction) * 0.42
         local leftFoot = -leftSwing * 0.18 - (leftKnee + kneeAction) * 0.42
 
         local rotations = {
-            Head = { headDrop - bodyBob * 0.35, -bodySway * 0.08, -bodyRoll * 0.25 },
-            UpperTorso = { -leanAngle + bodyBob - torsoAction, bodySway * 0.18, bodyRoll },
-            LowerTorso = { leanAngle * 0.22 + torsoAction * 0.18, bodySway * 0.12, -bodyRoll * 0.32 },
+            Head = { headDrop - bodyBob * 0.35, -bodySway * 0.08 - torsoYaw * 0.12, -bodyRoll * 0.25 },
+            UpperTorso = { -leanAngle + bodyBob - torsoAction, bodySway * 0.18 + torsoYaw, bodyRoll },
+            LowerTorso = { leanAngle * 0.22 + torsoAction * 0.18, bodySway * 0.12 + torsoYaw * 0.35, -bodyRoll * 0.32 },
             LeftUpperArm = { armSwingLeft, 0, -base.sway * 0.18 + leftArmRaise },
             LeftLowerArm = { armBendLeft + leftElbowBias, 0, 0 },
             LeftHand = { 0, 0, math.sin(phase + math.pi * 0.5) * 2.2 * arms - handWave },
@@ -1800,7 +1638,8 @@ end
 function motionEngine.saveCurrentReference()
     local recipe = motionEngine.lastGeneratedRecipe
     if not recipe
-        or sourceBox.Text ~= motionEngine.lastGeneratedDocument
+        or not importedSequence
+        or importedRig ~= selectedRigCache
         or motionEngine.cleanPrompt(promptBox.Text) ~= recipe.prompt then
         setStatus("Gere e confira uma animação antes de guardar a referência.", C.red)
         return
@@ -1822,149 +1661,9 @@ function motionEngine.saveCurrentReference()
 
     if motionEngine.persistLibrary() then
         motionEngine.renderLibrary()
-        setStatus("Referência adicionada à biblioteca local. Ela será considerada em próximas gerações parecidas.", C.green)
+        setStatus("Referência aprovada e guardada na biblioteca local.", C.green)
     end
-end
-
-function motionEngine.run(prompt, forcedRecipe)
-    local rig = selectedRig()
-    if not rig then
-        setStatus("Selecione o Mesh Rig 2016 antes de gerar.", C.red)
-        return false
-    end
-
-    local ok, result = pcall(function()
-        local skeleton = getSkeleton(rig)
-        local recipe, reference = motionEngine.resolveRecipe(prompt, forcedRecipe)
-        if reference then
-            recipe.referenceName = reference.name
-        end
-        local document = motionEngine.buildDocument(recipe, skeleton)
-        local encoded = HttpService:JSONEncode(document)
-        if #encoded > MAX_SOURCE_LENGTH then
-            error("A animação gerada ultrapassou o limite seguro de entrada.")
-        end
-        return {
-            recipe = recipe,
-            encoded = encoded,
-            referenceName = reference and reference.name or nil,
-            duration = document.timeline.duration,
-        }
-    end)
-
-    if not ok then
-        setStatus("Não consegui gerar: " .. tostring(result), C.red)
-        return false
-    end
-
-    motionEngine.lastGeneratedRecipe = nil
-    motionEngine.lastGeneratedDocument = result.encoded
-    sourceBox.Text = result.encoded
-
-    if not importDocument then
-        setStatus("O importador ainda não está pronto. Tente novamente.", C.red)
-        return false
-    end
-    local imported = importDocument()
-    if not imported then
-        motionEngine.lastGeneratedDocument = nil
-        setButtonState(saveReferenceButton, false, false)
-        setButtonState(variationButton, false, false)
-        return false
-    end
-
-    motionEngine.lastGeneratedRecipe = result.recipe
-    motionEngine.lastGeneratedDocument = result.encoded
-    setButtonState(saveReferenceButton, true, false)
-    setButtonState(variationButton, true, false)
-
-    local referenceNote = result.referenceName
-        and (" Referência aplicada: " .. result.referenceName .. ".")
-        or " Receita criada a partir do catálogo-base."
-    setStatus(
-        string.format(
-            "%s gerado: 13 poses por ciclo, %.2fs. Confira a prévia antes de salvar.%s",
-            result.recipe.name,
-            result.duration,
-            referenceNote
-        ),
-        C.green
-    )
-    return true
-end
-
-motionEngine.loadLibrary()
-motionEngine.renderLibrary()
-
-local selectedRigCache = nil
-
-local function refreshActionButtons()
-    local hasSource = sourceBox.Text:match("^%s*$") == nil
-    local hasPrompt = promptBox.Text:match("^%s*$") == nil
-    local generatedIsCurrent = motionEngine.lastGeneratedRecipe ~= nil
-        and motionEngine.lastGeneratedDocument == sourceBox.Text
-        and motionEngine.cleanPrompt(promptBox.Text) == motionEngine.lastGeneratedRecipe.prompt
-
-    setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
-    setButtonState(exampleButton, selectedRigCache ~= nil, false)
-    setButtonState(migrateButton, selectedRigCache ~= nil and hasSource, false)
-    setButtonState(rigCheckButton, selectedRigCache ~= nil, false)
-    setButtonState(generateButton, selectedRigCache ~= nil and hasPrompt, true)
-    setButtonState(variationButton, selectedRigCache ~= nil and generatedIsCurrent, false)
-    setButtonState(saveReferenceButton, generatedIsCurrent, false)
-end
-
-local function refreshSelectionHint()
-    selectedRigCache = selectedRig()
-    if not importedData then
-        rigInfo.Text = selectedRigCache
-            and ("RIG SELECIONADO: " .. selectedRigCache.Name)
-            or "RIG: —"
-    end
-    refreshActionButtons()
-end
-
-Selection.SelectionChanged:Connect(refreshSelectionHint)
-sourceBox:GetPropertyChangedSignal("Text"):Connect(function()
-    if motionEngine.lastGeneratedDocument ~= sourceBox.Text then
-        motionEngine.lastGeneratedRecipe = nil
-        motionEngine.lastGeneratedDocument = nil
-    end
-    refreshActionButtons()
-end)
-promptBox:GetPropertyChangedSignal("Text"):Connect(refreshActionButtons)
-refreshSelectionHint()
-motionEngine.renderLibrary()
-
-local function analyzeSelectedRig()
-    local rig = selectedRigCache
-    if not rig then
-        setStatus("Selecione o Mesh Rig 2016 no Explorer antes de analisar.", C.red)
-        return
-    end
-
-    local ok, skeleton = pcall(function()
-        return getSkeleton(rig)
-    end)
-    if not ok then
-        setStatus("Rig incompatível: " .. tostring(skeleton), C.red)
-        return
-    end
-
-    local jointType = skeleton.animationConstraintCount == 15
-        and "15 AnimationConstraint"
-        or "15 Motor6D"
-    local outputType = skeleton.hasAnimationConstraint
-        and "CurveAnimation"
-        or "KeyframeSequence"
-
-    rigInfo.Text = string.format("MESH RIG 2016  /  15 MESHPARTS  /  %s", jointType)
-    setStatus("Mesh Rig 2016 reconhecido. Saída: " .. outputType .. ". Hierarquia corporal validada.", C.green)
-end
-
-rigCheckButton.Activated:Connect(analyzeSelectedRig)
-
-local function isFiniteNumber(value)
+endlocal function isFiniteNumber(value)
     return typeof(value) == "number" and value == value and value > -math.huge and value < math.huge
 end
 
@@ -2060,25 +1759,6 @@ local function transformCharacterRotationToJointSpace(transform, jointName, skel
 
     return CFrame.new(transform.Position) * jointLocalRotation
 end
-
-local function extractPayload(source)
-    local fence = string.rep(string.char(96), 3)
-    source = source:gsub("^%s*" .. fence .. "[%w_-]*%s*", "")
-    source = source:gsub("%s*" .. fence .. "%s*$", "")
-
-    local payload = source:match("POSECODE_BEGIN(.-)POSECODE_END")
-    if payload then
-        return payload
-    end
-
-    local _, body = source:match("POSECODE%s*=%s*%[(=*)%[(.-)%]%1%]")
-    if body then
-        return body
-    end
-
-    return source
-end
-
 
 local function normalizeV2Data(data, skeleton)
     if typeof(data) ~= "table" or data.format ~= "POSECODE" or data.version ~= 2 then
@@ -2612,110 +2292,239 @@ local function validateData(data, rig, skeleton)
     }
 end
 
-local function convertV1ToV2(legacyData, validatedData, skeleton)
-    if typeof(legacyData) ~= "table" or legacyData.version ~= 1 then
-        error("O conversor aceita somente documentos POSECODE V1.")
+local function validateData(data, rig, skeleton)
+    if typeof(data) ~= "table" then
+        error("O conteúdo precisa ser um objeto JSON.")
+    end
+    if data.format ~= "POSECODE" then
+        error('Campo "format" precisa ser "POSECODE".')
+    end
+    if data.version ~= 1 then
+        error('Versão incompatível. Use "version": 1.')
+    end
+    if data.rig ~= "R15" then
+        error('O POSECODE 3.0 aceita somente Mesh Rig 2016 com rig = "R15".')
     end
 
-    local tracksByTarget = {}
-    local events = {}
-    local defaultStyle = validatedData.frames[1].easingStyle.Name
-    local defaultDirection = validatedData.frames[1].easingDirection.Name
-
-    for _, frameData in ipairs(validatedData.frames) do
-        local time = frameData.time
-        local easingStyle = frameData.easingStyle.Name
-        local easingDirection = frameData.easingDirection.Name
-
-        for targetName, jointData in pairs(frameData.joints) do
-            local targetType = skeleton.jointKindsByName[targetName]
-            if not targetType then
-                error('Não foi possível determinar o tipo do alvo "' .. tostring(targetName) .. '".')
-            end
-
-            local track = tracksByTarget[targetName]
-            if not track then
-                track = {
-                    target = {
-                        type = targetType,
-                        name = targetName,
-                    },
-                    keys = {},
-                }
-                tracksByTarget[targetName] = track
-            end
-
-            local key = {
-                time = time,
-                transform = {
-                    position = jointData.position or { 0, 0, 0 },
-                    rotation = jointData.rotation or { 0, 0, 0 },
-                },
-            }
-
-            if easingStyle ~= defaultStyle or easingDirection ~= defaultDirection then
-                key.easing = {
-                    style = easingStyle,
-                    direction = easingDirection,
-                }
-            end
-
-            table.insert(track.keys, key)
-        end
-
-        for _, markerData in ipairs(frameData.markers or {}) do
-            table.insert(events, {
-                time = time,
-                name = markerData.name,
-                value = markerData.value,
-            })
-        end
+    local humanoid = rig:FindFirstChildOfClass("Humanoid")
+    if humanoid and humanoid.RigType.Name ~= data.rig then
+        error("O script é para " .. data.rig .. ", mas o rig selecionado é " .. humanoid.RigType.Name .. ".")
     end
 
-    local targetNames = {}
-    for targetName in pairs(tracksByTarget) do
-        table.insert(targetNames, targetName)
+    if not isFiniteNumber(data.fps) or data.fps < 1 or data.fps > 60 or data.fps % 1 ~= 0 then
+        error('"fps" precisa ser um número inteiro entre 1 e 60.')
     end
-    table.sort(targetNames)
-
-    local tracks = {}
-    for _, targetName in ipairs(targetNames) do
-        table.insert(tracks, tracksByTarget[targetName])
+    if typeof(data.looped) ~= "boolean" then
+        error('"looped" precisa ser true ou false.')
+    end
+    if not isFiniteNumber(data.duration) or data.duration <= 0 or data.duration > MAX_DURATION then
+        error('"duration" precisa estar entre 0 e 15 segundos.')
+    end
+    local frameCount = arrayLength(data.frames, "frames", MAX_FRAMES)
+    if frameCount < 1 then
+        error("A animação precisa ter pelo menos um keyframe.")
     end
 
-    if #tracks == 0 then
-        error("O documento V1 não possui canais de junta para migrar.")
+    local durationFrames = math.floor(data.duration * data.fps + 0.5)
+    if durationFrames < 1 then
+        error("A duração precisa ser de pelo menos um quadro no FPS informado.")
+    end
+    local normalizedDuration = durationFrames / data.fps
+
+    local rotationSpace = data.rotationSpace or "joint"
+    if rotationSpace ~= "joint" and rotationSpace ~= "character" then
+        error('rotationSpace precisa ser "joint" ou "character".')
     end
 
-    local migrated = {
-        format = "POSECODE",
-        version = 2,
-        metadata = {
-            name = validatedData.name,
-            author = "POSECODE V1 migration",
-            description = "Converted from a validated POSECODE V1 document.",
-        },
-        rig = {
-            profile = validatedData.rig,
-        },
-        timeline = {
-            fps = validatedData.fps,
-            duration = validatedData.duration,
-            looped = validatedData.looped,
-            priority = validatedData.priority.Name,
-            defaultEasing = {
-                style = defaultStyle,
-                direction = defaultDirection,
-            },
-        },
-        tracks = tracks,
+    local priorityName = data.priority or "Action"
+    local validPriorities = {
+        Core = true,
+        Idle = true,
+        Movement = true,
+        Action = true,
+        Action2 = true,
+        Action3 = true,
+        Action4 = true,
     }
-
-    if #events > 0 then
-        migrated.events = events
+    if typeof(priorityName) ~= "string" or not validPriorities[priorityName] then
+        error('"priority" precisa ser Core, Idle, Movement, Action, Action2, Action3 ou Action4.')
     end
 
-    return migrated, #events
+    local frames = {}
+    local seenFrames = {}
+    local totalMarkerCount = 0
+
+    for index, frameData in ipairs(data.frames) do
+        if typeof(frameData) ~= "table" or not isFiniteNumber(frameData.time) then
+            error("Keyframe " .. index .. " não possui um tempo válido.")
+        end
+        if frameData.time < 0 or frameData.time > data.duration then
+            error("O tempo de um keyframe ultrapassa a duração declarada.")
+        end
+        if typeof(frameData.joints) ~= "table" then
+            error("Keyframe " .. index .. " precisa ter um objeto joints.")
+        end
+
+        local markers = {}
+        if frameData.markers ~= nil then
+            local markerCount = arrayLength(frameData.markers, "markers do quadro " .. index, MAX_MARKERS_PER_FRAME)
+            if markerCount > 0 and skeleton.hasCurveAnimation then
+                error("Eventos KeyframeMarker exigem saída KeyframeSequence. Remova os markers deste rig CurveAnimation experimental.")
+            end
+
+            for markerIndex, markerData in ipairs(frameData.markers) do
+                if typeof(markerData) ~= "table" then
+                    error("Evento " .. markerIndex .. " do quadro " .. index .. " precisa ser um objeto.")
+                end
+                if typeof(markerData.name) ~= "string" or markerData.name:match("^%s*$") or #markerData.name > 64 then
+                    error("O nome de cada evento precisa ter entre 1 e 64 caracteres.")
+                end
+                local markerValue = markerData.value or ""
+                if typeof(markerValue) ~= "string" or #markerValue > 256 then
+                    error("O valor do evento precisa ser texto com até 256 caracteres.")
+                end
+
+                totalMarkerCount += 1
+                if totalMarkerCount > MAX_MARKERS then
+                    error("A animação ultrapassa o limite de " .. MAX_MARKERS .. " eventos.")
+                end
+
+                table.insert(markers, {
+                    name = markerData.name,
+                    value = markerValue,
+                })
+            end
+        end
+
+        local frameNumber = math.floor(frameData.time * data.fps + 0.5)
+        if frameNumber > durationFrames then
+            error("Um keyframe ficou depois do fim ao ajustar ao FPS informado.")
+        end
+        if seenFrames[frameNumber] then
+            error("Dois keyframes caíram no mesmo quadro depois do ajuste ao FPS.")
+        end
+        seenFrames[frameNumber] = true
+
+        local easingStyleName = frameData.easingStyle or data.easingStyle or "Linear"
+        local easingDirectionName = frameData.easingDirection or data.easingDirection or "InOut"
+        if typeof(easingStyleName) ~= "string" or typeof(easingDirectionName) ~= "string" then
+            error("EasingStyle e EasingDirection precisam ser strings.")
+        end
+        local easingStyle = Enum.PoseEasingStyle[easingStyleName]
+        local easingDirection = Enum.PoseEasingDirection[easingDirectionName]
+
+        if not easingStyle then
+            error('EasingStyle inválido no keyframe ' .. index .. '. Use Linear, Constant, CubicV2, Elastic ou Bounce.')
+        end
+        if not easingDirection then
+            error('EasingDirection inválido no keyframe ' .. index .. '. Use In, Out ou InOut.')
+        end
+
+        if skeleton.hasCurveAnimation then
+            if easingStyleName == "Elastic" or easingStyleName == "Bounce" then
+                error("CurveAnimation não possui interpolação Elastic ou Bounce. Use Linear, Constant ou CubicV2.")
+            end
+            if easingStyleName == "CubicV2" and easingDirectionName ~= "InOut" then
+                error("CurveAnimation com CubicV2 exige easingDirection InOut. Ajuste o easingDirection deste quadro.")
+            end
+        end
+
+        local transforms = {}
+        for jointName, jointData in pairs(frameData.joints) do
+            if typeof(jointName) ~= "string" or not skeleton.jointsByPart1[jointName] then
+                error('A junta "' .. tostring(jointName) .. '" não existe nesse rig. Use o nome da peça conectada pela junta.')
+            end
+            local transform = transformFromData(jointData)
+            if rotationSpace == "character" then
+                transform = transformCharacterRotationToJointSpace(transform, jointName, skeleton)
+            end
+            transforms[jointName] = transform
+        end
+
+        table.insert(frames, {
+            time = frameNumber / data.fps,
+            joints = frameData.joints,
+            transforms = transforms,
+            markers = markers,
+            easingStyle = easingStyle,
+            easingDirection = easingDirection,
+        })
+    end
+
+    table.sort(frames, function(a, b)
+        return a.time < b.time
+    end)
+
+    if frames[1].time > 0 then
+        table.insert(frames, 1, {
+            time = 0,
+            joints = {},
+            transforms = {},
+            markers = {},
+            easingStyle = frames[1].easingStyle,
+            easingDirection = frames[1].easingDirection,
+        })
+    end
+
+    local lastFrame = frames[#frames]
+    if lastFrame.time < normalizedDuration then
+        table.insert(frames, {
+            time = normalizedDuration,
+            joints = table.clone(lastFrame.joints),
+            transforms = table.clone(lastFrame.transforms),
+            markers = {},
+            easingStyle = lastFrame.easingStyle,
+            easingDirection = lastFrame.easingDirection,
+        })
+    end
+
+    if #frames > MAX_FRAMES then
+        error("A normalização adicionou keyframes e ultrapassou o limite de " .. MAX_FRAMES .. ". Reduza a quantidade de quadros.")
+    end
+
+    local estimatedJointFrames = skeleton.jointCount * #frames
+    if skeleton.hasCurveAnimation then
+        local estimatedCurveKeys = estimatedJointFrames * 6
+        if estimatedCurveKeys > MAX_CURVE_KEYS then
+            error(string.format(
+                "A saída CurveAnimation exigiria %d chaves de curva; o limite seguro é %d. Reduza quadros ou juntas.",
+                estimatedCurveKeys,
+                MAX_CURVE_KEYS
+            ))
+        end
+    else
+        local estimatedPoseInstances = (skeleton.jointCount + 1) * #frames
+        if estimatedPoseInstances > MAX_POSE_INSTANCES then
+            error(string.format(
+                "A saída KeyframeSequence exigiria %d poses; o limite seguro é %d. Reduza quadros ou juntas.",
+                estimatedPoseInstances,
+                MAX_POSE_INSTANCES
+            ))
+        end
+    end
+
+    local cleanName = typeof(data.name) == "string" and data.name or "Posecode_Animation"
+    cleanName = cleanName:gsub("[^%w_%-]", "_"):sub(1, 42)
+    if cleanName == "" then
+        cleanName = "Posecode_Animation"
+    end
+
+    return {
+        name = cleanName,
+        format = data.format,
+        version = data.version,
+        rig = data.rig,
+        fps = data.fps,
+        looped = data.looped,
+        rotationSpace = rotationSpace,
+        duration = normalizedDuration,
+        priority = Enum.AnimationPriority[priorityName],
+        clipType = skeleton.hasCurveAnimation and "CurveAnimation" or "KeyframeSequence",
+        hasBone = skeleton.hasBone,
+        hasAnimationConstraint = skeleton.hasAnimationConstraint,
+        hasMotor6D = skeleton.hasMotor6D,
+        frames = frames,
+    }
 end
 
 local function buildKeyframeSequence(data, skeleton)
@@ -2988,7 +2797,7 @@ end
 
 local function beginPreview()
     if not importedSequence or not importedRig then
-        setStatus("Importe uma animação antes de reproduzir.", C.red)
+        setStatus("Gere uma animação antes de reproduzir.", C.red)
         return
     end
     if not importedRig:IsDescendantOf(Workspace) then
@@ -3173,35 +2982,6 @@ local function seekFromScreenX(screenX)
     seekToTime(importedData.duration * alpha)
 end
 
-local function stepKeyframe(direction)
-    if not importedData then
-        setStatus("Importe uma animação antes de navegar pelos quadros.", C.red)
-        return
-    end
-
-    local currentTime = previewTrack and previewTrack.IsPlaying and previewTrack.TimePosition or 0
-    local targetTime = direction < 0 and 0 or importedData.duration
-
-    if direction < 0 then
-        for _, frameData in ipairs(importedData.frames) do
-            if frameData.time < currentTime - 0.0001 then
-                targetTime = frameData.time
-            else
-                break
-            end
-        end
-    else
-        for _, frameData in ipairs(importedData.frames) do
-            if frameData.time > currentTime + 0.0001 then
-                targetTime = frameData.time
-                break
-            end
-        end
-    end
-
-    seekToTime(targetTime)
-end
-
 local function cyclePreviewSpeed()
     speedOptionIndex += 1
     if speedOptionIndex > #speedOptions then
@@ -3238,14 +3018,14 @@ end
 
 local function saveSequence()
     if not importedSequence or not importedRig then
-        setStatus("Importe uma animação antes de salvar.", C.red)
+        setStatus("Gere uma animação antes de salvar.", C.red)
         return
     end
 
     local recordingCallOk, recordingId = pcall(function()
         return ChangeHistoryService:TryBeginRecording(
             "Posecode_SaveAnimation",
-            "Posecode: salvar keyframes"
+            "Posecode: salvar animação procedural"
         )
     end)
 
@@ -3411,348 +3191,146 @@ local function saveSequence()
     setStatus('Clip salvo em AnimSaves. Nome: "' .. result .. '".', C.green)
 end
 
-importDocument = function()
-    stopPreview()
 
+function motionEngine.run(prompt, forcedRecipe)
     local rig = selectedRig()
     if not rig then
-        setStatus("Selecione o Mesh Rig 2016 no Explorer.", C.red)
+        setStatus("Selecione um Mesh Rig 2016 no Explorer.", C.red)
         return false
     end
-
-    if #sourceBox.Text > MAX_SOURCE_LENGTH then
-        setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
-        return false
-    end
-    if sourceBox.Text:match("^%s*$") then
-        setStatus("Cole um script ou JSON de animação antes de importar.", C.red)
+    if not rig:IsDescendantOf(Workspace) then
+        setStatus("O rig selecionado precisa estar no Workspace.", C.red)
         return false
     end
 
     local ok, result = pcall(function()
         local skeleton = getSkeleton(rig)
-        local payload = extractPayload(sourceBox.Text)
-        local decoded = HttpService:JSONDecode(payload)
-        local canonicalData = decoded
-        if typeof(decoded) == "table" and decoded.version == 2 then
-            canonicalData = normalizeV2Data(decoded, skeleton)
-        end
+        local recipe, reference = motionEngine.resolveRecipe(prompt, forcedRecipe)
+        if reference then recipe.referenceName = reference.name end
+        local document = motionEngine.buildDocument(recipe, skeleton)
+        local canonicalData = normalizeV2Data(document, skeleton)
         local data = validateData(canonicalData, rig, skeleton)
-        data.sourceVersion = decoded.version
+        data.sourceVersion = 2
         data.optimizedKeyCount = canonicalData.optimizedKeyCount or 0
-        local clip = buildAnimationClip(data, skeleton)
         return {
+            recipe = recipe,
             data = data,
-            clip = clip,
-            skeleton = skeleton,
+            clip = buildAnimationClip(data, skeleton),
         }
     end)
 
     if not ok then
-        setStatus("Importação recusada: " .. tostring(result), C.red)
+        setStatus("Não consegui gerar: " .. tostring(result), C.red)
         return false
     end
 
-    if importedSequence and importedSequence.Parent == nil then
-        importedSequence:Destroy()
-    end
-
+    stopPreview()
+    if importedSequence and importedSequence.Parent == nil then importedSequence:Destroy() end
     importedData = result.data
     importedSequence = result.clip
     importedRig = rig
     previewLooped = importedData.looped
-    loopButton.Text = previewLooped and "Repetir: ON" or "Repetir: OFF"
+    loopButton.Text = previewLooped and "LOOP ON" or "LOOP OFF"
     setClipControlsEnabled(true)
-
-    local clipTypeLabel = "KEYFRAME"
-    if importedData.clipType == "CurveAnimation" then
-        clipTypeLabel = importedData.hasAnimationConstraint and "CURVE / MESH 2016" or "KEYFRAME"
-    end
-    rigInfo.Text = string.format("MESH RIG 2016  /  %s  /  %s", rig.Name, clipTypeLabel)
     drawTimeline(importedData)
-    showPage("preview")
 
-    local sourceFormatLabel = importedData.sourceVersion == 2 and "POSECODE V2" or "POSECODE V1"
-    local optimizationNote = importedData.optimizedKeyCount > 0
-        and string.format(" %d keyframes redundantes removidos.", importedData.optimizedKeyCount)
-        or ""
-    setStatus(
-        importedData.hasAnimationConstraint
-            and string.format("%s: %d quadros convertidos.%s Curvas preparadas para o Mesh Rig 2016.", sourceFormatLabel, #importedData.frames, optimizationNote)
-            or string.format(
-                "%s: %d quadros convertidos.%s %s Prévia, navegação e salvamento disponíveis.",
-                sourceFormatLabel,
-                #importedData.frames,
-                optimizationNote,
-                importedData.hasBone and "Rig com Bone compatível." or "Rig Motor6D compatível."
-            ),
-        C.green
-    )
+    motionEngine.lastGeneratedRecipe = result.recipe
+    motionEngine.lastGeneratedPrompt = motionEngine.cleanPrompt(prompt)
+    setButtonState(variationButton, true, false)
+    setButtonState(saveReferenceButton, true, false)
+
+    local refNote = result.recipe.referenceName and (" · REF " .. result.recipe.referenceName) or ""
+    local clipType = importedData.clipType == "CurveAnimation" and "CURVE" or "KEYFRAME"
+    setStatus(string.format("%s gerada · %s · %d frames · %.2fs%s", result.recipe.name, clipType, #importedData.frames, importedData.duration, refNote), C.green)
+    beginPreview()
     return true
 end
 
-importButton.Activated:Connect(importDocument)
+local function refreshSelectionHint()
+    local candidate = selectedRig()
+    if candidate ~= selectedRigCache then
+        if previewTrack or previewStepConnection then stopPreview() end
+        if importedSequence and importedSequence.Parent == nil then importedSequence:Destroy() end
+        importedData = nil
+        importedSequence = nil
+        importedRig = nil
+        motionEngine.lastGeneratedRecipe = nil
+        motionEngine.lastGeneratedPrompt = nil
+        setClipControlsEnabled(false)
+        clearTimeline()
+        setButtonState(variationButton, false, false)
+        setButtonState(saveReferenceButton, false, false)
+    end
 
-generateButton.Activated:Connect(function()
-    motionEngine.run(promptBox.Text)
+    selectedRigCache = candidate
+    if not candidate then
+        rigInfo.Text = "SELECIONE O MESH RIG 2016"
+        rigInfo.TextColor3 = C.muted
+        rigDot.BackgroundColor3 = C.muted
+        setButtonState(generateButton, false, true)
+        setStatus("Selecione o Mesh Rig 2016 no Explorer.", C.muted)
+        return
+    end
+
+    local ok, skeleton = pcall(function() return getSkeleton(candidate) end)
+    if not ok then
+        rigInfo.Text = "RIG INCOMPATÍVEL · MESH RIG 2016"
+        rigInfo.TextColor3 = C.red
+        rigDot.BackgroundColor3 = C.red
+        setButtonState(generateButton, false, true)
+        setStatus("Rig recusado: " .. tostring(skeleton), C.red)
+        return
+    end
+
+    local jointLabel = skeleton.animationConstraintCount == 15 and "15 CONSTRAINTS" or "15 MOTOR6D"
+    rigInfo.Text = string.format("%s · MESH RIG 2016 · %s", candidate.Name, jointLabel)
+    rigInfo.TextColor3 = C.green
+    rigDot.BackgroundColor3 = C.green
+    setButtonState(generateButton, true, true)
+    setStatus("Rig pronto. Descreva o movimento e gere.", C.green)
+end
+
+refreshRigButton.Activated:Connect(refreshSelectionHint)
+Selection.SelectionChanged:Connect(refreshSelectionHint)
+promptBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local recipe = motionEngine.lastGeneratedRecipe
+    local matches = recipe ~= nil
+        and motionEngine.cleanPrompt(promptBox.Text) == recipe.prompt
+        and importedRig == selectedRigCache
+    setButtonState(saveReferenceButton, matches, false)
+    setButtonState(variationButton, matches, false)
 end)
 
+generateButton.Activated:Connect(function() motionEngine.run(promptBox.Text) end)
 variationButton.Activated:Connect(function()
     local current = motionEngine.lastGeneratedRecipe
-    if not current then
-        setStatus("Gere uma animação antes de pedir outra variação.", C.red)
+    if not current or importedRig ~= selectedRigCache then
+        setStatus("Gere primeiro uma animação para criar variações.", C.red)
         return
     end
-    local nextRecipe = motionEngine.copyRecipe(current)
-    nextRecipe.seed = motionEngine.nextSeed()
-    motionEngine.run(nextRecipe.prompt, nextRecipe)
+    local recipe = motionEngine.copyRecipe(current)
+    recipe.seed = motionEngine.nextSeed()
+    motionEngine.run(recipe.prompt, recipe)
 end)
-
-saveReferenceButton.Activated:Connect(function()
-    motionEngine.saveCurrentReference()
-end)
-
-exampleButton.Activated:Connect(function()
-    local rig = selectedRig()
-    if not rig then
-        setStatus("Selecione o Mesh Rig 2016 antes de carregar o exemplo.", C.red)
-        return
-    end
-
-    local ok, result = pcall(function()
-        local skeleton = getSkeleton(rig)
-
-        local function makeKey(time, rotation)
-            return {
-                time = time,
-                transform = {
-                    position = { 0, 0, 0 },
-                    rotation = rotation,
-                },
-            }
-        end
-
-        local function makeTrack(targetName, keys)
-            local targetType = skeleton.jointKindsByName[targetName]
-            if not targetType then
-                error("O Mesh Rig 2016 não possui a junta " .. targetName .. ".")
-            end
-            return {
-                target = {
-                    type = targetType,
-                    name = targetName,
-                },
-                keys = keys,
-            }
-        end
-
-        local sample = {
-            format = "POSECODE",
-            version = 2,
-            metadata = {
-                name = "MeshRig2016_Wave",
-                author = "POSECODE",
-                description = "Exemplo de aceno calibrado para o espaço do personagem.",
-            },
-            rig = {
-                profile = "R15",
-            },
-            timeline = {
-                fps = 30,
-                duration = 1.2,
-                looped = true,
-                priority = "Action",
-                rotationSpace = "character",
-                defaultEasing = {
-                    style = "CubicV2",
-                    direction = "InOut",
-                },
-            },
-            tracks = {
-                makeTrack("RightUpperArm", {
-                    makeKey(0.0, { 0, 0, 0 }),
-                    makeKey(0.2, { 0, 0, 62 }),
-                    makeKey(0.4, { 0, 0, 68 }),
-                    makeKey(0.6, { 0, 0, 58 }),
-                    makeKey(0.8, { 0, 0, 68 }),
-                    makeKey(1.0, { 0, 0, 62 }),
-                    makeKey(1.2, { 0, 0, 0 }),
-                }),
-                makeTrack("RightLowerArm", {
-                    makeKey(0.0, { 0, 0, 0 }),
-                    makeKey(0.2, { 42, 0, 0 }),
-                    makeKey(0.4, { 50, 0, 0 }),
-                    makeKey(0.6, { 35, 0, 0 }),
-                    makeKey(0.8, { 50, 0, 0 }),
-                    makeKey(1.0, { 42, 0, 0 }),
-                    makeKey(1.2, { 0, 0, 0 }),
-                }),
-                makeTrack("RightHand", {
-                    makeKey(0.0, { 0, 0, 0 }),
-                    makeKey(0.2, { 0, 0, -12 }),
-                    makeKey(0.4, { 0, 0, 12 }),
-                    makeKey(0.6, { 0, 0, -12 }),
-                    makeKey(0.8, { 0, 0, 12 }),
-                    makeKey(1.0, { 0, 0, 0 }),
-                    makeKey(1.2, { 0, 0, 0 }),
-                }),
-            },
-        }
-
-        return HttpService:JSONEncode(sample)
-    end)
-
-    if not ok then
-        setStatus("Não consegui criar o exemplo: " .. tostring(result), C.red)
-        return
-    end
-
-    sourceBox.Text = result
-    setStatus("Exemplo de aceno para Mesh Rig 2016 carregado. Clique em Importar clip.", C.green)
-end)
-
-
-migrateButton.Activated:Connect(function()
-    local rig = selectedRig()
-    if not rig then
-        setStatus("Selecione o Mesh Rig 2016 antes de converter o V1.", C.red)
-        return
-    end
-    if #sourceBox.Text > MAX_SOURCE_LENGTH then
-        setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
-        return
-    end
-    if sourceBox.Text:match("^%s*$") then
-        setStatus("Cole um documento POSECODE V1 antes de converter.", C.red)
-        return
-    end
-
-    local ok, result = pcall(function()
-        local payload = extractPayload(sourceBox.Text)
-        local decoded = HttpService:JSONDecode(payload)
-        if typeof(decoded) ~= "table" or decoded.version ~= 1 then
-            error("A conversão exige um documento com format POSECODE e version 1.")
-        end
-
-        local skeleton = getSkeleton(rig)
-        local validated = validateData(decoded, rig, skeleton)
-        local migrated, eventCount = convertV1ToV2(decoded, validated, skeleton)
-        local encoded = HttpService:JSONEncode(migrated)
-
-        if #encoded > MAX_SOURCE_LENGTH then
-            error("O documento convertido ultrapassa 256 KB. Reduza os canais ou keyframes antes de migrar.")
-        end
-
-        return {
-            json = encoded,
-            trackCount = #migrated.tracks,
-            eventCount = eventCount,
-        }
-    end)
-
-    if not ok then
-        setStatus("Migração recusada: " .. tostring(result), C.red)
-        return
-    end
-
-    sourceBox.Text = result.json
-    setStatus(
-        string.format(
-            "V1 convertido para V2: %d tracks e %d eventos. Revise o JSON e importe quando estiver pronto.",
-            result.trackCount,
-            result.eventCount
-        ),
-        C.green
-    )
-end)
-
-clearButton.Activated:Connect(function()
-    stopPreview()
-    sourceBox.Text = ""
-
-    if importedSequence and importedSequence.Parent == nil then
-        importedSequence:Destroy()
-    end
-
-    importedSequence = nil
-    importedData = nil
-    importedRig = nil
-    previewLooped = false
-    loopButton.Text = "Repetir: OFF"
-    setClipControlsEnabled(false)
-    refreshSelectionHint()
-    clearTimeline()
-    setStatus("Campo de importação limpo.")
-end)
-
-timelineInputConnections[1] = timelineHitbox.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        isScrubbing = true
-        seekFromScreenX(input.Position.X)
-    end
-end)
-
-timelineInputConnections[2] = UserInputService.InputChanged:Connect(function(input)
-    if not isScrubbing then
-        return
-    end
-
-    if input.UserInputType == Enum.UserInputType.MouseMovement
-        or input.UserInputType == Enum.UserInputType.Touch then
-        seekFromScreenX(input.Position.X)
-    end
-end)
-
-timelineInputConnections[3] = UserInputService.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1
-        or input.UserInputType == Enum.UserInputType.Touch then
-        isScrubbing = false
-    end
-end)
+saveReferenceButton.Activated:Connect(function() motionEngine.saveCurrentReference() end)
 
 previewButton.Activated:Connect(playPreview)
-
 pauseButton.Activated:Connect(pausePreview)
-
 stopButton.Activated:Connect(function()
     stopPreview()
-    setStatus("Prévia parada.")
+    setStatus("Prévia parada.", C.muted)
 end)
-
 speedButton.Activated:Connect(cyclePreviewSpeed)
 loopButton.Activated:Connect(togglePreviewLoop)
-
-previousKeyButton.Activated:Connect(function()
-    stepKeyframe(-1)
-end)
-
-nextKeyButton.Activated:Connect(function()
-    stepKeyframe(1)
-end)
-
 saveButton.Activated:Connect(saveSequence)
-
-toolbarButton.Click:Connect(function()
-    widget.Enabled = not widget.Enabled
-end)
-
-widget:GetPropertyChangedSignal("Enabled"):Connect(function()
-    if not widget.Enabled then
-        isScrubbing = false
-        if previewTrack then
-            stopPreview()
-        end
+timelineHitbox.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1
+        or input.UserInputType == Enum.UserInputType.Touch then
+        seekFromScreenX(input.Position.X)
     end
 end)
 
-plugin.Unloading:Connect(function()
-    isScrubbing = false
-    stopPreview()
-    for _, connection in ipairs(timelineInputConnections) do
-        connection:Disconnect()
-    end
-    if importedSequence and importedSequence.Parent == nil then
-        importedSequence:Destroy()
-    end
-end)
+motionEngine.loadLibrary()
+motionEngine.renderLibrary()
+setClipControlsEnabled(false)
+refreshSelectionHint()
