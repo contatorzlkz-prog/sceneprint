@@ -3,8 +3,9 @@
 ## 3.0 · Gerador procedural por descrição
 
 - Adiciona uma aba **Gerar** para descrever movimentos em linguagem natural.
-- Cria um motor procedural com 8 padrões-base: walk, run, sprint, sneak, tiptoe, march, limp e idle.
-- Combina 5 velocidades, 5 intensidades, 5 comprimentos de passada, 4 estilos de braço, 4 posturas, 4 níveis de balanço, 2 direções e 3 interpolações: 384.000 combinações paramétricas discretas.
+- Cria um motor procedural com 15 padrões-base: walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap e dance.
+- Combina 15 bases, 5 velocidades, 5 intensidades, 5 comprimentos de passada, 4 estilos de braço, 4 posturas, 4 níveis de balanço, 2 direções e 3 interpolações: 720.000 combinações paramétricas discretas.
+- Adiciona gestos cíclicos e de ação: aceno, continência, salto, reverência, apontar, palmas e dança.
 - Gera tracks POSECODE V2 para as 15 juntas do Mesh Rig 2016, com keyframes alinhados ao FPS.
 - Encaminha o documento gerado ao pipeline existente de validação, prévia e salvamento.
 - Adiciona **Outra variação**, usando uma semente diferente para manter o estilo e variar detalhes.
