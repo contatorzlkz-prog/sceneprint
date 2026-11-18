@@ -2,9 +2,9 @@
 
 ## Gerador procedural e importação segura
 
-A aba **Gerar** interpreta uma descrição curta e compõe movimentos a partir de um catálogo local de padrões-base. A primeira versão inclui walk, run, sprint, sneak, tiptoe, march, limp e idle. Modificadores independentes ajustam cadência, intensidade, passada, braços, postura, balanço, direção e interpolação.
+A aba **Gerar** interpreta uma descrição curta e compõe movimentos a partir de um catálogo local de padrões-base. O catálogo atual inclui 15 padrões: walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap e dance. Modificadores independentes ajustam cadência, intensidade, passada, braços, postura, balanço, direção e interpolação.
 
-As 384.000 combinações são configurações paramétricas, não 384 mil clips salvos no repositório. O clip é sintetizado no momento da solicitação. Referências aprovadas pelo usuário podem ser guardadas nas configurações persistentes do plugin e reaproveitadas em descrições futuras parecidas.
+As 720.000 combinações são configurações paramétricas, não 720 mil clips salvos no repositório. O clip é sintetizado no momento da solicitação. Referências aprovadas pelo usuário podem ser guardadas nas configurações persistentes do plugin e reaproveitadas em descrições futuras parecidas.
 
 O plugin não interpreta a lógica de scripts Luau arbitrários. Scripts podem conter loops, cálculos, condições, TweenService e eventos sem uma lista fixa de poses; executá-los para reconstruir movimentos seria imprevisível.
 
@@ -27,7 +27,7 @@ Veja o [guia completo do POSECODE V2](FORMATO_V2.md) e a [referência V1](FORMAT
 
 ## Compatibilidade de rigs
 
-O POSECODE 2.1 aceita somente o perfil estrutural **Mesh Rig 2016 (R15)**. A validação exige:
+O POSECODE 3.0 aceita somente o perfil estrutural **Mesh Rig 2016 (R15)**. A validação exige:
 
 - Um Humanoid com RigType = R15.
 - As 15 MeshParts corporais: Head, UpperTorso, LowerTorso, braços, mãos, pernas e pés com os nomes padrão R15.
