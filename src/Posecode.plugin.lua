@@ -2,7 +2,7 @@
     POSECODE
     Convert structured animation data into Roblox animation clips.
     Handle: ruancr
-    Version: 2.1
+    Version: 3.0
     The plugin never executes pasted source; it only extracts and validates JSON.
 ]]
 
@@ -17,7 +17,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "2.1"
+local VERSION = "3.0"
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -132,7 +132,7 @@ local header = make("Frame", root, {
 })
 
 label(header, "POSECODE", UDim2.fromOffset(14, 8), UDim2.new(1, -92, 0, 22), 15, C.text, Enum.Font.GothamBold)
-label(header, "IMPORTADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
+label(header, "GERADOR DE ANIMAÇÕES", UDim2.fromOffset(15, 29), UDim2.new(1, -92, 0, 10), 8, C.muted, Enum.Font.GothamMedium)
 local versionLabel = label(header, "v" .. VERSION, UDim2.new(1, -54, 0, 17), UDim2.fromOffset(40, 16), 9, C.muted, Enum.Font.GothamMedium)
 versionLabel.TextXAlignment = Enum.TextXAlignment.Right
 
@@ -177,6 +177,13 @@ local function vectorIcon(parent, kind, color, position)
         line(8, 6, 1, 5)
         line(11, 2, 1, 13)
         line(14, 5, 1, 7)
+    elseif kind == "generate" then
+        line(7, 1, 2, 4)
+        line(7, 11, 2, 4)
+        line(1, 7, 4, 2)
+        line(11, 7, 4, 2)
+        line(4, 4, 2, 2)
+        line(10, 10, 2, 2)
     elseif kind == "rig" then
         line(2, 2, 5, 1)
         line(2, 2, 1, 5)
@@ -245,6 +252,62 @@ local rigPage = make("Frame", scroll, {
     BorderSizePixel = 0,
     Visible = false,
 })
+
+local generatorPage = make("Frame", scroll, {
+    Name = "GeneratorPage",
+    Position = UDim2.fromOffset(16, 0),
+    Size = UDim2.new(1, -32, 0, 370),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+    Visible = false,
+})
+label(generatorPage, "DESCREVA O MOVIMENTO", UDim2.fromOffset(0, 5), UDim2.new(1, 0, 0, 15), 10, C.text, Enum.Font.GothamMedium)
+label(generatorPage, "Escreva em linguagem natural. Ex.: walk cansado, corrida confiante.", UDim2.fromOffset(0, 23), UDim2.new(1, 0, 0, 24), 9, C.muted).TextWrapped = true
+
+local promptBox = make("TextBox", generatorPage, {
+    Position = UDim2.fromOffset(0, 52),
+    Size = UDim2.new(1, 0, 0, 74),
+    BackgroundColor3 = C.field,
+    BorderSizePixel = 0,
+    ClearTextOnFocus = false,
+    Font = Enum.Font.Gotham,
+    Text = "walk natural",
+    PlaceholderText = "Ex.: walk cansado, run confiante, sneak lento...",
+    PlaceholderColor3 = C.muted,
+    TextColor3 = C.text,
+    TextSize = 11,
+    TextWrapped = true,
+    TextXAlignment = Enum.TextXAlignment.Left,
+    TextYAlignment = Enum.TextYAlignment.Top,
+    MultiLine = true,
+})
+make("UICorner", promptBox, { CornerRadius = UDim.new(0, 4) })
+make("UIStroke", promptBox, {
+    Color = C.line,
+    Thickness = 1,
+    Transparency = 0.2,
+})
+make("UIPadding", promptBox, {
+    PaddingTop = UDim.new(0, 9),
+    PaddingBottom = UDim.new(0, 7),
+    PaddingLeft = UDim.new(0, 10),
+    PaddingRight = UDim.new(0, 10),
+})
+
+local generateButton = button(generatorPage, "Gerar animação", UDim2.fromOffset(0, 137), UDim2.new(1, 0, 0, 36), true)
+local variationButton = button(generatorPage, "Outra variação", UDim2.fromOffset(0, 181), UDim2.new(0.5, -4, 0, 30), false)
+local saveReferenceButton = button(generatorPage, "Guardar referência", UDim2.new(0.5, 4, 0, 181), UDim2.new(0.5, -4, 0, 30), false)
+
+local libraryHeading = label(generatorPage, "BIBLIOTECA LOCAL · 0 REFERÊNCIAS", UDim2.fromOffset(0, 222), UDim2.new(1, 0, 0, 15), 8, C.muted, Enum.Font.GothamMedium)
+local libraryList = make("Frame", generatorPage, {
+    Name = "SavedMotionList",
+    Position = UDim2.fromOffset(0, 242),
+    Size = UDim2.new(1, 0, 0, 84),
+    BackgroundTransparency = 1,
+    BorderSizePixel = 0,
+})
+local librarySummary = label(generatorPage, "8 movimentos-base · 384.000 combinações paramétricas.", UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
+librarySummary.TextWrapped = true
 
 local footer = make("Frame", root, {
     Name = "StatusFooter",
@@ -421,18 +484,21 @@ local function createTab(name, title, iconKind, position, size)
     }
 end
 
-createTab("import", "Importar", "file", UDim2.fromScale(0, 0), UDim2.new(0.333, -3, 1, 0))
-createTab("preview", "Prévia", "timeline", UDim2.new(0.333, 2, 0, 0), UDim2.new(0.334, -4, 1, 0))
-createTab("rig", "Rig", "rig", UDim2.new(0.667, 2, 0, 0), UDim2.new(0.333, -2, 1, 0))
+createTab("import", "Importar", "file", UDim2.fromScale(0, 0), UDim2.new(0.25, -3, 1, 0))
+createTab("generate", "Gerar", "generate", UDim2.new(0.25, 1, 0, 0), UDim2.new(0.25, -3, 1, 0))
+createTab("preview", "Prévia", "timeline", UDim2.new(0.5, 2, 0, 0), UDim2.new(0.25, -3, 1, 0))
+createTab("rig", "Rig", "rig", UDim2.new(0.75, 3, 0, 0), UDim2.new(0.25, -3, 1, 0))
 
 showPage = function(pageName)
     activePage = pageName
     content.Visible = pageName == "import"
+    generatorPage.Visible = pageName == "generate"
     previewPage.Visible = pageName == "preview"
     rigPage.Visible = pageName == "rig"
 
     local pageHeights = {
         import = 390,
+        generate = 370,
         preview = 270,
         rig = 220,
     }
@@ -449,6 +515,14 @@ showPage = function(pageName)
 end
 
 showPage("import")
+
+local motionEngine = {
+    recipes = {},
+    lastGeneratedRecipe = nil,
+    lastGeneratedDocument = nil,
+}
+
+local importDocument
 
 local importedData = nil
 local importedSequence = nil
@@ -630,7 +704,7 @@ end
 local function validateMeshRig2016(rig, skeleton)
     local humanoid = rig:FindFirstChildOfClass("Humanoid")
     if not humanoid or humanoid.RigType ~= Enum.HumanoidRigType.R15 then
-        error("O POSECODE 2.1 aceita somente o Mesh Rig 2016 R15. Selecione esse rig no Explorer.")
+        error("O POSECODE 3.0 aceita somente o Mesh Rig 2016 R15. Selecione esse rig no Explorer.")
     end
 
     local meshParts = {}
@@ -980,14 +1054,724 @@ local function getSkeleton(rig)
     return skeleton
 end
 
+local MOTION_LIBRARY_SETTING = "PosecodeMotionLibrary"
+local MOTION_SEED_SETTING = "PosecodeMotionSeed"
+local MAX_SAVED_MOTIONS = 24
+local MOTION_FPS = 30
+local MOTION_SEGMENTS = 12
+
+local MOTION_CATALOG = {
+    walk = {
+        label = "Walk",
+        aliases = { "walk", "andar", "andando", "caminhar", "caminhada" },
+        leg = 25, knee = 19, arm = 14, armBend = 7,
+        lean = 2, bounce = 1.2, sway = 2.1, head = 1.2,
+        periodFrames = 36, asymmetry = 0,
+    },
+    run = {
+        label = "Run",
+        aliases = { "run", "correr", "correndo", "corrida" },
+        leg = 34, knee = 37, arm = 22, armBend = 19,
+        lean = 7, bounce = 2.6, sway = 2.6, head = 1.8,
+        periodFrames = 30, asymmetry = 0,
+    },
+    sprint = {
+        label = "Sprint",
+        aliases = { "sprint", "sprintar", "corrida rapida", "correr rapido" },
+        leg = 41, knee = 48, arm = 28, armBend = 25,
+        lean = 11, bounce = 3.2, sway = 2.5, head = 2.5,
+        periodFrames = 24, asymmetry = 0,
+    },
+    sneak = {
+        label = "Sneak",
+        aliases = { "sneak", "agachar", "agachado", "agachada", "furtivo", "esgueirar" },
+        leg = 12, knee = 26, arm = 6, armBend = 15,
+        lean = 16, bounce = 0.4, sway = 1.3, head = 4,
+        periodFrames = 48, asymmetry = 0,
+    },
+    tiptoe = {
+        label = "Tiptoe",
+        aliases = { "tiptoe", "na ponta", "ponta dos pes", "pontas dos pes" },
+        leg = 9, knee = 18, arm = 4, armBend = 6,
+        lean = 4, bounce = 0.6, sway = 1, head = 1,
+        periodFrames = 48, asymmetry = 0,
+    },
+    march = {
+        label = "March",
+        aliases = { "march", "marchar", "marcha" },
+        leg = 29, knee = 8, arm = 24, armBend = 3,
+        lean = 1, bounce = 1.1, sway = 1.2, head = 0.5,
+        periodFrames = 36, asymmetry = 0,
+    },
+    limp = {
+        label = "Limp",
+        aliases = { "limp", "mancar", "mancando", "manco", "manca" },
+        leg = 20, knee = 15, arm = 9, armBend = 8,
+        lean = 4, bounce = 0.7, sway = 4, head = 2,
+        periodFrames = 42, asymmetry = 0.32,
+    },
+    idle = {
+        label = "Idle",
+        aliases = { "idle", "parado", "parada", "respirar", "respirando", "em pe" },
+        leg = 0, knee = 0, arm = 1, armBend = 3,
+        lean = 0, bounce = 0.4, sway = 0.7, head = 1.2,
+        periodFrames = 60, asymmetry = 0,
+    },
+}
+
+local MOTION_STYLE_ORDER = { "sprint", "sneak", "tiptoe", "march", "limp", "idle", "run", "walk" }
+local MOOD_PROFILES = {
+    tired = { speed = 2, intensity = 2, stride = 2, arms = 1, torso = 4, bounce = 1 },
+    happy = { speed = 4, intensity = 3, stride = 3, arms = 3, torso = 2, bounce = 4 },
+    confident = { speed = 3, intensity = 3, stride = 4, arms = 3, torso = 1, bounce = 2 },
+    angry = { speed = 4, intensity = 4, stride = 4, arms = 4, torso = 3, bounce = 2 },
+    heavy = { speed = 2, intensity = 3, stride = 2, arms = 2, torso = 4, bounce = 1 },
+    sad = { speed = 2, intensity = 2, stride = 2, arms = 1, torso = 4, bounce = 1 },
+    robotic = { speed = 3, intensity = 3, stride = 3, arms = 2, torso = 2, bounce = 1, easing = 1 },
+    exaggerated = { speed = 3, intensity = 5, stride = 5, arms = 4, torso = 4, bounce = 4 },
+    casual = { speed = 3, intensity = 2, stride = 3, arms = 2, torso = 2, bounce = 2 },
+}
+local MOOD_LABELS = {
+    tired = "cansado",
+    happy = "feliz",
+    confident = "confiante",
+    angry = "intenso",
+    heavy = "pesado",
+    sad = "abatido",
+    robotic = "robotico",
+    exaggerated = "exagerado",
+    casual = "casual",
+}
+local SPEED_FACTORS = { 1.66, 1.33, 1, 0.67, 0.4 }
+local INTENSITY_FACTORS = { 0.55, 0.75, 1, 1.2, 1.4 }
+local STRIDE_FACTORS = { 0.6, 0.8, 1, 1.2, 1.4 }
+local ARM_FACTORS = { 0.45, 0.7, 1, 1.3 }
+local TORSO_FACTORS = { 0.45, 0.75, 1.05, 1.4 }
+local BOUNCE_FACTORS = { 0, 0.5, 1, 1.45 }
+local EASING_OPTIONS = {
+    [1] = { style = "Linear", direction = "InOut" },
+    [2] = { style = "CubicV2", direction = "InOut" },
+    [3] = { style = "Constant", direction = "InOut" },
+}
+local MOTION_VARIATION_COUNT = 8 * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
+
+function motionEngine.cleanPrompt(value)
+    local result = tostring(value or "")
+    result = result:gsub("[\r\n\t]", " ")
+    result = result:gsub("\\", "")
+    result = result:gsub('"', "")
+    result = result:gsub("%s+", " ")
+    result = result:gsub("^%s+", ""):gsub("%s+$", "")
+    return string.sub(result, 1, 96)
+end
+
+function motionEngine.normalizeText(value)
+    local result = string.lower(tostring(value or ""))
+    local replacements = {
+        { "á", "a" }, { "à", "a" }, { "ã", "a" }, { "â", "a" },
+        { "é", "e" }, { "ê", "e" }, { "í", "i" },
+        { "ó", "o" }, { "ô", "o" }, { "õ", "o" },
+        { "ú", "u" }, { "ç", "c" },
+    }
+    for _, replacement in ipairs(replacements) do
+        result = result:gsub(replacement[1], replacement[2])
+    end
+    result = result:gsub("[^%w%s%-]", " ")
+    result = result:gsub("%s+", " ")
+    return " " .. result .. " "
+end
+
+function motionEngine.hasAny(text, terms)
+    for _, term in ipairs(terms) do
+        if string.find(text, " " .. term .. " ", 1, true) then
+            return true
+        end
+    end
+    return false
+end
+
+function motionEngine.nextSeed()
+    local previous = 0
+    local readOk, stored = pcall(function()
+        return plugin:GetSetting(MOTION_SEED_SETTING)
+    end)
+    if readOk and typeof(stored) == "number" then
+        previous = stored
+    end
+    local nextValue = (math.floor(previous) % 999999) + 1
+    pcall(function()
+        plugin:SetSetting(MOTION_SEED_SETTING, nextValue)
+    end)
+    return nextValue
+end
+
+function motionEngine.copyRecipe(recipe)
+    local copy = {}
+    for key, value in pairs(recipe or {}) do
+        copy[key] = value
+    end
+    return copy
+end
+
+function motionEngine.parsePrompt(prompt)
+    local text = motionEngine.normalizeText(prompt)
+    local result = {
+        base = "walk",
+        mood = nil,
+        explicit = {},
+        values = {},
+    }
+
+    for _, styleName in ipairs(MOTION_STYLE_ORDER) do
+        if motionEngine.hasAny(text, MOTION_CATALOG[styleName].aliases) then
+            result.base = styleName
+            break
+        end
+    end
+
+    local moodAliases = {
+        { "tired", { "cansado", "cansada", "com sono", "exausto", "exausta", "tired" } },
+        { "happy", { "feliz", "alegre", "animado", "animada", "happy" } },
+        { "confident", { "confiante", "seguro", "segura", "confident" } },
+        { "angry", { "bravo", "brava", "irritado", "irritada", "furioso", "furiosa", "angry" } },
+        { "heavy", { "pesado", "pesada", "heavy" } },
+        { "sad", { "triste", "abatido", "abatida", "sad" } },
+        { "robotic", { "robotico", "robotica", "mecanico", "mecanica", "robotic" } },
+        { "exaggerated", { "exagerado", "exagerada", "exagerado", "exaggerated" } },
+        { "casual", { "casual", "relaxado", "relaxada" } },
+    }
+    for _, moodEntry in ipairs(moodAliases) do
+        if motionEngine.hasAny(text, moodEntry[2]) then
+            result.mood = moodEntry[1]
+            break
+        end
+    end
+
+    local function setValue(name, value)
+        result.values[name] = value
+        result.explicit[name] = true
+    end
+
+    if motionEngine.hasAny(text, { "muito devagar", "bem devagar", "bem lento", "very slow" }) then
+        setValue("speed", 1)
+    elseif motionEngine.hasAny(text, { "devagar", "lento", "lenta", "slow" }) then
+        setValue("speed", 2)
+    elseif motionEngine.hasAny(text, { "muito rapido", "muito veloz", "super rapido", "very fast" }) then
+        setValue("speed", 5)
+    elseif motionEngine.hasAny(text, { "rapido", "rapida", "veloz", "fast" }) then
+        setValue("speed", 4)
+    end
+
+    if motionEngine.hasAny(text, { "muito sutil", "bem suave", "subtle", "sutil" }) then
+        setValue("intensity", 1)
+    elseif motionEngine.hasAny(text, { "leve", "low intensity" }) then
+        setValue("intensity", 2)
+    elseif motionEngine.hasAny(text, { "muito forte", "muito intenso", "extremo", "exagerado", "exagerada" }) then
+        setValue("intensity", 5)
+    elseif motionEngine.hasAny(text, { "forte", "intenso", "intensa" }) then
+        setValue("intensity", 4)
+    end
+
+    if motionEngine.hasAny(text, { "passos muito curtos", "passo muito curto", "tiny steps", "very short stride" }) then
+        setValue("stride", 1)
+    elseif motionEngine.hasAny(text, { "passos curtos", "passo curto", "curto", "short stride" }) then
+        setValue("stride", 2)
+    elseif motionEngine.hasAny(text, { "passos largos", "passada larga", "passos longos", "long stride", "wide stride" }) then
+        setValue("stride", 5)
+    elseif motionEngine.hasAny(text, { "passo longo", "passadas longas" }) then
+        setValue("stride", 4)
+    end
+
+    if motionEngine.hasAny(text, { "bracos soltos", "bracos relaxados", "relaxed arms" }) then
+        setValue("arms", 1)
+    elseif motionEngine.hasAny(text, { "bracos leves", "soft arm swing" }) then
+        setValue("arms", 2)
+    elseif motionEngine.hasAny(text, { "bracos fortes", "bracos exagerados", "strong arm swing" }) then
+        setValue("arms", 4)
+    end
+
+    if motionEngine.hasAny(text, { "postura ereta", "corpo ereto", "upright" }) then
+        setValue("torso", 1)
+    elseif motionEngine.hasAny(text, { "postura neutra", "corpo neutro", "neutral torso" }) then
+        setValue("torso", 2)
+    elseif motionEngine.hasAny(text, { "muito inclinado", "bem curvado", "deep lean" }) then
+        setValue("torso", 4)
+    elseif motionEngine.hasAny(text, { "inclinado", "curvado", "forward lean" }) then
+        setValue("torso", 3)
+    end
+
+    if motionEngine.hasAny(text, { "sem quicar", "sem salto", "no bounce" }) then
+        setValue("bounce", 1)
+    elseif motionEngine.hasAny(text, { "pouco quique", "low bounce" }) then
+        setValue("bounce", 2)
+    elseif motionEngine.hasAny(text, { "muito saltitante", "saltitante", "bouncy" }) then
+        setValue("bounce", 4)
+    end
+
+    if motionEngine.hasAny(text, { "de costas", "para tras", "backwards", "backward" }) then
+        setValue("direction", -1)
+    end
+
+    if motionEngine.hasAny(text, { "robotico", "robotica", "mecanico", "mecanica", "linear", "robotic" }) then
+        setValue("easing", 1)
+    elseif motionEngine.hasAny(text, { "travado", "em blocos", "stepped", "constant" }) then
+        setValue("easing", 3)
+    elseif motionEngine.hasAny(text, { "suave", "smooth", "fluido", "fluida" }) then
+        setValue("easing", 2)
+    end
+
+    return result
+end
+
+function motionEngine.loadLibrary()
+    motionEngine.recipes = {}
+    local ok, stored = pcall(function()
+        return plugin:GetSetting(MOTION_LIBRARY_SETTING)
+    end)
+    if not ok or typeof(stored) ~= "table" then
+        return
+    end
+
+    local count = math.clamp(math.floor(tonumber(stored.count) or 0), 0, MAX_SAVED_MOTIONS)
+    for index = 1, count do
+        local entry = stored["entry" .. tostring(index)]
+        if typeof(entry) == "table"
+            and typeof(entry.prompt) == "string"
+            and MOTION_CATALOG[entry.base] then
+            table.insert(motionEngine.recipes, {
+                prompt = motionEngine.cleanPrompt(entry.prompt),
+                name = motionEngine.cleanPrompt(entry.name or entry.prompt),
+                base = entry.base,
+                mood = typeof(entry.mood) == "string" and entry.mood or nil,
+                speed = math.clamp(math.floor(tonumber(entry.speed) or 3), 1, 5),
+                intensity = math.clamp(math.floor(tonumber(entry.intensity) or 3), 1, 5),
+                stride = math.clamp(math.floor(tonumber(entry.stride) or 3), 1, 5),
+                arms = math.clamp(math.floor(tonumber(entry.arms) or 3), 1, 4),
+                torso = math.clamp(math.floor(tonumber(entry.torso) or 2), 1, 4),
+                bounce = math.clamp(math.floor(tonumber(entry.bounce) or 3), 1, 4),
+                direction = tonumber(entry.direction) == -1 and -1 or 1,
+                easing = math.clamp(math.floor(tonumber(entry.easing) or 2), 1, 3),
+                seed = math.clamp(math.floor(tonumber(entry.seed) or 1), 1, 999999),
+            })
+        end
+    end
+end
+
+function motionEngine.persistLibrary()
+    local payload = { count = #motionEngine.recipes }
+    for index, recipe in ipairs(motionEngine.recipes) do
+        payload["entry" .. tostring(index)] = {
+            prompt = motionEngine.cleanPrompt(recipe.prompt),
+            name = motionEngine.cleanPrompt(recipe.name),
+            base = recipe.base,
+            mood = recipe.mood or "",
+            speed = recipe.speed,
+            intensity = recipe.intensity,
+            stride = recipe.stride,
+            arms = recipe.arms,
+            torso = recipe.torso,
+            bounce = recipe.bounce,
+            direction = recipe.direction,
+            easing = recipe.easing,
+            seed = recipe.seed,
+        }
+    end
+
+    local ok, message = pcall(function()
+        plugin:SetSetting(MOTION_LIBRARY_SETTING, payload)
+    end)
+    if not ok then
+        setStatus("Não consegui gravar a biblioteca local: " .. tostring(message), C.red)
+        return false
+    end
+    return true
+end
+
+function motionEngine.renderLibrary()
+    for _, child in ipairs(libraryList:GetChildren()) do
+        child:Destroy()
+    end
+
+    libraryHeading.Text = string.format("BIBLIOTECA LOCAL · %d REFERÊNCIAS", #motionEngine.recipes)
+    if #motionEngine.recipes == 0 then
+        local empty = label(
+            libraryList,
+            "Depois de testar uma animação, guarde-a como referência.",
+            UDim2.fromOffset(0, 5),
+            UDim2.new(1, 0, 0, 28),
+            9,
+            C.muted
+        )
+        empty.TextWrapped = true
+        return
+    end
+
+    for index = 1, math.min(3, #motionEngine.recipes) do
+        local recipe = motionEngine.recipes[index]
+        local row = button(
+            libraryList,
+            recipe.name,
+            UDim2.fromOffset(0, (index - 1) * 28),
+            UDim2.new(1, 0, 0, 24),
+            false
+        )
+        row.TextSize = 9
+        row.Activated:Connect(function()
+            promptBox.Text = recipe.prompt
+            motionEngine.run(recipe.prompt, motionEngine.copyRecipe(recipe))
+        end)
+    end
+end
+
+function motionEngine.findReference(parsed)
+    local best = nil
+    local bestScore = 0
+    for _, saved in ipairs(motionEngine.recipes) do
+        if saved.base == parsed.base then
+            local score = 10
+            if saved.mood == parsed.mood then
+                score += 10
+            elseif parsed.mood == nil and saved.mood == nil then
+                score += 10
+            else
+                score -= 5
+            end
+            if score > bestScore then
+                best = saved
+                bestScore = score
+            end
+        end
+    end
+    return best
+end
+
+function motionEngine.resolveRecipe(prompt, forcedRecipe)
+    if forcedRecipe then
+        local recipe = motionEngine.copyRecipe(forcedRecipe)
+        recipe.prompt = motionEngine.cleanPrompt(prompt)
+        recipe.seed = recipe.seed or motionEngine.nextSeed()
+        return recipe, nil
+    end
+
+    local parsed = motionEngine.parsePrompt(prompt)
+    local base = MOTION_CATALOG[parsed.base]
+    local mood = parsed.mood and MOOD_PROFILES[parsed.mood] or nil
+    local recipe = {
+        prompt = motionEngine.cleanPrompt(prompt),
+        base = parsed.base,
+        mood = parsed.mood,
+        speed = base.defaultSpeed or 3,
+        intensity = 3,
+        stride = 3,
+        arms = 3,
+        torso = 2,
+        bounce = 3,
+        direction = 1,
+        easing = 2,
+    }
+
+    if mood then
+        for key, value in pairs(mood) do
+            recipe[key] = value
+        end
+    end
+
+    local reference = motionEngine.findReference(parsed)
+    if reference and (reference.mood == parsed.mood) then
+        for _, field in ipairs({ "speed", "intensity", "stride", "arms", "torso", "bounce", "direction", "easing" }) do
+            if not parsed.explicit[field] then
+                recipe[field] = reference[field]
+            end
+        end
+        recipe.referenceName = reference.name
+    end
+
+    for field, value in pairs(parsed.values) do
+        recipe[field] = value
+    end
+
+    recipe.seed = motionEngine.nextSeed()
+    local moodLabel = recipe.mood and ("_" .. recipe.mood) or ""
+    recipe.name = base.label .. moodLabel
+    return recipe, reference
+end
+
+function motionEngine.buildDocument(recipe, skeleton)
+    local base = MOTION_CATALOG[recipe.base]
+    if not base then
+        error("Não encontrei o movimento-base solicitado.")
+    end
+
+    local intensity = INTENSITY_FACTORS[recipe.intensity] or 1
+    local stride = STRIDE_FACTORS[recipe.stride] or 1
+    local arms = ARM_FACTORS[recipe.arms] or 1
+    local torso = TORSO_FACTORS[recipe.torso] or 1
+    local bounce = BOUNCE_FACTORS[recipe.bounce] or 1
+
+    local moodLean = 0
+    local headDrop = 0
+    if recipe.mood == "tired" then
+        moodLean = 5
+        headDrop = 4
+    elseif recipe.mood == "sad" then
+        moodLean = 5
+        headDrop = 6
+    elseif recipe.mood == "confident" then
+        moodLean = -1.5
+    elseif recipe.mood == "angry" then
+        moodLean = 3
+    elseif recipe.mood == "heavy" then
+        moodLean = 4
+        headDrop = 2
+    elseif recipe.mood == "happy" then
+        headDrop = -1
+    end
+
+    local random = Random.new(recipe.seed or 1)
+    local phaseOffset = random:NextNumber(-0.055, 0.055)
+    local swingVariance = random:NextNumber(0.96, 1.04)
+    local leanVariance = random:NextNumber(0.96, 1.04)
+
+    local cycleFrames = math.clamp(
+        math.floor((base.periodFrames * (SPEED_FACTORS[recipe.speed] or 1) / MOTION_SEGMENTS) + 0.5)
+            * MOTION_SEGMENTS,
+        MOTION_SEGMENTS,
+        60
+    )
+    local duration = cycleFrames / MOTION_FPS
+    local easing = EASING_OPTIONS[recipe.easing] or EASING_OPTIONS[2]
+    local jointNames = {
+        "Head", "UpperTorso", "LowerTorso",
+        "LeftUpperArm", "LeftLowerArm", "LeftHand",
+        "RightUpperArm", "RightLowerArm", "RightHand",
+        "LeftUpperLeg", "LeftLowerLeg", "LeftFoot",
+        "RightUpperLeg", "RightLowerLeg", "RightFoot",
+    }
+    local tracksByName = {}
+
+    for _, jointName in ipairs(jointNames) do
+        local targetType = skeleton.jointKindsByName[jointName]
+        if not targetType then
+            error("O Mesh Rig 2016 selecionado não possui o canal " .. jointName .. ".")
+        end
+        tracksByName[jointName] = {
+            target = { type = targetType, name = jointName },
+            keys = {},
+        }
+    end
+
+    local legAmplitude = base.leg * intensity * stride * swingVariance
+    local kneeAmplitude = base.knee * intensity * stride
+    local armAmplitude = base.arm * intensity * arms * swingVariance
+    local leanAngle = (base.lean * torso + moodLean) * leanVariance
+    local asymmetry = base.asymmetry or 0
+    if recipe.mood == "tired" then
+        asymmetry += 0.08
+    end
+    if recipe.direction == -1 then
+        leanAngle = -leanAngle * 0.45
+    end
+
+    for step = 0, MOTION_SEGMENTS do
+        local phase = (math.pi * 2 * step / MOTION_SEGMENTS) * (recipe.direction or 1) + phaseOffset
+        local sine = math.sin(phase)
+        local cosine = math.cos(phase)
+        local rightSwing = sine * legAmplitude * (1 + asymmetry)
+        local leftSwing = -sine * legAmplitude * (1 - asymmetry)
+        local rightKnee = math.max(0, math.sin(phase + math.pi * 0.5)) * kneeAmplitude
+        local leftKnee = math.max(0, math.sin(phase - math.pi * 0.5)) * kneeAmplitude
+        local armSwingRight = -leftSwing * 0.58 * arms
+        local armSwingLeft = -rightSwing * 0.58 * arms
+        local armBendRight = base.armBend + math.max(0, math.sin(phase + math.pi * 0.5)) * base.armBend * 0.42
+        local armBendLeft = base.armBend + math.max(0, math.sin(phase - math.pi * 0.5)) * base.armBend * 0.42
+        local bodyBob = math.sin(phase * 2) * base.bounce * bounce
+        local bodySway = sine * base.sway * intensity
+        local bodyRoll = cosine * base.sway * 0.42
+        local rightFoot = -rightSwing * 0.18 - rightKnee * 0.42
+        local leftFoot = -leftSwing * 0.18 - leftKnee * 0.42
+
+        local rotations = {
+            Head = { headDrop - bodyBob * 0.35, -bodySway * 0.08, -bodyRoll * 0.25 },
+            UpperTorso = { -leanAngle + bodyBob, bodySway * 0.18, bodyRoll },
+            LowerTorso = { leanAngle * 0.22, bodySway * 0.12, -bodyRoll * 0.32 },
+            LeftUpperArm = { armSwingLeft, 0, -base.sway * 0.18 },
+            LeftLowerArm = { armBendLeft, 0, 0 },
+            LeftHand = { 0, 0, math.sin(phase + math.pi * 0.5) * 2.2 * arms },
+            RightUpperArm = { armSwingRight, 0, base.sway * 0.18 },
+            RightLowerArm = { armBendRight, 0, 0 },
+            RightHand = { 0, 0, math.sin(phase - math.pi * 0.5) * 2.2 * arms },
+            LeftUpperLeg = { leftSwing, 0, -asymmetry * 2 },
+            LeftLowerLeg = { leftKnee, 0, 0 },
+            LeftFoot = { leftFoot, 0, 0 },
+            RightUpperLeg = { rightSwing, 0, asymmetry * 2 },
+            RightLowerLeg = { rightKnee, 0, 0 },
+            RightFoot = { rightFoot, 0, 0 },
+        }
+
+        local time = (cycleFrames * step / MOTION_SEGMENTS) / MOTION_FPS
+        for _, jointName in ipairs(jointNames) do
+            local rotation = rotations[jointName]
+            table.insert(tracksByName[jointName].keys, {
+                time = time,
+                transform = {
+                    rotation = {
+                        rotation[1],
+                        rotation[2],
+                        rotation[3],
+                    },
+                },
+            })
+        end
+    end
+
+    local tracks = {}
+    for _, jointName in ipairs(jointNames) do
+        table.insert(tracks, tracksByName[jointName])
+    end
+
+    local safeName = ("PC_" .. recipe.base .. (recipe.mood and ("_" .. recipe.mood) or "") .. "_" .. tostring(recipe.seed or 1))
+    local description = "Gerado por descrição: " .. motionEngine.cleanPrompt(recipe.prompt)
+    if recipe.referenceName then
+        description = description .. " | referência: " .. motionEngine.cleanPrompt(recipe.referenceName)
+    end
+
+    return {
+        format = "POSECODE",
+        version = 2,
+        metadata = {
+            name = string.sub(safeName, 1, 64),
+            author = "POSECODE Generator",
+            description = string.sub(description, 1, 256),
+        },
+        rig = { profile = "R15" },
+        timeline = {
+            fps = MOTION_FPS,
+            duration = duration,
+            looped = true,
+            priority = recipe.base == "idle" and "Idle" or "Movement",
+            rotationSpace = "character",
+            defaultEasing = {
+                style = easing.style,
+                direction = easing.direction,
+            },
+        },
+        tracks = tracks,
+        events = {},
+    }
+end
+
+function motionEngine.saveCurrentReference()
+    local recipe = motionEngine.lastGeneratedRecipe
+    if not recipe or sourceBox.Text ~= motionEngine.lastGeneratedDocument then
+        setStatus("Gere e confira uma animação antes de guardar a referência.", C.red)
+        return
+    end
+
+    local saved = motionEngine.copyRecipe(recipe)
+    saved.prompt = motionEngine.cleanPrompt(saved.prompt)
+    saved.name = motionEngine.cleanPrompt(saved.name or saved.prompt)
+    for index, existing in ipairs(motionEngine.recipes) do
+        if existing.base == saved.base and existing.mood == saved.mood and existing.prompt == saved.prompt then
+            table.remove(motionEngine.recipes, index)
+            break
+        end
+    end
+    table.insert(motionEngine.recipes, 1, saved)
+    while #motionEngine.recipes > MAX_SAVED_MOTIONS do
+        table.remove(motionEngine.recipes)
+    end
+
+    if motionEngine.persistLibrary() then
+        motionEngine.renderLibrary()
+        setStatus("Referência adicionada à biblioteca local. Ela será considerada em próximas gerações parecidas.", C.green)
+    end
+end
+
+function motionEngine.run(prompt, forcedRecipe)
+    local rig = selectedRig()
+    if not rig then
+        setStatus("Selecione o Mesh Rig 2016 antes de gerar.", C.red)
+        return false
+    end
+
+    local ok, result = pcall(function()
+        local skeleton = getSkeleton(rig)
+        local recipe, reference = motionEngine.resolveRecipe(prompt, forcedRecipe)
+        if reference then
+            recipe.referenceName = reference.name
+        end
+        local document = motionEngine.buildDocument(recipe, skeleton)
+        local encoded = HttpService:JSONEncode(document)
+        if #encoded > MAX_SOURCE_LENGTH then
+            error("A animação gerada ultrapassou o limite seguro de entrada.")
+        end
+        return {
+            recipe = recipe,
+            encoded = encoded,
+            referenceName = reference and reference.name or nil,
+            duration = document.timeline.duration,
+        }
+    end)
+
+    if not ok then
+        setStatus("Não consegui gerar: " .. tostring(result), C.red)
+        return false
+    end
+
+    motionEngine.lastGeneratedRecipe = nil
+    motionEngine.lastGeneratedDocument = result.encoded
+    sourceBox.Text = result.encoded
+
+    if not importDocument then
+        setStatus("O importador ainda não está pronto. Tente novamente.", C.red)
+        return false
+    end
+    local imported = importDocument()
+    if not imported then
+        motionEngine.lastGeneratedDocument = nil
+        setButtonState(saveReferenceButton, false, false)
+        setButtonState(variationButton, false, false)
+        return false
+    end
+
+    motionEngine.lastGeneratedRecipe = result.recipe
+    motionEngine.lastGeneratedDocument = result.encoded
+    setButtonState(saveReferenceButton, true, false)
+    setButtonState(variationButton, true, false)
+
+    local referenceNote = result.referenceName
+        and (" Referência aplicada: " .. result.referenceName .. ".")
+        or " Receita criada a partir do catálogo-base."
+    setStatus(
+        string.format(
+            "%s gerado: 13 poses por ciclo, %.2fs. Confira a prévia antes de salvar.%s",
+            result.recipe.name,
+            result.duration,
+            referenceNote
+        ),
+        C.green
+    )
+    return true
+end
+
+motionEngine.loadLibrary()
+motionEngine.renderLibrary()
+
 local selectedRigCache = nil
 
 local function refreshActionButtons()
     local hasSource = sourceBox.Text:match("^%s*$") == nil
+    local hasPrompt = promptBox.Text:match("^%s*$") == nil
+    local generatedIsCurrent = motionEngine.lastGeneratedRecipe ~= nil
+        and motionEngine.lastGeneratedDocument == sourceBox.Text
+
     setButtonState(importButton, selectedRigCache ~= nil and hasSource, true)
     setButtonState(exampleButton, selectedRigCache ~= nil, false)
     setButtonState(migrateButton, selectedRigCache ~= nil and hasSource, false)
     setButtonState(rigCheckButton, selectedRigCache ~= nil, false)
+    setButtonState(generateButton, selectedRigCache ~= nil and hasPrompt, true)
+    setButtonState(variationButton, selectedRigCache ~= nil and generatedIsCurrent, false)
+    setButtonState(saveReferenceButton, generatedIsCurrent, false)
 end
 
 local function refreshSelectionHint()
@@ -1001,8 +1785,16 @@ local function refreshSelectionHint()
 end
 
 Selection.SelectionChanged:Connect(refreshSelectionHint)
-sourceBox:GetPropertyChangedSignal("Text"):Connect(refreshActionButtons)
+sourceBox:GetPropertyChangedSignal("Text"):Connect(function()
+    if motionEngine.lastGeneratedDocument ~= sourceBox.Text then
+        motionEngine.lastGeneratedRecipe = nil
+        motionEngine.lastGeneratedDocument = nil
+    end
+    refreshActionButtons()
+end)
+promptBox:GetPropertyChangedSignal("Text"):Connect(refreshActionButtons)
 refreshSelectionHint()
+motionEngine.renderLibrary()
 
 local function analyzeSelectedRig()
     local rig = selectedRigCache
@@ -1181,7 +1973,7 @@ local function normalizeV2Data(data, skeleton)
 
     local rigProfile = rigData.profile
     if rigProfile ~= "R15" then
-        error('O POSECODE 2.1 aceita somente rig.profile = "R15" no Mesh Rig 2016.')
+        error('O POSECODE 3.0 aceita somente rig.profile = "R15" no Mesh Rig 2016.')
     end
 
     if not isFiniteNumber(timeline.fps)
@@ -1456,7 +2248,7 @@ local function validateData(data, rig, skeleton)
         error('Versão incompatível. Use "version": 1.')
     end
     if data.rig ~= "R15" then
-        error('O POSECODE 2.1 aceita somente Mesh Rig 2016 com rig = "R15".')
+        error('O POSECODE 3.0 aceita somente Mesh Rig 2016 com rig = "R15".')
     end
 
     local humanoid = rig:FindFirstChildOfClass("Humanoid")
@@ -2479,22 +3271,22 @@ local function saveSequence()
     setStatus('Clip salvo em AnimSaves. Nome: "' .. result .. '".', C.green)
 end
 
-importButton.Activated:Connect(function()
+importDocument = function()
     stopPreview()
 
     local rig = selectedRig()
     if not rig then
         setStatus("Selecione o Mesh Rig 2016 no Explorer.", C.red)
-        return
+        return false
     end
 
     if #sourceBox.Text > MAX_SOURCE_LENGTH then
         setStatus("O conteúdo ultrapassa 256 KB. Reduza o JSON e tente novamente.", C.red)
-        return
+        return false
     end
     if sourceBox.Text:match("^%s*$") then
         setStatus("Cole um script ou JSON de animação antes de importar.", C.red)
-        return
+        return false
     end
 
     local ok, result = pcall(function()
@@ -2518,7 +3310,7 @@ importButton.Activated:Connect(function()
 
     if not ok then
         setStatus("Importação recusada: " .. tostring(result), C.red)
-        return
+        return false
     end
 
     if importedSequence and importedSequence.Parent == nil then
@@ -2556,6 +3348,28 @@ importButton.Activated:Connect(function()
             ),
         C.green
     )
+    return true
+end
+
+importButton.Activated:Connect(importDocument)
+
+generateButton.Activated:Connect(function()
+    motionEngine.run(promptBox.Text)
+end)
+
+variationButton.Activated:Connect(function()
+    local current = motionEngine.lastGeneratedRecipe
+    if not current then
+        setStatus("Gere uma animação antes de pedir outra variação.", C.red)
+        return
+    end
+    local nextRecipe = motionEngine.copyRecipe(current)
+    nextRecipe.seed = motionEngine.nextSeed()
+    motionEngine.run(nextRecipe.prompt, nextRecipe)
+end)
+
+saveReferenceButton.Activated:Connect(function()
+    motionEngine.saveCurrentReference()
 end)
 
 exampleButton.Activated:Connect(function()
