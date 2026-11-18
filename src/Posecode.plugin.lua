@@ -990,7 +990,7 @@ local MOTION_CATALOG = {
         gesture = "dance", danceArmRaise = 38, handWave = 9,
         looped = true, priority = "Action",
     },
-       strafe = {
+    strafe = {
         label = "Strafe",
         aliases = { "strafe", "strafing", "side step", "sideways walk", "andar de lado", "passo lateral" },
         leg = 18, knee = 15, arm = 8, armBend = 5,
