@@ -1,6 +1,6 @@
 --[[
     POSECODE
-    Convert structured animation data into Roblox animation clips.
+    Generate procedural R15 motion and import POSECODE animation clips.
     Handle: ruancr
     Version: 3.0
     The plugin never executes pasted source; it only extracts and validates JSON.
@@ -1066,42 +1066,42 @@ local MOTION_CATALOG = {
         aliases = { "walk", "andar", "andando", "caminhar", "caminhada" },
         leg = 25, knee = 19, arm = 14, armBend = 7,
         lean = 2, bounce = 1.2, sway = 2.1, head = 1.2,
-        periodFrames = 36, asymmetry = 0,
+        periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
     },
     run = {
         label = "Run",
         aliases = { "run", "correr", "correndo", "corrida" },
         leg = 34, knee = 37, arm = 22, armBend = 19,
         lean = 7, bounce = 2.6, sway = 2.6, head = 1.8,
-        periodFrames = 30, asymmetry = 0,
+        periodFrames = 30, defaultSpeed = 4, asymmetry = 0,
     },
     sprint = {
         label = "Sprint",
         aliases = { "sprint", "sprintar", "corrida rapida", "correr rapido" },
         leg = 41, knee = 48, arm = 28, armBend = 25,
         lean = 11, bounce = 3.2, sway = 2.5, head = 2.5,
-        periodFrames = 24, asymmetry = 0,
+        periodFrames = 24, defaultSpeed = 5, asymmetry = 0,
     },
     sneak = {
         label = "Sneak",
         aliases = { "sneak", "agachar", "agachado", "agachada", "furtivo", "esgueirar" },
         leg = 12, knee = 26, arm = 6, armBend = 15,
         lean = 16, bounce = 0.4, sway = 1.3, head = 4,
-        periodFrames = 48, asymmetry = 0,
+        periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
     },
     tiptoe = {
         label = "Tiptoe",
         aliases = { "tiptoe", "na ponta", "ponta dos pes", "pontas dos pes" },
         leg = 9, knee = 18, arm = 4, armBend = 6,
         lean = 4, bounce = 0.6, sway = 1, head = 1,
-        periodFrames = 48, asymmetry = 0,
+        periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
     },
     march = {
         label = "March",
         aliases = { "march", "marchar", "marcha" },
         leg = 29, knee = 8, arm = 24, armBend = 3,
         lean = 1, bounce = 1.1, sway = 1.2, head = 0.5,
-        periodFrames = 36, asymmetry = 0,
+        periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
     },
     limp = {
         label = "Limp",
@@ -1115,7 +1115,7 @@ local MOTION_CATALOG = {
         aliases = { "idle", "parado", "parada", "respirar", "respirando", "em pe" },
         leg = 0, knee = 0, arm = 1, armBend = 3,
         lean = 0, bounce = 0.4, sway = 0.7, head = 1.2,
-        periodFrames = 60, asymmetry = 0,
+        periodFrames = 60, defaultSpeed = 2, asymmetry = 0,
     },
 }
 
@@ -1166,7 +1166,7 @@ function motionEngine.cleanPrompt(value)
 end
 
 function motionEngine.normalizeText(value)
-    local result = string.lower(tostring(value or ""))
+    local result = tostring(value or "")
     local replacements = {
         { "á", "a" }, { "à", "a" }, { "ã", "a" }, { "â", "a" },
         { "é", "e" }, { "ê", "e" }, { "í", "i" },
@@ -1176,6 +1176,7 @@ function motionEngine.normalizeText(value)
     for _, replacement in ipairs(replacements) do
         result = result:gsub(replacement[1], replacement[2])
     end
+    result = string.lower(result)
     result = result:gsub("[^%w%s%-]", " ")
     result = result:gsub("%s+", " ")
     return " " .. result .. " "
@@ -1262,7 +1263,7 @@ function motionEngine.parsePrompt(prompt)
         setValue("speed", 4)
     end
 
-    if motionEngine.hasAny(text, { "muito sutil", "bem suave", "subtle", "sutil" }) then
+    if motionEngine.hasAny(text, { "muito sutil", "bem suave", "suave", "subtle", "sutil" }) then
         setValue("intensity", 1)
     elseif motionEngine.hasAny(text, { "leve", "low intensity" }) then
         setValue("intensity", 2)
@@ -1342,7 +1343,7 @@ function motionEngine.loadLibrary()
                 prompt = motionEngine.cleanPrompt(entry.prompt),
                 name = motionEngine.cleanPrompt(entry.name or entry.prompt),
                 base = entry.base,
-                mood = typeof(entry.mood) == "string" and entry.mood or nil,
+                mood = typeof(entry.mood) == "string" and entry.mood ~= "" and entry.mood or nil,
                 speed = math.clamp(math.floor(tonumber(entry.speed) or 3), 1, 5),
                 intensity = math.clamp(math.floor(tonumber(entry.intensity) or 3), 1, 5),
                 stride = math.clamp(math.floor(tonumber(entry.stride) or 3), 1, 5),
@@ -1491,7 +1492,7 @@ function motionEngine.resolveRecipe(prompt, forcedRecipe)
     end
 
     recipe.seed = motionEngine.nextSeed()
-    local moodLabel = recipe.mood and ("_" .. recipe.mood) or ""
+    local moodLabel = recipe.mood and (" · " .. (MOOD_LABELS[recipe.mood] or recipe.mood)) or ""
     recipe.name = base.label .. moodLabel
     return recipe, reference
 end
