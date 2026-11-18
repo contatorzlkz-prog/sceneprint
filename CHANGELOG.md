@@ -1,5 +1,18 @@
 # Changelog
 
+## 3.2 · Abertura corrigida e interpretação em camadas
+
+- Conecta o clique da barra Plugins ao estado visível da janela POSECODE e sincroniza o indicador ativo do botão.
+- Corrige a ausência do handler de abertura que fazia o botão da barra não apresentar o painel.
+- Troca a escolha única de movimento por interpretação semântica de uma ação principal e um gesto secundário.
+- Permite combinações como caminhar enquanto acena, correr enquanto aponta e caminhar enquanto bate palmas.
+- Adiciona seleção de braço para gestos, controles de cabeça, travas de braços/cabeça, lado da marcha mancando e espelhamento.
+- Adiciona cinco perfis de atitude: assustado, tímido, determinado, arrogante e confuso.
+- Normaliza sinônimos com acentos antes da comparação e escolhe aliases por posição e especificidade.
+- Sincroniza a fase do gesto secundário com a ação principal para manter continuidade.
+- Melhora as sugestões rápidas com composições que exercitam os novos recursos.
+- Documenta a diferença entre interpretação semântica local e geração por modelo de linguagem externo.
+
 ## 3.1 · Gerador procedural exclusivo
 
 - Substitui a interface em abas por um painel único, compacto e centrado na geração.
@@ -12,147 +25,3 @@
 - Melhora as fases de backpedal e strafe e mantém a geração limitada ao Mesh Rig 2016 selecionado.
 - Continua usando internamente o pipeline validado de poses, prévia e salvamento do Studio.
 
-## 3.0 · Gerador procedural por descrição
-
-- Adiciona uma aba **Gerar** para descrever movimentos em linguagem natural.
-- Cria um motor procedural com 15 padrões-base: walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap e dance.
-- Combina 15 bases, 5 velocidades, 5 intensidades, 5 comprimentos de passada, 4 estilos de braço, 4 posturas, 4 níveis de balanço, 2 direções e 3 interpolações: 720.000 combinações paramétricas discretas.
-- Adiciona gestos cíclicos e de ação: aceno, continência, salto, reverência, apontar, palmas e dança.
-- Gera tracks POSECODE V2 para as 15 juntas do Mesh Rig 2016, com keyframes alinhados ao FPS.
-- Encaminha o documento gerado ao pipeline existente de validação, prévia e salvamento.
-- Adiciona **Outra variação**, usando uma semente diferente para manter o estilo e variar detalhes.
-- Adiciona biblioteca local de referências aprovadas, persistida por Plugin:GetSetting/SetSetting.
-- Busca receitas previamente aprovadas para reutilizar parâmetros em pedidos semelhantes.
-- Mantém a importação V2, a migração V1 → V2 e o formato POSECODE V2.
-
-## 2.1 · Perfil exclusivo Mesh Rig 2016
-
-- Direciona o plugin ao perfil estrutural Mesh Rig 2016 (R15).
-- Exige as 15 MeshParts corporais com nomes padrão, HumanoidRootPart e hierarquia das 15 juntas.
-- Aceita somente rigs com 15 AnimationConstraint ou 15 Motor6D; rejeita Bones, rigs genéricos, R6, rigs avançados com juntas extras e hierarquias mistas.
-- Adiciona timeline.rotationSpace: joint mantém eixos locais; character converte eixos do personagem para o referencial de cada junta usando Attachment0/C0.
-- Troca o exemplo genérico por um aceno de braço/antebraço/mão para Mesh Rig 2016.
-- Mantém a prévia temporária com AnimationClipProvider:RegisterAnimationClip.
-
-
-## 2.0 · Formato V2 nativo, migração e otimização
-
-- Promove o **POSECODE V2** a formato principal do plugin.
-- Mantém a leitura do POSECODE V1 para não quebrar animações e projetos existentes.
-- Adiciona **Converter V1 para V2** na aba Importar; a migração valida o rig e o documento antes de gerar o JSON convertido.
-- Converte canais V1 em tracks tipadas, preservando tempos normalizados, easing e eventos compatíveis.
-- Adiciona otimização conservadora por track: em sequências de três ou mais keyframes consecutivos com transformação idêntica, remove somente os intermediários e conserva os dois extremos.
-- Informa quantos keyframes redundantes foram removidos durante a importação V2.
-- Amplia o diagnóstico do rig com contagens separadas de Motor6D, AnimationConstraint e Bone.
-- Atualiza o exemplo interno para continuar gerando V2 com o tipo real do alvo selecionado.
-- Mantém a arquitetura de saída KeyframeSequence e CurveAnimation do pipeline validado.
-- Atualiza documentação e JSON Schema para a estrutura V2.
-
-## 1.8 · Navegação compacta e interface por etapas
-
-- Divide a janela em três abas: **Importar**, **Prévia** e **Rig**.
-- Oculta os controles das outras etapas até que o usuário abra a aba correspondente.
-- Mantém o editor JSON e as ações de importação concentrados na aba **Importar**.
-- Move a timeline, a reprodução, a velocidade, a repetição e o salvamento para **Prévia**.
-- Isola a análise de estrutura e compatibilidade na aba **Rig**.
-- Adiciona ícones vetoriais simples desenhados com elementos GUI nativos, sem IDs de imagem externos.
-- Mantém o status em uma faixa fixa no rodapé para que mensagens continuem visíveis durante a navegação.
-- Abre **Prévia** automaticamente após uma importação bem-sucedida.
-- Adiciona suporte ao formato **POSECODE V2**, organizado em metadata, rig, timeline, tracks e events.
-- Mantém a importação de documentos V1 para compatibilidade com projetos existentes.
-- Combina keyframes de tracks diferentes numa timeline comum e valida alvos por tipo.
-- Normaliza keyframes e eventos ao FPS declarado e rejeita conflitos de easing no mesmo instante.
-- Atualiza **Carregar exemplo** para gerar POSECODE V2 com o tipo real do primeiro alvo encontrado no rig.
-- Disponibiliza um JSON Schema para validação externa dos documentos V2.
-- Preserva as rotas de saída KeyframeSequence e CurveAnimation do pipeline existente.
-
-## 1.7 · Compatibilidade de rigs e organização
-
-- Adiciona suporte a hierarquias **Bone** e malhas skinned usando `CurveAnimation`.
-- Permite perfis `CUSTOM` para Models sem `Humanoid`.
-- Organiza a geração de curvas em uma árvore que acompanha a hierarquia dos nós animados.
-- Permite combinar canais `Motor6D` e `Bone` na mesma saída `CurveAnimation`.
-- Adiciona **Analisar rig** para conferir perfil, quantidade de elementos e tipo de saída antes da importação.
-- Diferencia a rota documentada de `Bone` da conversão experimental de `AnimationConstraint`.
-- Atualiza os exemplos, a validação e a documentação sem alterar o formato POSECODE v1.
-
-## 1.6 · Eventos e robustez técnica
-
-- Adiciona **event markers** opcionais em `KeyframeSequence`, com nome e valor por quadro.
-- Exibe os eventos na timeline e informa quando um marker é alcançado durante a prévia.
-- Adiciona controle de repetição independente para a prévia.
-- Protege toda a inicialização da prévia, incluindo `Animator`, captura de pose e registro temporário.
-- Desconecta os listeners de eventos ao parar ou reiniciar a prévia.
-- Faz pré-verificação do volume de saída: 18.000 poses ou 24.000 chaves de curva.
-- Mantém o formato POSECODE v1 e a interface clássica da versão anterior.
-
-## 1.5 · Ajustes técnicos e experiência de uso
-
-- Reorganiza a interface para um painel clássico, discreto e consistente.
-- Adiciona estados contextuais aos controles e evita ações antes de haver um clip importado.
-- Valida juntas incompletas, limita o tamanho do esqueleto e escolhe a raiz de forma determinística.
-- Atualiza a seleção do rig somente quando a seleção muda, sem reexaminar o modelo a cada caractere digitado.
-- Reduz as atualizações visuais da timeline durante a prévia sem reduzir a avaliação da animação.
-- Mantém o formato POSECODE v1.
-
-## 1.4 · Ícones vetoriais e robustez da prévia
-
-- Cria um conjunto enxuto de ícones SVG em `assets/icons/posecode-icons.svg`.
-- Desenha os ícones dentro do plugin com elementos nativos da GUI do Roblox, sem depender de uploads de imagens ou IDs externos.
-- Atualiza os títulos de seção e os botões de importar, exemplo, limpar, reproduzir, pausar, parar, navegar e salvar.
-- Centraliza os ícones dos controles compactos e evita sobreposição entre o título da timeline e o resumo do clip.
-- Corrige a exibição do tempo total quando a timeline é limpa.
-- Protege a criação de `KeyframeSequence` e `CurveAnimation`, destruindo o objeto parcialmente criado quando ocorre uma falha.
-- Registra `Animation` e `AnimationTrack` durante a criação para que a limpeza também funcione se `LoadAnimation` ou `Play` falhar.
-- Encerra e restaura a prévia quando o rig sai do `Workspace` ou quando o painel é ocultado.
-- Mantém POSECODE v1 compatível; a versão 1.4 é a versão do plugin.
-
-## 1.3 · Interface compacta e conversão eficiente
-
-- Reorganiza a janela em cabeçalho fixo e conteúdo com rolagem, com tamanho mínimo menor.
-- Reduz a altura do editor de entrada e elimina painéis grandes desnecessários.
-- Substitui rótulos longos nos controles de prévia por símbolos de reprodução, pausa e parada.
-- Adiciona identidade visual mais clara, estado do plugin por indicador de cor e hover discreto nos botões.
-- Calcula cada transformação local uma vez por junta/quadro e reutiliza o cache na geração dos clips.
-- Calcula Euler XYZ uma vez por junta/quadro nas curvas, em vez de decompor a rotação novamente para cada eixo.
-- Valida os três componentes dos vetores sem criar tabelas temporárias.
-- Mantém o formato de dados POSECODE v1 compatível; a versão 1.3 é a versão do plugin, não do JSON.
-
-## 1.2 · Clips, curva e controles de prévia
-
-- Gera `KeyframeSequence` para rigs somente com `Motor6D`.
-- Gera `CurveAnimation` para rigs com `AnimationConstraint`, com canais Position e Rotation.
-- Adiciona navegação por arraste na linha do tempo e leitura do tempo atual.
-- Adiciona pausa/retomada, parada e velocidades 0.5×, 1×, 1.5× e 2×.
-- Adiciona navegação para o quadro anterior e seguinte.
-- Adiciona botão para carregar um exemplo com base no rig selecionado e botão para limpar.
-- Padroniza rotações locais em ordem XYZ.
-- Calcula tangentes para segmentos cúbicos das `CurveAnimation`.
-- Atualiza a interface para distinguir clips de keyframes e de curvas.
-- Atualiza a documentação do formato e os limites de interpolação.
-
-## 1.1 · Correções e melhorias
-
-- Faz a prévia avançar explicitamente a avaliação do `Animator` no Studio.
-- Restaura `Transform` e `CurrentAngle` das juntas ao encerrar a prévia.
-- Usa `RegisterActiveAnimationClip` para criar o ID temporário.
-- Identifica a raiz pela `AssemblyRootPart` e valida a árvore `Motor6D`/`AnimationConstraint`.
-- Reconhece `AnimationConstraint` em rigs novos e continua aceitando `Motor6D` em rigs anteriores.
-- Alinha os tempos ao FPS declarado e rejeita colisões após o arredondamento.
-- Insere um quadro neutro no início e mantém a última pose até a duração final.
-- Suporta transformações esparsas e easing global ou por keyframe.
-- Amplia as prioridades até `Action4`.
-- Salva em `ServerStorage.RBX_ANIMSAVES`, referenciado por `AnimSaves`.
-- Mantém compatibilidade com a pasta `AnimSaves` antiga e restaura referências se o salvamento falhar.
-- Melhora a extração do conteúdo JSON.
-- Limita a entrada a 256 KB e rejeita arrays incompletos ou com índices inválidos.
-
-## 0.1.0 · Nova direção: POSECODE
-
-- Reorienta o projeto de escultura de terreno para importação de animações geradas por IA.
-- Introduz o formato declarativo POSECODE v1, com tempos e transformações por junta.
-- Valida rig, duração, keyframes e nomes das juntas.
-- Converte os dados para `KeyframeSequence` e hierarquia de `Pose`.
-- Adiciona prévia local usando `AnimationClipProvider`.
-- Adiciona salvamento local em `ServerStorage`, com referência `AnimSaves`.
-- Documenta os limites de conversão e o fluxo de publicação do Roblox.
