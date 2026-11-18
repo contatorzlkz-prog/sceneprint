@@ -1166,7 +1166,7 @@ function motionEngine.parsePrompt(prompt)
 
     local moodAliases = {
         { "tired", { "cansado", "cansada", "com sono", "exausto", "exausta", "tired" } },
-        { "happy", { "feliz", "alegre", "animado", "animada", "happy" } },
+        { "happy", { "feliz", "alegre", "animado", "animada", "happy", "friendly", "energetic", "energético", "energetica" } },
         { "confident", { "confiante", "seguro", "segura", "confident" } },
         { "angry", { "bravo", "brava", "irritado", "irritada", "furioso", "furiosa", "angry" } },
         { "heavy", { "pesado", "pesada", "heavy" } },
