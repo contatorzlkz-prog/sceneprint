@@ -2,38 +2,39 @@
   <rect width="960" height="620" rx="8" fill="#1E1F21"/>
   <rect x="1" y="1" width="958" height="618" rx="7" stroke="#414449"/>
   <text x="32" y="36" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="18" font-weight="700">POSECODE</text>
-  <text x="33" y="52" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" letter-spacing=".8">ANIMATION TOOL</text>
-  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v2.0</text>
+  <text x="33" y="52" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" letter-spacing=".8">GERADOR DE ANIMAÇÕES</text>
+  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v3.0</text>
   <path d="M24 68H936" stroke="#414449"/>
-  <rect x="24" y="82" width="296" height="42" rx="3" fill="#303236"/>
-  <rect x="34" y="94" width="12" height="14" rx="1" stroke="#E8EAED" stroke-width="1.4"/>
-  <path d="M37 99H43M37 103H43" stroke="#E8EAED" stroke-width="1.2"/>
-  <text x="57" y="108" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="13" font-weight="600">Importar</text>
-  <rect x="330" y="82" width="296" height="42" rx="3" fill="#1E1F21"/>
-  <path d="M340 103H358M343 98V108M349 93V113M355 100V106" stroke="#969BA2" stroke-width="1.3"/>
-  <text x="367" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="13">Prévia</text>
-  <rect x="632" y="82" width="304" height="42" rx="3" fill="#1E1F21"/>
-  <path d="M644 94H650V100H644ZM656 94H662V100H656ZM644 106H650V112H644ZM656 106H662V112H656Z" stroke="#969BA2" stroke-width="1.2" fill="none"/>
-  <text x="672" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="13">Rig</text>
-  <rect x="32" y="121" width="280" height="2" fill="#53779E"/>
-  <text x="32" y="165" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="13" font-weight="600">ENTRADA · POSECODE V2</text>
-  <text x="32" y="189" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">Cole o JSON ou a variável POSECODE.</text>
-  <rect x="32" y="203" width="896" height="216" rx="4" fill="#18191B" stroke="#414449"/>
-  <text x="52" y="232" fill="#A9C3DF" font-family="monospace" font-size="13">{ "format": "POSECODE", "version": 2,</text>
-  <text x="52" y="258" fill="#D3D5D8" font-family="monospace" font-size="12">  "metadata": { "name": "Walk_Cycle" },</text>
-  <text x="52" y="284" fill="#D3D5D8" font-family="monospace" font-size="12">  "rig": { "profile": "R15" },</text>
-  <text x="52" y="310" fill="#D3D5D8" font-family="monospace" font-size="12">  "timeline": { "fps": 30, "duration": 0.8 },</text>
-  <text x="52" y="336" fill="#D3D5D8" font-family="monospace" font-size="12">  "tracks": [ { "target": { "type": "Motor6D" } ... } ]</text>
-  <text x="52" y="390" fill="#737981" font-family="monospace" font-size="11">...</text>
-  <rect x="32" y="435" width="896" height="40" rx="3" fill="#53779E"/>
-  <text x="480" y="460" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="13" font-weight="700">IMPORTAR CLIP</text>
-  <rect x="32" y="486" width="442" height="36" rx="3" fill="#383B3F"/>
-  <text x="253" y="509" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">CARREGAR EXEMPLO V2</text>
-  <rect x="482" y="486" width="446" height="36" rx="3" fill="#383B3F"/>
-  <text x="705" y="509" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">LIMPAR</text>
-  <rect x="32" y="532" width="896" height="32" rx="3" fill="#303236"/>
-  <text x="480" y="553" text-anchor="middle" fill="#D8DADF" font-family="Arial,sans-serif" font-size="10">CONVERTER V1 PARA V2</text>
+  <rect x="24" y="82" width="220" height="42" rx="3" fill="#1E1F21"/>
+  <text x="134" y="108" text-anchor="middle" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Importar</text>
+  <rect x="250" y="82" width="220" height="42" rx="3" fill="#303236"/>
+  <path d="M267 103h14M274 96v14M274 96l-4 4M274 96l4 4" stroke="#E8EAED" stroke-width="1.4"/>
+  <text x="292" y="108" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="12" font-weight="600">Gerar</text>
+  <rect x="248" y="121" width="224" height="2" fill="#53779E"/>
+  <rect x="476" y="82" width="220" height="42" rx="3" fill="#1E1F21"/>
+  <path d="M491 103H510M494 98V108M500 94V112M506 100V106" stroke="#969BA2" stroke-width="1.3"/>
+  <text x="520" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Prévia</text>
+  <rect x="702" y="82" width="234" height="42" rx="3" fill="#1E1F21"/>
+  <path d="M716 95h6v6h-6zM727 95h6v6h-6zM716 106h6v6h-6zM727 106h6v6h-6z" stroke="#969BA2" stroke-width="1.2"/>
+  <text x="742" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Rig</text>
+  <text x="32" y="165" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="13" font-weight="600">DESCREVA O MOVIMENTO</text>
+  <text x="32" y="189" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">Escreva o movimento que deseja gerar.</text>
+  <rect x="32" y="204" width="896" height="98" rx="4" fill="#18191B" stroke="#414449"/>
+  <text x="52" y="244" fill="#E8EAED" font-family="Arial,sans-serif" font-size="18">walk cansado</text>
+  <text x="52" y="274" fill="#737981" font-family="Arial,sans-serif" font-size="10">Movimento · atitude · ritmo · postura</text>
+  <rect x="32" y="318" width="896" height="42" rx="3" fill="#53779E"/>
+  <text x="480" y="344" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="13" font-weight="700">GERAR ANIMAÇÃO</text>
+  <rect x="32" y="373" width="442" height="36" rx="3" fill="#383B3F"/>
+  <text x="253" y="396" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">OUTRA VARIAÇÃO</text>
+  <rect x="482" y="373" width="446" height="36" rx="3" fill="#383B3F"/>
+  <text x="705" y="396" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">GUARDAR REFERÊNCIA</text>
+  <text x="32" y="445" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="10" font-weight="600" letter-spacing=".8">BIBLIOTECA LOCAL · REFERÊNCIAS APROVADAS</text>
+  <rect x="32" y="458" width="896" height="31" rx="3" fill="#303236"/>
+  <text x="48" y="478" fill="#D9DCE0" font-family="Arial,sans-serif" font-size="11">Walk · cansado</text>
+  <rect x="32" y="496" width="896" height="31" rx="3" fill="#303236"/>
+  <text x="48" y="516" fill="#D9DCE0" font-family="Arial,sans-serif" font-size="11">Run · confiante</text>
+  <text x="32" y="556" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">15 movimentos-base · 720 mil combinações paramétricas</text>
   <path d="M24 582H936" stroke="#414449"/>
-  <circle cx="35" cy="602" r="4" fill="#969BA2"/>
-  <text x="49" y="606" fill="#AEB2B8" font-family="Arial,sans-serif" font-size="11">Entrada estruturada · validação segura · V1 compatível</text>
+  <circle cx="35" cy="602" r="4" fill="#85AC8B"/>
+  <text x="49" y="606" fill="#AEB2B8" font-family="Arial,sans-serif" font-size="11">Geração procedural · biblioteca local · Mesh Rig 2016</text>
 </svg>
