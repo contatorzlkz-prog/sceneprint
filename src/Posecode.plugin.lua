@@ -306,7 +306,7 @@ local libraryList = make("Frame", generatorPage, {
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-local librarySummary = label(generatorPage, "8 movimentos-base · 384.000 combinações paramétricas.", UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
+local librarySummary = label(generatorPage, string.format("8 movimentos-base · %s combinações paramétricas.", string.format("%0.0f", MOTION_VARIATION_COUNT)), UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
 librarySummary.TextWrapped = true
 
 local footer = make("Frame", root, {
@@ -1108,7 +1108,7 @@ local MOTION_CATALOG = {
         aliases = { "limp", "mancar", "mancando", "manco", "manca" },
         leg = 20, knee = 15, arm = 9, armBend = 8,
         lean = 4, bounce = 0.7, sway = 4, head = 2,
-        periodFrames = 42, asymmetry = 0.32,
+        periodFrames = 42, defaultSpeed = 2, asymmetry = 0.32,
     },
     idle = {
         label = "Idle",
@@ -1581,8 +1581,8 @@ function motionEngine.buildDocument(recipe, skeleton)
         local leftSwing = -sine * legAmplitude * (1 - asymmetry)
         local rightKnee = math.max(0, math.sin(phase + math.pi * 0.5)) * kneeAmplitude
         local leftKnee = math.max(0, math.sin(phase - math.pi * 0.5)) * kneeAmplitude
-        local armSwingRight = -leftSwing * 0.58 * arms
-        local armSwingLeft = -rightSwing * 0.58 * arms
+        local armSwingRight = -sine * armAmplitude
+        local armSwingLeft = sine * armAmplitude
         local armBendRight = base.armBend + math.max(0, math.sin(phase + math.pi * 0.5)) * base.armBend * 0.42
         local armBendLeft = base.armBend + math.max(0, math.sin(phase - math.pi * 0.5)) * base.armBend * 0.42
         local bodyBob = math.sin(phase * 2) * base.bounce * bounce
