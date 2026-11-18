@@ -2,7 +2,7 @@
     POSECODE
     Procedural character animation generator for Roblox Studio.
     Handle: ruancr
-    Version: 3.1
+    Version: 3.2
     Generates motion directly from procedural profiles. No code import.
 ]]
 
@@ -16,7 +16,7 @@ local Workspace = game:GetService("Workspace")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
-local VERSION = "3.1"
+local VERSION = "3.2"
 local MOTION_BASE_COUNT = 20
 local MOTION_VARIATION_COUNT = MOTION_BASE_COUNT * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3 * 17
 local MAX_FRAMES = 120
@@ -65,6 +65,21 @@ local widgetInfo = DockWidgetPluginGuiInfo.new(
 
 local widget = plugin:CreateDockWidgetPluginGuiAsync("Posecode.Main", widgetInfo)
 widget.Title = "POSECODE"
+
+local function setWidgetVisible(visible)
+    widget.Enabled = visible
+    toolbarButton:SetActive(visible)
+end
+
+toolbarButton.Click:Connect(function()
+    setWidgetVisible(not widget.Enabled)
+end)
+
+widget:GetPropertyChangedSignal("Enabled"):Connect(function()
+    toolbarButton:SetActive(widget.Enabled)
+end)
+
+toolbarButton:SetActive(widget.Enabled)
 
 local function make(className, parent, properties)
     local object = Instance.new(className)
@@ -860,63 +875,63 @@ local MOTION_SEGMENTS = 12
 local MOTION_CATALOG = {
     walk = {
         label = "Walk",
-        aliases = { "walk", "walking", "walking cycle", "andar", "andando", "caminhar", "caminhada" },
+        aliases = { "walk", "walking", "walking cycle", "andar", "andando", "caminhar", "caminhada", "passo natural", "andar normalmente" },
         leg = 25, knee = 19, arm = 14, armBend = 7,
         lean = 2, bounce = 1.2, sway = 2.1, head = 1.2,
         periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
     },
     run = {
         label = "Run",
-        aliases = { "run", "running", "jog", "jogging", "correr", "correndo", "corrida" },
+        aliases = { "run", "running", "jog", "jogging", "correr", "correndo", "corrida", "trotar", "trote" },
         leg = 34, knee = 37, arm = 22, armBend = 19,
         lean = 7, bounce = 2.6, sway = 2.6, head = 1.8,
         periodFrames = 30, defaultSpeed = 4, asymmetry = 0,
     },
     sprint = {
         label = "Sprint",
-        aliases = { "sprint", "sprinting", "sprintar", "corrida rapida", "correr rapido" },
+        aliases = { "sprint", "sprinting", "sprintar", "corrida rapida", "correr rapido", "correr muito rapido", "disparar correndo" },
         leg = 41, knee = 48, arm = 28, armBend = 25,
         lean = 11, bounce = 3.2, sway = 2.5, head = 2.5,
         periodFrames = 24, defaultSpeed = 5, asymmetry = 0,
     },
     sneak = {
         label = "Sneak",
-        aliases = { "sneak", "sneaking", "stealth", "agachar", "agachado", "agachada", "furtivo", "esgueirar" },
+        aliases = { "sneak", "sneaking", "stealth", "agachar", "agachado", "agachada", "furtivo", "esgueirar", "andar agachado", "andar sem fazer barulho" },
         leg = 12, knee = 26, arm = 6, armBend = 15,
         lean = 16, bounce = 0.4, sway = 1.3, head = 4,
         periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
     },
     tiptoe = {
         label = "Tiptoe",
-        aliases = { "tiptoe", "tiptoeing", "na ponta", "ponta dos pes", "pontas dos pes" },
+        aliases = { "tiptoe", "tiptoeing", "na ponta", "ponta dos pes", "pontas dos pes", "andar na ponta dos pes" },
         leg = 9, knee = 18, arm = 4, armBend = 6,
         lean = 4, bounce = 0.6, sway = 1, head = 1,
         periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
     },
     march = {
         label = "March",
-        aliases = { "march", "marching", "marchar", "marcha" },
+        aliases = { "march", "marching", "marchar", "marcha", "passo militar", "desfilar" },
         leg = 29, knee = 8, arm = 24, armBend = 3,
         lean = 1, bounce = 1.1, sway = 1.2, head = 0.5,
         periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
     },
     limp = {
         label = "Limp",
-        aliases = { "limp", "limping", "mancar", "mancando", "manco", "manca" },
+        aliases = { "limp", "limping", "mancar", "mancando", "manco", "manca", "andar mancando" },
         leg = 20, knee = 15, arm = 9, armBend = 8,
         lean = 4, bounce = 0.7, sway = 4, head = 2,
         periodFrames = 42, defaultSpeed = 2, asymmetry = 0.32,
     },
     idle = {
         label = "Idle",
-        aliases = { "idle", "standing idle", "still", "parado", "parada", "respirar", "respirando", "em pe" },
+        aliases = { "idle", "standing idle", "still", "stand", "standing", "parado", "parada", "respirar", "respirando", "em pe", "ficar parado", "ficar em pe" },
         leg = 0, knee = 0, arm = 1, armBend = 3,
         lean = 0, bounce = 0.4, sway = 0.7, head = 1.2,
         periodFrames = 60, defaultSpeed = 2, asymmetry = 0,
     },
     wave = {
         label = "Wave",
-        aliases = { "wave", "waving", "acenar", "aceno", "acene", "tchau" },
+        aliases = { "wave", "waving", "acenar", "aceno", "acene", "tchau", "dar tchau", "acenar com a mao" },
         leg = 0, knee = 0, arm = 0, armBend = 0,
         lean = 0, bounce = 0.1, sway = 0.5, head = 1,
         periodFrames = 60, defaultSpeed = 3, asymmetry = 0,
@@ -925,7 +940,7 @@ local MOTION_CATALOG = {
     },
     salute = {
         label = "Salute",
-        aliases = { "salute", "saluting", "continencia", "prestar continencia", "saudacao militar" },
+        aliases = { "salute", "saluting", "continencia", "prestar continencia", "saudacao militar", "bater continencia" },
         leg = 0, knee = 0, arm = 0, armBend = 0,
         lean = 0, bounce = 0, sway = 0.4, head = 1.4,
         periodFrames = 48, defaultSpeed = 3, asymmetry = 0,
@@ -934,7 +949,7 @@ local MOTION_CATALOG = {
     },
     jump = {
         label = "Jump",
-        aliases = { "jump", "jumping", "pular", "pulando", "salto", "saltando" },
+        aliases = { "jump", "jumping", "pular", "pulando", "salto", "saltando", "pular no lugar" },
         leg = 0, knee = 0, arm = 0, armBend = 0,
         lean = 0, bounce = 1.8, sway = 0.8, head = 1,
         periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
@@ -943,7 +958,7 @@ local MOTION_CATALOG = {
     },
     bow = {
         label = "Bow",
-        aliases = { "bow", "bowing", "reverencia", "reverenciar", "curvar o corpo" },
+        aliases = { "bow", "bowing", "reverencia", "reverenciar", "curvar o corpo", "fazer reverencia" },
         leg = 0, knee = 0, arm = 1, armBend = 4,
         lean = 0, bounce = 0, sway = 0.4, head = 2,
         periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
@@ -952,7 +967,7 @@ local MOTION_CATALOG = {
     },
     point = {
         label = "Point",
-        aliases = { "point", "pointing", "apontar", "apontando", "aponta" },
+        aliases = { "point", "pointing", "apontar", "apontando", "aponta", "apontar com o braco" },
         leg = 0, knee = 0, arm = 0, armBend = 0,
         lean = 0, bounce = 0, sway = 0.5, head = 1,
         periodFrames = 42, defaultSpeed = 3, asymmetry = 0,
@@ -977,14 +992,7 @@ local MOTION_CATALOG = {
         gesture = "dance", danceArmRaise = 38, handWave = 9,
         looped = true, priority = "Action",
     },
-   loccrawl = {
-        label = "Crawl",
-        aliases = { "crawl", "crawling", "rastejar", "rastejando", "engatinhar", "engatinhando" },
-        leg = 18, knee = 32, arm = 20, armBend = 24,
-        lean = 27, bounce = 0.25, sway = 2.6, head = 4,
-        periodFrames = 54, defaultSpeed = 2, asymmetry = 0.04,
-    },
-    strafe = {
+       strafe = {
         label = "Strafe",
         aliases = { "strafe", "strafing", "side step", "sideways walk", "andar de lado", "passo lateral" },
         leg = 18, knee = 15, arm = 8, armBend = 5,
@@ -1048,8 +1056,13 @@ local MOOD_PROFILES = {
     proud = { speed = 3, intensity = 3, stride = 4, arms = 3, torso = 1, bounce = 2 },
     curious = { speed = 2, intensity = 2, stride = 2, arms = 2, torso = 2, bounce = 1 },
     playful = { speed = 4, intensity = 3, stride = 4, arms = 4, torso = 2, bounce = 4 },
-    serious = { speed = 3, intensity = 2, stride = 3, arms = 1, torso = 1, bounce = 0 },
+    serious = { speed = 3, intensity = 2, stride = 3, arms = 1, torso = 1, bounce = 1 },
     relaxed = { speed = 2, intensity = 1, stride = 3, arms = 1, torso = 2, bounce = 1 },
+    scared = { speed = 4, intensity = 2, stride = 2, arms = 4, torso = 3, bounce = 3 },
+    shy = { speed = 2, intensity = 2, stride = 2, arms = 1, torso = 4, bounce = 1 },
+    determined = { speed = 3, intensity = 4, stride = 4, arms = 3, torso = 1, bounce = 2 },
+    arrogant = { speed = 3, intensity = 3, stride = 4, arms = 3, torso = 1, bounce = 2 },
+    confused = { speed = 2, intensity = 2, stride = 2, arms = 2, torso = 2, bounce = 1 },
 }
 local MOOD_LABELS = {
     tired = "cansado",
@@ -1068,6 +1081,11 @@ local MOOD_LABELS = {
     playful = "brincalhao",
     serious = "serio",
     relaxed = "relaxado",
+    scared = "assustado",
+    shy = "timido",
+    determined = "determinado",
+    arrogant = "arrogante",
+    confused = "confuso",
 }
 local SPEED_FACTORS = { 1.66, 1.33, 1, 0.67, 0.4 }
 local INTENSITY_FACTORS = { 0.55, 0.75, 1, 1.2, 1.4 }
@@ -1113,11 +1131,32 @@ end
 
 function motionEngine.hasAny(text, terms)
     for _, term in ipairs(terms) do
-        if string.find(text, " " .. term .. " ", 1, true) then
+        local normalized = motionEngine.normalizeText(term)
+        local plainTerm = normalized:gsub("^%s+", ""):gsub("%s+$", "")
+        if plainTerm ~= "" and string.find(text, " " .. plainTerm .. " ", 1, true) then
             return true
         end
     end
     return false
+end
+
+function motionEngine.findPhrasePosition(text, terms)
+    local bestPosition, bestLength = nil, 0
+    for _, term in ipairs(terms) do
+        local normalized = motionEngine.normalizeText(term)
+        local plainTerm = normalized:gsub("^%s+", ""):gsub("%s+$", "")
+        if plainTerm ~= "" then
+            local found = string.find(text, " " .. plainTerm .. " ", 1, true)
+            if found then
+                local position = found + 1
+                if not bestPosition or position < bestPosition
+                    or (position == bestPosition and #plainTerm > bestLength) then
+                    bestPosition, bestLength = position, #plainTerm
+                end
+            end
+        end
+    end
+    return bestPosition, bestLength
 end
 
 function motionEngine.nextSeed()
@@ -1146,122 +1185,194 @@ end
 function motionEngine.parsePrompt(prompt)
     local text = motionEngine.normalizeText(prompt)
     local result = {
-        base = "walk",
-        mood = nil,
-        explicit = {},
-        values = {},
+        base = nil, overlayGesture = nil, mood = nil,
+        explicit = {}, values = {}, gestureSide = "right",
+        headAction = nil, headLock = false, armLock = false,
+        limpSide = nil, mirror = false,
     }
-
-    local recognizedBase = false
+    local locomotion = {
+        walk = true, run = true, sprint = true, sneak = true, tiptoe = true,
+        march = true, limp = true, idle = true, crawl = true, strafe = true,
+        backpedal = true,
+    }
+    local overlayGestures = {
+        wave = true, salute = true, jump = true, bow = true, point = true,
+        clap = true, dance = true, stretch = true, shrug = true,
+    }
+    local hits = {}
     for _, styleName in ipairs(MOTION_STYLE_ORDER) do
-        if motionEngine.hasAny(text, MOTION_CATALOG[styleName].aliases) then
-            result.base = styleName
-            recognizedBase = true
-            break
+        local definition = MOTION_CATALOG[styleName]
+        if definition then
+            local position, length = motionEngine.findPhrasePosition(text, definition.aliases)
+            if position then
+                table.insert(hits, { name = styleName, position = position, length = length })
+            end
         end
     end
-    if not recognizedBase then
-        error("Não reconheci o movimento. Tente walk, run, sprint, sneak, crawl, wave, jump, dance ou outro tipo da biblioteca.")
+    table.sort(hits, function(a, b)
+        if a.position == b.position then
+            if a.length == b.length then return a.name < b.name end
+            return a.length > b.length
+        end
+        return a.position < b.position
+    end)
+
+    local primaryHit = nil
+    for _, hit in ipairs(hits) do
+        if locomotion[hit.name] then primaryHit = hit break end
+    end
+    primaryHit = primaryHit or hits[1]
+    if not primaryHit then
+        error("Não identifiquei a ação. Tente 'andar', 'correr', 'acenar', 'pular' ou 'dançar'.")
+    end
+    result.base = primaryHit.name
+
+    for _, hit in ipairs(hits) do
+        if hit.name ~= result.base and overlayGestures[hit.name] then
+            result.overlayGesture = hit.name
+            result.explicit.overlayGesture = true
+            break
+        end
     end
 
     local moodAliases = {
-        { "tired", { "cansado", "cansada", "exausto", "exausta", "tired" } },
-        { "happy", { "feliz", "alegre", "animado", "animada", "happy", "friendly", "energetic", "energético", "energetica" } },
-        { "confident", { "confiante", "seguro", "segura", "confident" } },
-        { "angry", { "bravo", "brava", "irritado", "irritada", "furioso", "furiosa", "angry" } },
-        { "heavy", { "pesado", "pesada", "heavy" } },
-        { "sad", { "triste", "abatido", "abatida", "sad" } },
-        { "robotic", { "robotico", "robotica", "mecanico", "mecanica", "robotic" } },
-        { "exaggerated", { "exagerado", "exagerada", "exagerado", "exaggerated" } },
-        { "casual", { "casual" } },
-        { "sleepy", { "sleepy", "sonolento", "sonolenta", "com sono" } },
-        { "nervous", { "nervous", "nervoso", "nervosa", "ansioso", "ansiosa" } },
+        { "tired", { "cansado", "cansada", "exausto", "exausta", "tired", "exhausted" } },
+        { "happy", { "feliz", "alegre", "animado", "animada", "happy", "friendly", "energetic", "energético", "energética", "cheerful" } },
+        { "confident", { "confiante", "seguro", "segura", "confident", "confidently" } },
+        { "angry", { "bravo", "brava", "irritado", "irritada", "furioso", "furiosa", "angry", "aggressive" } },
+        { "heavy", { "pesado", "pesada", "heavy", "hefty" } },
+        { "sad", { "triste", "abatido", "abatida", "sad", "depressed" } },
+        { "robotic", { "robotico", "robotica", "mecanico", "mecanica", "robotic", "mechanical" } },
+        { "exaggerated", { "exagerado", "exagerada", "over the top", "exaggerated" } },
+        { "casual", { "casual", "natural", "normal" } },
+        { "sleepy", { "sleepy", "sonolento", "sonolenta", "com sono", "sleeping" } },
+        { "nervous", { "nervous", "nervoso", "nervosa", "ansioso", "ansiosa", "anxious" } },
         { "proud", { "proud", "orgulhoso", "orgulhosa", "peito estufado" } },
-        { "curious", { "curious", "curioso", "curiosa" } },
-        { "playful", { "playful", "brincalhao", "brincalhona", "divertido" } },
-        { "serious", { "serious", "serio", "seria" } },
-        { "relaxed", { "relaxed", "relaxado", "relaxada", "tranquilo", "tranquila" } },
+        { "curious", { "curious", "curioso", "curiosa", "intrigado", "intrigada" } },
+        { "playful", { "playful", "brincalhao", "brincalhona", "divertido", "divertida", "travesso" } },
+        { "serious", { "serious", "serio", "seria", "formal" } },
+        { "relaxed", { "relaxed", "relaxado", "relaxada", "tranquilo", "tranquila", "calmo", "calma" } },
+        { "scared", { "scared", "assustado", "assustada", "com medo", "amedrontado", "amedrontada", "fearful" } },
+        { "shy", { "shy", "timido", "timida", "envergonhado", "envergonhada" } },
+        { "determined", { "determined", "determinado", "determinada", "decidido", "decidida" } },
+        { "arrogant", { "arrogant", "arrogante", "convencido", "convencida" } },
+        { "confused", { "confused", "confuso", "confusa", "perdido", "perdida", "sem entender" } },
     }
+    local moodPosition = nil
     for _, moodEntry in ipairs(moodAliases) do
-        if motionEngine.hasAny(text, moodEntry[2]) then
-            result.mood = moodEntry[1]
-            break
+        local position = motionEngine.findPhrasePosition(text, moodEntry[2])
+        if position and (not moodPosition or position < moodPosition) then
+            result.mood, moodPosition = moodEntry[1], position
         end
     end
-
     local function setValue(name, value)
         result.values[name] = value
         result.explicit[name] = true
     end
 
-    if motionEngine.hasAny(text, { "muito devagar", "bem devagar", "bem lento", "quase parando", "very slow", "extremely slow" }) then
+    if motionEngine.hasAny(text, { "muito devagar", "bem devagar", "bem lento", "quase parando", "very slow", "extremely slow", "slow motion" }) then
         setValue("speed", 1)
-    elseif motionEngine.hasAny(text, { "devagar", "lento", "lenta", "slow" }) then
+    elseif motionEngine.hasAny(text, { "devagar", "lento", "lenta", "slow", "slowly" }) then
         setValue("speed", 2)
-    elseif motionEngine.hasAny(text, { "muito rapido", "muito veloz", "super rapido", "explosivo", "very fast", "extremely fast" }) then
+    elseif motionEngine.hasAny(text, { "muito rapido", "muito veloz", "super rapido", "very fast", "extremely fast", "as fast as possible" }) then
         setValue("speed", 5)
-    elseif motionEngine.hasAny(text, { "rapido", "rapida", "veloz", "fast" }) then
+    elseif motionEngine.hasAny(text, { "rapido", "rapida", "veloz", "fast", "quickly" }) then
         setValue("speed", 4)
     end
 
-    if motionEngine.hasAny(text, { "muito sutil", "bem suave", "suave", "subtle", "sutil" }) then
+    if motionEngine.hasAny(text, { "muito sutil", "bem suave", "suave", "subtle", "sutil", "barely" }) then
         setValue("intensity", 1)
-    elseif motionEngine.hasAny(text, { "leve", "low intensity" }) then
+    elseif motionEngine.hasAny(text, { "leve", "low intensity", "slightly" }) then
         setValue("intensity", 2)
-    elseif motionEngine.hasAny(text, { "muito forte", "muito intenso", "extremo", "exagerado", "exagerada" }) then
+    elseif motionEngine.hasAny(text, { "muito forte", "muito intenso", "extremo", "intenso ao maximo", "extreme", "exaggerated" }) then
         setValue("intensity", 5)
-    elseif motionEngine.hasAny(text, { "forte", "intenso", "intensa" }) then
+    elseif motionEngine.hasAny(text, { "forte", "intenso", "intensa", "strong" }) then
         setValue("intensity", 4)
     end
 
     if motionEngine.hasAny(text, { "passos muito curtos", "passo muito curto", "tiny steps", "very short stride" }) then
         setValue("stride", 1)
-    elseif motionEngine.hasAny(text, { "passos curtos", "passo curto", "curto", "short stride" }) then
+    elseif motionEngine.hasAny(text, { "passos curtos", "passo curto", "short stride", "small steps" }) then
         setValue("stride", 2)
-    elseif motionEngine.hasAny(text, { "passos largos", "passada larga", "passos longos", "long stride", "wide stride" }) then
+    elseif motionEngine.hasAny(text, { "passos largos", "passada larga", "passos longos", "long stride", "wide stride", "long steps" }) then
         setValue("stride", 5)
     elseif motionEngine.hasAny(text, { "passo longo", "passadas longas" }) then
         setValue("stride", 4)
     end
 
-    if motionEngine.hasAny(text, { "bracos soltos", "bracos relaxados", "relaxed arms", "arms loose" }) then
+    if motionEngine.hasAny(text, { "bracos soltos", "bracos relaxados", "relaxed arms", "arms loose", "bracos leves" }) then
         setValue("arms", 1)
-    elseif motionEngine.hasAny(text, { "bracos leves", "soft arm swing" }) then
+    elseif motionEngine.hasAny(text, { "bracos suaves", "soft arm swing", "movimento leve dos bracos" }) then
         setValue("arms", 2)
-    elseif motionEngine.hasAny(text, { "bracos fortes", "bracos exagerados", "strong arm swing" }) then
+    elseif motionEngine.hasAny(text, { "bracos fortes", "bracos exagerados", "strong arm swing", "bracos amplos" }) then
         setValue("arms", 4)
     end
 
-    if motionEngine.hasAny(text, { "postura ereta", "corpo ereto", "upright", "peito aberto" }) then
+    if motionEngine.hasAny(text, { "postura ereta", "corpo ereto", "upright", "peito aberto", "ombros para tras" }) then
         setValue("torso", 1)
     elseif motionEngine.hasAny(text, { "postura neutra", "corpo neutro", "neutral torso" }) then
         setValue("torso", 2)
-    elseif motionEngine.hasAny(text, { "muito inclinado", "bem curvado", "deep lean" }) then
+    elseif motionEngine.hasAny(text, { "muito inclinado", "bem curvado", "deep lean", "muito curvado" }) then
         setValue("torso", 4)
-    elseif motionEngine.hasAny(text, { "inclinado", "curvado", "forward lean" }) then
+    elseif motionEngine.hasAny(text, { "inclinado", "curvado", "forward lean", "corpo para frente" }) then
         setValue("torso", 3)
     end
 
-    if motionEngine.hasAny(text, { "sem quicar", "sem salto", "no bounce" }) then
+    if motionEngine.hasAny(text, { "sem quicar", "sem salto", "no bounce", "sem balanco vertical", "sem pular" }) then
         setValue("bounce", 1)
-    elseif motionEngine.hasAny(text, { "pouco quique", "low bounce" }) then
+    elseif motionEngine.hasAny(text, { "pouco quique", "low bounce", "quique leve" }) then
         setValue("bounce", 2)
-    elseif motionEngine.hasAny(text, { "muito saltitante", "saltitante", "bouncy" }) then
+    elseif motionEngine.hasAny(text, { "muito saltitante", "saltitante", "bouncy", "quicando muito" }) then
         setValue("bounce", 4)
     end
-
-    if motionEngine.hasAny(text, { "de costas", "para tras", "backwards", "backward", "reverse" }) then
+    if motionEngine.hasAny(text, { "de costas", "para tras", "backwards", "backward", "reverse", "recuando" }) then
         setValue("direction", -1)
     end
-
-    if motionEngine.hasAny(text, { "robotico", "robotica", "mecanico", "mecanica", "linear", "robotic" }) then
+    if motionEngine.hasAny(text, { "robotico", "robotica", "mecanico", "mecanica", "linear", "robotic", "mechanical" }) then
         setValue("easing", 1)
-    elseif motionEngine.hasAny(text, { "travado", "em blocos", "stepped", "constant" }) then
+    elseif motionEngine.hasAny(text, { "travado", "em blocos", "stepped", "constant", "movimento seco" }) then
         setValue("easing", 3)
-    elseif motionEngine.hasAny(text, { "suave", "smooth", "fluido", "fluida" }) then
+    elseif motionEngine.hasAny(text, { "suave", "smooth", "fluido", "fluida", "smoothly", "macio" }) then
         setValue("easing", 2)
     end
 
+    if motionEngine.hasAny(text, { "sem mexer os bracos", "bracos parados", "arms still", "keep arms still", "sem balancar os bracos" }) then
+        result.armLock, result.explicit.armLock = true, true
+    end
+    if motionEngine.hasAny(text, { "cabeca parada", "sem mexer a cabeca", "keep head still", "head still" }) then
+        result.headLock, result.explicit.headLock = true, true
+    end
+    if motionEngine.hasAny(text, { "com os dois bracos", "ambos os bracos", "both arms", "two arms", "com as duas maos" }) then
+        result.gestureSide, result.explicit.gestureSide = "both", true
+    elseif motionEngine.hasAny(text, { "braco esquerdo", "mao esquerda", "left arm", "left hand", "lado esquerdo" }) then
+        result.gestureSide, result.explicit.gestureSide = "left", true
+    elseif motionEngine.hasAny(text, { "braco direito", "mao direita", "right arm", "right hand", "lado direito" }) then
+        result.gestureSide, result.explicit.gestureSide = "right", true
+    end
+
+    if motionEngine.hasAny(text, { "olhar para esquerda", "olhando para esquerda", "look left", "turn head left", "vira a cabeca para esquerda" }) then
+        result.headAction = "lookLeft"
+    elseif motionEngine.hasAny(text, { "olhar para direita", "olhando para direita", "look right", "turn head right", "vira a cabeca para direita" }) then
+        result.headAction = "lookRight"
+    elseif motionEngine.hasAny(text, { "olhar para cima", "look up", "levantar o olhar" }) then
+        result.headAction = "lookUp"
+    elseif motionEngine.hasAny(text, { "olhar para baixo", "look down", "baixar o olhar" }) then
+        result.headAction = "lookDown"
+    elseif motionEngine.hasAny(text, { "balancar a cabeca", "balanca a cabeca", "shake head", "shaking head", "dizer nao com a cabeca" }) then
+        result.headAction = "shake"
+    elseif motionEngine.hasAny(text, { "acenar com a cabeca", "fazer que sim", "concordando com a cabeca", "nod", "nod head" }) then
+        result.headAction = "nod"
+    end
+    if result.headAction then result.explicit.headAction = true end
+
+    if motionEngine.hasAny(text, { "perna esquerda", "left leg", "lado esquerdo machucado" }) then
+        result.limpSide, result.explicit.limpSide = "left", true
+    elseif motionEngine.hasAny(text, { "perna direita", "right leg", "lado direito machucado" }) then
+        result.limpSide, result.explicit.limpSide = "right", true
+    end
+    if motionEngine.hasAny(text, { "espelhado", "espelhar", "mirror", "mirrored", "invertido" }) then
+        result.mirror, result.explicit.mirror = true, true
+    end
     return result
 end
 
@@ -1285,6 +1396,13 @@ function motionEngine.loadLibrary()
                 name = motionEngine.cleanPrompt(entry.name or entry.prompt),
                 base = entry.base,
                 mood = typeof(entry.mood) == "string" and entry.mood ~= "" and entry.mood or nil,
+                overlayGesture = typeof(entry.overlayGesture) == "string" and MOTION_CATALOG[entry.overlayGesture] and entry.overlayGesture or nil,
+                gestureSide = (entry.gestureSide == "left" or entry.gestureSide == "both") and entry.gestureSide or "right",
+                headAction = typeof(entry.headAction) == "string" and entry.headAction or nil,
+                headLock = entry.headLock == true,
+                armLock = entry.armLock == true,
+                limpSide = (entry.limpSide == "left" or entry.limpSide == "right") and entry.limpSide or nil,
+                mirror = entry.mirror == true,
                 speed = math.clamp(math.floor(tonumber(entry.speed) or 3), 1, 5),
                 intensity = math.clamp(math.floor(tonumber(entry.intensity) or 3), 1, 5),
                 stride = math.clamp(math.floor(tonumber(entry.stride) or 3), 1, 5),
@@ -1307,6 +1425,13 @@ function motionEngine.persistLibrary()
             name = motionEngine.cleanPrompt(recipe.name),
             base = recipe.base,
             mood = recipe.mood or "",
+            overlayGesture = recipe.overlayGesture or "",
+            gestureSide = recipe.gestureSide or "right",
+            headAction = recipe.headAction or "",
+            headLock = recipe.headLock == true,
+            armLock = recipe.armLock == true,
+            limpSide = recipe.limpSide or "",
+            mirror = recipe.mirror == true,
             speed = recipe.speed,
             intensity = recipe.intensity,
             stride = recipe.stride,
@@ -1425,6 +1550,13 @@ function motionEngine.resolveRecipe(prompt, forcedRecipe)
         prompt = motionEngine.cleanPrompt(prompt),
         base = parsed.base,
         mood = parsed.mood,
+        overlayGesture = parsed.overlayGesture,
+        gestureSide = parsed.gestureSide or "right",
+        headAction = parsed.headAction,
+        headLock = parsed.headLock == true,
+        armLock = parsed.armLock == true,
+        limpSide = parsed.limpSide,
+        mirror = parsed.mirror == true,
         speed = base.defaultSpeed or 3,
         intensity = 3,
         stride = 3,
@@ -1448,6 +1580,9 @@ function motionEngine.resolveRecipe(prompt, forcedRecipe)
                 recipe[field] = reference[field]
             end
         end
+        for _, field in ipairs({ "overlayGesture", "gestureSide", "headAction", "headLock", "armLock", "limpSide", "mirror" }) do
+            if not parsed.explicit[field] then recipe[field] = reference[field] end
+        end
         recipe.referenceName = reference.name
     end
 
@@ -1463,9 +1598,10 @@ end
 
 function motionEngine.buildDocument(recipe, skeleton)
     local base = MOTION_CATALOG[recipe.base]
-    if not base then
-        error("Não encontrei o movimento-base solicitado.")
-    end
+    if not base then error("Não encontrei o movimento-base solicitado.") end
+    local gestureBase = recipe.overlayGesture and MOTION_CATALOG[recipe.overlayGesture] or base
+    if not gestureBase or not gestureBase.gesture then gestureBase = base end
+    local gestureType = gestureBase.gesture
 
     local intensity = INTENSITY_FACTORS[recipe.intensity] or 1
     local stride = STRIDE_FACTORS[recipe.stride] or 1
@@ -1490,12 +1626,23 @@ function motionEngine.buildDocument(recipe, skeleton)
         headDrop = 2
     elseif recipe.mood == "happy" then
         headDrop = -1
+    elseif recipe.mood == "scared" then
+        moodLean, headDrop = 5, 3
+    elseif recipe.mood == "shy" then
+        moodLean, headDrop = 6, 4
+    elseif recipe.mood == "determined" then
+        moodLean = -2
+    elseif recipe.mood == "arrogant" then
+        moodLean, headDrop = -4, -1
+    elseif recipe.mood == "confused" then
+        headDrop = 2
     end
 
     local random = Random.new(recipe.seed or 1)
-    local phaseOffset = random:NextNumber(-0.055, 0.055)
-    local swingVariance = random:NextNumber(0.96, 1.04)
-    local leanVariance = random:NextNumber(0.96, 1.04)
+    local phaseOffset = random:NextNumber(-0.11, 0.11)
+    local swingVariance = random:NextNumber(0.90, 1.10)
+    local leanVariance = random:NextNumber(0.92, 1.08)
+    local armVariance = random:NextNumber(0.88, 1.12)
 
     local cycleFrames = math.clamp(
         math.floor((base.periodFrames * (SPEED_FACTORS[recipe.speed] or 1) / MOTION_SEGMENTS) + 0.5)
@@ -1527,9 +1674,12 @@ function motionEngine.buildDocument(recipe, skeleton)
 
     local legAmplitude = base.leg * intensity * stride * swingVariance
     local kneeAmplitude = base.knee * intensity * stride
-    local armAmplitude = base.arm * intensity * arms * swingVariance
+    local armAmplitude = base.arm * intensity * arms * swingVariance * armVariance
     local leanAngle = (base.lean * torso + moodLean) * leanVariance * (base.leanDirection or 1)
     local asymmetry = base.asymmetry or 0
+    if recipe.limpSide == "left" then asymmetry = -math.abs(asymmetry)
+    elseif recipe.limpSide == "right" then asymmetry = math.abs(asymmetry) end
+    if recipe.mirror then asymmetry = -asymmetry end
     if recipe.mood == "tired" then
         asymmetry += 0.08
     end
@@ -1543,6 +1693,8 @@ function motionEngine.buildDocument(recipe, skeleton)
         local gaitPhase = base.reverseStride and -phase or phase
         local sine = math.sin(phase)
         local cosine = math.cos(phase)
+        local gesturePhase = phase * ((base.periodFrames or 36) / (gestureBase.periodFrames or 36))
+        local gestureSine = math.sin(gesturePhase)
         local progress = step / MOTION_SEGMENTS
         local actionPulse = math.sin(math.pi * progress)
         local gaitSine = math.sin(gaitPhase)
@@ -1564,46 +1716,72 @@ function motionEngine.buildDocument(recipe, skeleton)
         local kneeAction = 0
         local bodyBob = math.sin(phase * 2) * base.bounce * bounce
 
-        if base.gesture == "wave" then
-            rightArmRaise = ((base.rightArmRaise or 0) + math.sin(phase * 2) * 3) * arms
-            rightElbowBias = (base.rightElbowBias or 0) * arms
-            handWave = math.sin(phase * 2) * (base.handWave or 0)
-        elseif base.gesture == "salute" then
-            rightArmRaise = (base.rightArmRaise or 0) * actionPulse * arms
-            rightElbowBias = (base.rightElbowBias or 0) * actionPulse * arms
-        elseif base.gesture == "jump" then
-            kneeAction = (base.jumpKnee or 0) * actionPulse * intensity * stride
-            local armLift = (base.jumpArmRaise or 0) * actionPulse * arms
+        if gestureType == "wave" then
+            rightArmRaise = ((gestureBase.rightArmRaise or 0) + math.sin(gesturePhase * 2) * 3) * arms
+            rightElbowBias = (gestureBase.rightElbowBias or 0) * arms
+            handWave = math.sin(gesturePhase * 2) * (gestureBase.handWave or 0)
+        elseif gestureType == "salute" then
+            rightArmRaise = (gestureBase.rightArmRaise or 0) * actionPulse * arms
+            rightElbowBias = (gestureBase.rightElbowBias or 0) * actionPulse * arms
+        elseif gestureType == "jump" then
+            kneeAction = (gestureBase.jumpKnee or 0) * actionPulse * intensity * stride
+            local armLift = (gestureBase.jumpArmRaise or 0) * actionPulse * arms
             leftArmRaise = -armLift
             rightArmRaise = armLift
-            torsoAction = -(base.jumpLean or 0) * actionPulse * torso
+            torsoAction = -(gestureBase.jumpLean or 0) * actionPulse * torso
             bodyBob = base.bounce * bounce * actionPulse
-        elseif base.gesture == "bow" then
-            torsoAction = (base.bowAngle or 0) * actionPulse * torso
-        elseif base.gesture == "point" then
-            rightArmRaise = (base.rightArmRaise or 0) * actionPulse * arms
-            rightElbowBias = (base.rightElbowBias or 0) * actionPulse * arms
-        elseif base.gesture == "clap" then
-            local clap = math.sin(phase * 2) * (base.clapPulse or 0)
-            leftArmRaise = -((base.clapArmRaise or 0) + clap) * arms
-            rightArmRaise = ((base.clapArmRaise or 0) + clap) * arms
-            leftElbowBias = (base.clapElbow or 0) * arms
-            rightElbowBias = (base.clapElbow or 0) * arms
-            handWave = math.sin(phase * 2) * 3
-        elseif base.gesture == "dance" then
-            leftArmRaise = math.max(0, sine) * (base.danceArmRaise or 0) * arms
-            rightArmRaise = math.max(0, -sine) * (base.danceArmRaise or 0) * arms
-            handWave = math.sin(phase * 2) * (base.handWave or 0)
-        elseif base.gesture == "stretch" then
-            leftArmRaise = -(base.stretchRaise or 0) * arms * actionPulse
-            rightArmRaise = (base.stretchRaise or 0) * arms * actionPulse
-            torsoAction = -(base.stretchArch or 0) * torso * actionPulse
-        elseif base.gesture == "shrug" then
-            leftArmRaise = -(base.shrugRaise or 0) * arms * actionPulse
-            rightArmRaise = (base.shrugRaise or 0) * arms * actionPulse
-            leftElbowBias = (base.shrugElbow or 0) * arms * actionPulse
-            rightElbowBias = (base.shrugElbow or 0) * arms * actionPulse
+        elseif gestureType == "bow" then
+            torsoAction = (gestureBase.bowAngle or 0) * actionPulse * torso
+        elseif gestureType == "point" then
+            rightArmRaise = (gestureBase.rightArmRaise or 0) * actionPulse * arms
+            rightElbowBias = (gestureBase.rightElbowBias or 0) * actionPulse * arms
+        elseif gestureType == "clap" then
+            local clap = math.sin(gesturePhase * 2) * (gestureBase.clapPulse or 0)
+            leftArmRaise = -((gestureBase.clapArmRaise or 0) + clap) * arms
+            rightArmRaise = ((gestureBase.clapArmRaise or 0) + clap) * arms
+            leftElbowBias = (gestureBase.clapElbow or 0) * arms
+            rightElbowBias = (gestureBase.clapElbow or 0) * arms
+            handWave = math.sin(gesturePhase * 2) * 3
+        elseif gestureType == "dance" then
+            leftArmRaise = math.max(0, gestureSine) * (gestureBase.danceArmRaise or 0) * arms
+            rightArmRaise = math.max(0, -gestureSine) * (gestureBase.danceArmRaise or 0) * arms
+            handWave = math.sin(gesturePhase * 2) * (gestureBase.handWave or 0)
+        elseif gestureType == "stretch" then
+            leftArmRaise = -(gestureBase.stretchRaise or 0) * arms * actionPulse
+            rightArmRaise = (gestureBase.stretchRaise or 0) * arms * actionPulse
+            torsoAction = -(gestureBase.stretchArch or 0) * torso * actionPulse
+        elseif gestureType == "shrug" then
+            leftArmRaise = -(gestureBase.shrugRaise or 0) * arms * actionPulse
+            rightArmRaise = (gestureBase.shrugRaise or 0) * arms * actionPulse
+            leftElbowBias = (gestureBase.shrugElbow or 0) * arms * actionPulse
+            rightElbowBias = (gestureBase.shrugElbow or 0) * arms * actionPulse
         end
+
+        if gestureType == "wave" or gestureType == "salute" or gestureType == "point" then
+            if recipe.gestureSide == "left" then
+                leftArmRaise, leftElbowBias = -math.abs(rightArmRaise), rightElbowBias
+                rightArmRaise, rightElbowBias = 0, 0
+                handWave = -handWave
+            elseif recipe.gestureSide == "both" then
+                leftArmRaise, leftElbowBias = -math.abs(rightArmRaise), rightElbowBias
+            end
+        end
+        if recipe.armLock then
+            armSwingRight, armSwingLeft = 0, 0
+            armBendRight, armBendLeft = 0, 0
+            leftArmRaise, rightArmRaise = 0, 0
+            leftElbowBias, rightElbowBias = 0, 0
+            handWave = 0
+        end
+
+        local headPitch, headYaw = 0, 0
+        if recipe.headAction == "lookLeft" then headYaw = -23
+        elseif recipe.headAction == "lookRight" then headYaw = 23
+        elseif recipe.headAction == "lookUp" then headPitch = -16
+        elseif recipe.headAction == "lookDown" then headPitch = 16
+        elseif recipe.headAction == "shake" then headYaw = math.sin(gesturePhase * 2) * 15
+        elseif recipe.headAction == "nod" then headPitch = math.sin(gesturePhase * 2) * 9 end
+        if recipe.headLock then headPitch, headYaw = 0, 0 end
 
         local torsoYaw = base.sideways and math.sin(phase) * 12 * (recipe.direction or 1) or 0
         local lateralStride = base.sideways and sine * base.leg * intensity * stride * 0.34 or 0
@@ -1613,7 +1791,11 @@ function motionEngine.buildDocument(recipe, skeleton)
         local leftFoot = -leftSwing * 0.18 - (leftKnee + kneeAction) * 0.42
 
         local rotations = {
-            Head = { headDrop - bodyBob * 0.35, -bodySway * 0.08 - torsoYaw * 0.12, -bodyRoll * 0.25 },
+            Head = {
+                recipe.headLock and 0 or (headDrop - bodyBob * 0.35 + headPitch),
+                recipe.headLock and 0 or (headYaw - bodySway * 0.08 - torsoYaw * 0.12),
+                recipe.headLock and 0 or (-bodyRoll * 0.25),
+            },
             UpperTorso = { -leanAngle + bodyBob - torsoAction, bodySway * 0.18 + torsoYaw, bodyRoll },
             LowerTorso = { leanAngle * 0.22 + torsoAction * 0.18, bodySway * 0.12 + torsoYaw * 0.35, -bodyRoll * 0.32 },
             LeftUpperArm = { armSwingLeft, 0, -base.sway * 0.18 + leftArmRaise },
