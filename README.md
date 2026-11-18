@@ -9,7 +9,7 @@
 
 ## O que é
 
-O POSECODE transforma descrições de movimento em animações procedurais para o Mesh Rig 2016. Em vez de escolher apenas uma animação pronta, o interpretador identifica uma ação principal, uma segunda camada de gesto e modificadores de corpo, atitude e direção.
+O POSECODE transforma descrições de movimento em animações procedurais para o Mesh Rig 2016. Em vez de escolher apenas uma animação pronta, o interpretador identifica uma ação principal de locomoção, pode aplicar um gesto secundário e aceita modificadores de corpo, atitude e direção. Em descrições sem locomoção, usa uma única ação gestual.
 
 Exemplos: `walk cansado`, `walk + wave com braço esquerdo`, `run confiante + point`, `sneak olhando para esquerda` e `idle + nod`.
 
@@ -17,7 +17,7 @@ Exemplos: `walk cansado`, `walk + wave com braço esquerdo`, `run confiante + po
 
 - **20 movimentos-base:** walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap, dance, crawl, strafe, backpedal, stretch e shrug.
 - **21 perfis de atitude**, além de neutro: cansado, feliz, confiante, irritado, pesado, triste, robótico, exagerado, casual, sonolento, nervoso, orgulhoso, curioso, brincalhão, sério, relaxado, assustado, tímido, determinado, arrogante e confuso.
-- **Composição:** uma ação principal pode ser combinada com um gesto secundário. Exemplo: caminhar enquanto acena; correr enquanto aponta.
+- **Composição:** uma ação de locomoção pode ser combinada com um gesto secundário. Exemplo: caminhar enquanto acena; correr enquanto aponta. Ações que são apenas gestos são geradas individualmente.
 - **Controles direcionais:** braço esquerdo/direito/ambos, lado da perna na marcha mancando, cabeça olhando para uma direção, aceno de cabeça, balanço de cabeça e espelhamento.
 - **Variação procedural:** cada geração usa uma semente diferente para variar fase, amplitude e detalhes sem abandonar o perfil solicitado.
 - **Biblioteca local:** até 48 receitas aprovadas, que podem servir de referência para novos pedidos semelhantes.
