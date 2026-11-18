@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.1 · Gerador procedural exclusivo
+
+- Substitui a interface em abas por um painel único, compacto e centrado na geração.
+- Remove os caminhos de colar JSON, importar clipes, migrar V1 e carregar exemplos.
+- O fluxo de usuário passa a ser: rig selecionado → descrição → geração → prévia → salvar/aprovar referência.
+- Adiciona uma faixa visual MOTION → BLEND → POSE para mostrar a composição procedural.
+- Expande o catálogo para 20 bases, incluindo crawl, strafe, backpedal, stretch e shrug.
+- Expande o vocabulário de atitudes e reforça a recusa de descrições sem movimento-base reconhecido.
+- Amplia a biblioteca local para 48 referências aprovadas.
+- Melhora as fases de backpedal e strafe e mantém a geração limitada ao Mesh Rig 2016 selecionado.
+- Continua usando internamente o pipeline validado de poses, prévia e salvamento do Studio.
+
 ## 3.0 · Gerador procedural por descrição
 
 - Adiciona uma aba **Gerar** para descrever movimentos em linguagem natural.
