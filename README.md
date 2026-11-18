@@ -1,19 +1,21 @@
 <div align="center">
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
-  <p>Importador e conversor de animações para Roblox Studio.</p>
-  <p><sub>ruancr · v2.1 · MESH RIG 2016</sub></p>
+  <p>Gerador procedural e importador de animações para Roblox Studio.</p>
+  <p><sub>ruancr · v3.0 · MESH RIG 2016</sub></p>
 </div>
 
 ![Interface do POSECODE v2.1](assets/posecode-preview.svg)
 
 ## Sobre
 
-O POSECODE transforma documentos POSECODE V2 ou V1 em clips editáveis no Roblox Studio. O V2 é o formato principal, organizado por tracks; o V1 continua disponível para projetos existentes.
+O POSECODE 3.0 é um gerador procedural de animações para o Mesh Rig 2016. Você descreve o movimento em texto — por exemplo, **"walk cansado"** ou **"run confiante"** — e o motor combina padrões de movimento, ritmo, intensidade, passada, braços, postura, balanço e interpolação para criar um clip.
 
-A entrada é validada como JSON estruturado. O conteúdo colado nunca é executado.
+A animação gerada é convertida internamente para POSECODE V2 e passa pelo mesmo validador, prévia e salvamento do importador. A ferramenta também continua aceitando documentos POSECODE V2 e V1 existentes. Texto de usuário é tratado como descrição: o plugin não executa código colado.
 
-## Destaques da v2.1
+O motor possui 8 movimentos-base e 384.000 combinações paramétricas discretas. Isso não significa 384 mil arquivos pré-gravados: as combinações são sintetizadas na hora. Você pode aprovar uma geração e guardá-la como referência; a biblioteca local persiste entre sessões do Studio e é consultada em gerações futuras com o mesmo tipo de movimento.
+
+## Destaques da v3.0
 
 - **POSECODE V2 nativo:** tracks tipadas, timeline comum, metadados e eventos.
 - **Migração V1 → V2:** converte documentos antigos e devolve o JSON V2 na caixa de entrada para revisão antes da importação.
@@ -33,7 +35,7 @@ Documentação: [guia V2](docs/FORMATO_V2.md) · [JSON Schema](schemas/posecode-
 
 ## Compatibilidade
 
-O POSECODE 2.1 é direcionado ao **perfil estrutural do Mesh Rig 2016**: Humanoid R15, 15 MeshParts corporais com nomes padronizados, HumanoidRootPart e uma árvore corporal de 15 juntas.
+O POSECODE 3.0 é direcionado ao **perfil estrutural do Mesh Rig 2016**: Humanoid R15, 15 MeshParts corporais com nomes padronizados, HumanoidRootPart e uma árvore corporal de 15 juntas.
 
 - **15 AnimationConstraint:** gera CurveAnimation, usada pela prévia local.
 - **15 Motor6D:** gera KeyframeSequence.
@@ -49,15 +51,15 @@ POSECODE V1 continua disponível para documentos antigos, mas agora também exig
 
 ## Como usar
 
-1. Insira e selecione o Mesh Rig 2016 no Studio.
-2. Abra **Rig** e use **Analisar estrutura do rig**. O painel confirma as 15 MeshParts e as 15 juntas.
-3. Abra **Importar** e cole um documento POSECODE V2.
-4. Use **Importar clip** para validar e converter.
-5. O painel abre **Prévia** após uma importação bem-sucedida.
-6. Revise a timeline, teste a animação e salve o clip no Studio.
-7. Publique pelo Editor de Animação.
+1. Insira e selecione um Mesh Rig 2016 no Studio.
+2. Abra **Rig** e use **Analisar estrutura do rig** para conferir as 15 MeshParts e as 15 juntas.
+3. Abra **Gerar** e descreva o movimento, por exemplo: `walk cansado`, `run confiante`, `sneak lento` ou `march robotico`.
+4. Clique em **Gerar animação**. O plugin monta o documento V2, valida a estrutura e abre a **Prévia** automaticamente.
+5. Confira o clip no rig. Use **Outra variação** para trocar a semente e criar uma versão próxima, mas não idêntica.
+6. Depois de aprovar, volte à aba **Gerar** e clique em **Guardar referência**. As receitas aprovadas podem orientar novas gerações parecidas.
+7. Salve o clip em **Prévia** e publique pelo Editor de Animação.
 
-Para projetos V1, cole o documento antigo e use **Converter V1 para V2**. O texto convertido aparece na caixa para que você confira e importe quando estiver pronto.
+Para importar um JSON externo, use **Importar**. Para projetos V1, use **Converter V1 para V2** e revise o documento convertido antes de importar.
 
 ## Instalação
 
@@ -70,6 +72,8 @@ Veja a documentação oficial de [Studio plugins](https://create.roblox.com/docs
 
 ## Limites
 
+- O gerador está direcionado ao perfil estrutural Mesh Rig 2016 (R15); não é um conversor de código Luau arbitrário.
+- A biblioteca local guarda receitas aprovadas, não dezenas de milhares de clips pré-renderizados.
 - Entrada máxima de 256 KB.
 - Até 15 tracks/alvos e 120 instantes de keyframe normalizados.
 - Duração máxima de 15 segundos, FPS de 1 a 60.
