@@ -1,8 +1,8 @@
 # Formato POSECODE V2
 
-O **POSECODE V2** é o formato principal do POSECODE 2.1, direcionado ao perfil estrutural Mesh Rig 2016 (R15). Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
+O **POSECODE V2** é o formato principal de dados do POSECODE 3.0, direcionado ao perfil estrutural Mesh Rig 2016 (R15). Ele separa metadados, perfil do rig, timeline, tracks e eventos. Cada track representa um alvo animado e contém sua própria sequência de keyframes.
 
-O plugin POSECODE 2.1 importa V2 como formato principal e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
+O plugin POSECODE 3.0 gera V2 a partir de descrições de movimento, importa documentos V2 e continua aceitando documentos V1. O campo `version` identifica a versão do formato dos dados, não a versão do plugin. Para validar documentos gerados por ferramentas externas, use o [JSON Schema oficial](../schemas/posecode-v2.schema.json).
 
 ## Exemplo completo
 
@@ -98,7 +98,7 @@ Este exemplo demonstra a estrutura para um Mesh Rig 2016 com AnimationConstraint
 
 A aba **Gerar** cria documentos V2 diretamente. O motor combina um movimento-base com modificadores discretos, produz tracks tipadas para as juntas do Mesh Rig 2016 e encaminha o resultado para a mesma normalização e validação descritas abaixo. O JSON gerado continua sendo POSECODE V2; não há uma segunda linguagem executável.
 
-Os movimentos-base atuais são walk, run, sprint, sneak, tiptoe, march, limp e idle. As combinações paramétricas ajustam ritmo, intensidade, passada, movimento dos braços, inclinação do tronco, balanço, direção e interpolação. Referências aprovadas podem ser guardadas na biblioteca local do plugin e usadas como ponto de partida para gerações semelhantes.
+Os 15 movimentos-base atuais são walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap e dance. As 720.000 combinações paramétricas ajustam ritmo, intensidade, passada, movimento dos braços, inclinação do tronco, balanço, direção e interpolação. Referências aprovadas podem ser guardadas na biblioteca local do plugin e usadas como ponto de partida para gerações semelhantes.
 
 ## Estrutura
 
