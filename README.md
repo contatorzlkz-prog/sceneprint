@@ -2,58 +2,61 @@
   <img src="assets/posecode-mark.svg" width="42" alt="POSECODE" />
   <h1>POSECODE</h1>
   <p>Gerador procedural de animações para Roblox Studio.</p>
-  <p><sub>ruancr · v3.1 · MESH RIG 2016</sub></p>
+  <p><sub>ruancr · v3.2 · MESH RIG 2016</sub></p>
 </div>
 
-![Interface do POSECODE 3.1](assets/posecode-preview.svg)
+![Interface do POSECODE 3.2](assets/posecode-preview.svg)
 
 ## O que é
 
-O POSECODE é um gerador procedural de animações. Você descreve o movimento que deseja — por exemplo, `walk cansado`, `backpedal confiante`, `wave friendly` ou `dance playful` — e o motor constrói uma sequência de poses para as 15 juntas do Mesh Rig 2016.
+O POSECODE transforma descrições de movimento em animações procedurais para o Mesh Rig 2016. Em vez de escolher apenas uma animação pronta, o interpretador identifica uma ação principal, uma segunda camada de gesto e modificadores de corpo, atitude e direção.
 
-Ele não é um transcritor de scripts, não pede JSON e não executa código colado. A animação nasce de perfis de movimento, parâmetros de locomoção, camadas de atitude e variações determinísticas.
+Exemplos: `walk cansado`, `walk + wave com braço esquerdo`, `run confiante + point`, `sneak olhando para esquerda` e `idle + nod`.
 
-## Motor procedural
+## Interpretação e motor de movimento
 
 - **20 movimentos-base:** walk, run, sprint, sneak, tiptoe, march, limp, idle, wave, salute, jump, bow, point, clap, dance, crawl, strafe, backpedal, stretch e shrug.
-- **17 perfis de atitude:** 16 atitudes reconhecidas mais o estado neutro.
-- **16,32 milhões de combinações paramétricas teóricas:** combinações de movimento, velocidade, intensidade, passada, braços, postura, balanço, direção, interpolação e atitude. Não são arquivos prontos nem uma promessa de 16,32 milhões de movimentos visualmente únicos.
-- **Geração local:** não depende de API externa, chave, modelo de linguagem ou conexão com a internet.
-- **Variações:** muda a semente mantendo a descrição e os parâmetros principais.
-- **Biblioteca local:** guarda até 48 receitas aprovadas para servirem como referência em gerações semelhantes.
+- **21 perfis de atitude**, além de neutro: cansado, feliz, confiante, irritado, pesado, triste, robótico, exagerado, casual, sonolento, nervoso, orgulhoso, curioso, brincalhão, sério, relaxado, assustado, tímido, determinado, arrogante e confuso.
+- **Composição:** uma ação principal pode ser combinada com um gesto secundário. Exemplo: caminhar enquanto acena; correr enquanto aponta.
+- **Controles direcionais:** braço esquerdo/direito/ambos, lado da perna na marcha mancando, cabeça olhando para uma direção, aceno de cabeça, balanço de cabeça e espelhamento.
+- **Variação procedural:** cada geração usa uma semente diferente para variar fase, amplitude e detalhes sem abandonar o perfil solicitado.
+- **Biblioteca local:** até 48 receitas aprovadas, que podem servir de referência para novos pedidos semelhantes.
+
+## O que significa “inteligência” aqui
+
+O POSECODE 3.2 tem um interpretador semântico local baseado em regras, sinônimos e composição de camadas. Ele reconhece intenções e combinações conhecidas; não é um modelo de linguagem, não envia dados para serviços externos e não entende qualquer frase livre. Pedidos com etapas temporais como “primeiro acene, depois sente” ainda não são sequenciados automaticamente.
 
 ## Interface
 
-O fluxo é único e compacto:
-
 1. Selecione o Mesh Rig 2016 no Explorer.
 2. Escreva uma descrição ou escolha uma sugestão rápida.
-3. Clique em **Gerar animação**. O plugin valida o rig, sintetiza as poses e inicia a prévia.
-4. Ajuste a reprodução, peça outra variação ou guarde uma referência aprovada.
+3. Clique em **Gerar animação**. O plugin interpreta o pedido, valida o rig e sintetiza as poses.
+4. Confira a prévia, ajuste velocidade/repetição, gere outra variação ou guarde uma referência.
 5. Use **Salvar no Studio** para guardar o clip em AnimSaves.
 
-A barra visual MOTION → BLEND → POSE representa as etapas internas: padrão-base, combinação de modificadores e saída nas juntas. É uma referência de organização de grafos de animação, não um editor de nós independente.
+A faixa MOTION → BLEND → POSE representa a passagem da ação principal para os modificadores e a saída nas juntas. É uma visualização do processo, não um editor de nós separado.
 
-## Instalação
+## Instalação e atualização
 
-1. Abra o Roblox Studio e habilite **Plugin Debugging Enabled** nas configurações.
-2. Crie um Script em `ServerStorage` e cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua).
-3. Selecione o Script no Explorer e use **Plugins → Save as Local Plugin**.
-4. Remova o Script de instalação de `ServerStorage` e abra o plugin salvo em **Plugins → POSECODE**.
+1. No Roblox Studio, habilite **Plugin Debugging Enabled** nas configurações de Studio.
+2. Crie um Script em `ServerStorage`, cole o conteúdo de [Posecode.plugin.lua](src/Posecode.plugin.lua) e selecione **Plugins → Save as Local Plugin**.
+3. Depois de salvar, localize a cópia do POSECODE em `PluginDebugService`.
+4. **Apague ou deixe de editar o Script original em ServerStorage.** A cópia em `PluginDebugService` é a que o Studio executa e deve receber as alterações.
+5. Para aplicar uma atualização, substitua o conteúdo do Script do plugin em `PluginDebugService`, clique com o botão direito nele e escolha **Save and Reload Plugin**.
+6. Clique em **POSECODE** na barra Plugins para abrir ou fechar o painel.
 
-O plugin foi direcionado exclusivamente ao perfil estrutural Mesh Rig 2016 (R15). O rig precisa estar selecionado e dentro de `Workspace` para gerar e pré-visualizar.
+O uso de `PluginDebugService` e da opção **Save and Reload Plugin** segue o fluxo de depuração de plugins documentado pelo Roblox.
 
 ## Escopo e limites
 
-- A geração é procedural e baseada em vocabulário conhecido; não é um modelo de IA que entende qualquer frase livre.
-- O plugin reconhece 20 movimentos-base e modificadores documentados no [guia do gerador](docs/GERADOR.md).
-- R6, rigs genéricos, rigs de Bone, modelos incompletos e hierarquias diferentes do Mesh Rig 2016 são recusados.
-- Gestos de mão usam as juntas existentes; não há animação independente de dedos.
-- A prévia é local ao Studio. Para publicar, use o Editor de Animação do Roblox.
-- A aparência depende do rig e da orientação local de suas juntas. Sempre confira a prévia antes de publicar.
+- Exclusivo do perfil estrutural Mesh Rig 2016 R15 validado pelo plugin.
+- Uma ação principal e, no máximo, uma camada de gesto secundário por geração.
+- O vocabulário é conhecido e expansível; sequências temporais livres e linguagem ilimitada não são suportadas.
+- Dedos individuais não são canais independentes nas 15 juntas usadas.
+- A prévia deve ser conferida no Roblox Studio antes de publicar.
 
 ## Arquivos
 
 - [Código do plugin](src/Posecode.plugin.lua)
-- [Guia de movimentos e vocabulário](docs/GERADOR.md)
+- [Guia de movimentos, combinações e vocabulário](docs/GERADOR.md)
 - [Histórico de versões](CHANGELOG.md)
