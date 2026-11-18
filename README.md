@@ -5,7 +5,7 @@
   <p><sub>ruancr · v3.0 · MESH RIG 2016</sub></p>
 </div>
 
-![Interface do POSECODE v2.1](assets/posecode-preview.svg)
+![Interface do POSECODE v3.0](assets/posecode-preview.svg)
 
 ## Sobre
 
@@ -17,14 +17,15 @@ O motor possui 8 movimentos-base e 384.000 combinações paramétricas discretas
 
 ## Destaques da v3.0
 
-- **POSECODE V2 nativo:** tracks tipadas, timeline comum, metadados e eventos.
-- **Migração V1 → V2:** converte documentos antigos e devolve o JSON V2 na caixa de entrada para revisão antes da importação.
-- **Otimização conservadora:** remove apenas keyframes intermediários em sequências de três ou mais transformações consecutivas idênticas, mantendo o primeiro e o último.
-- **Perfil Mesh Rig 2016:** valida R15, as 15 MeshParts corporais, HumanoidRootPart e a hierarquia exata das 15 juntas.
-- **Eixos de rotação:** aceita rotação no espaço local da junta ou no espaço do personagem, convertendo pelo C0/Attachment0 de cada junta.
-- **Exemplo integrado:** gera um aceno com braço, antebraço e mão para o Mesh Rig 2016.
-- **JSON Schema:** especificação formal para validar documentos V2 em ferramentas externas.
-- **Interface por etapas:** Importar, Prévia e Rig, com os controles separados.
+- **Gerador por descrição:** interpreta pedidos como `walk cansado`, `run confiante`, `sneak lento` e `march robotico`.
+- **Oito movimentos-base:** walk, run, sprint, sneak, tiptoe, march, limp e idle.
+- **384.000 combinações paramétricas:** cruza ritmo, intensidade, passada, braços, postura, balanço, direção e interpolação; são receitas sintetizadas, não arquivos pré-gravados.
+- **Variações instantâneas:** gera outra versão com uma nova semente sem perder a intenção e o estilo do pedido.
+- **Biblioteca local:** guarda referências aprovadas e reutiliza os parâmetros em futuras gerações semelhantes.
+- **POSECODE V2 como saída:** cada animação é construída em tracks tipadas e segue pelo pipeline existente de validação e conversão.
+- **Importação legada:** mantém suporte a V2 externo e a migração de V1 para V2.
+- **Mesh Rig 2016:** valida R15, as 15 MeshParts corporais, HumanoidRootPart e as 15 juntas.
+- **Prévia e salvamento:** mantém a timeline e a gravação local de clips no Studio.
 
 ## Formatos
 
@@ -47,7 +48,7 @@ timeline.rotationSpace pode ser joint (padrão, eixos locais da junta) ou charac
 
 AnimationConstraint é reconhecido como o tipo de junta usado pelo Avatar Joint Upgrade. A prévia local deve ser conferida no Studio antes de publicar o clip.
 
-POSECODE V1 continua disponível para documentos antigos, mas agora também exige o perfil de rig aceito pelo POSECODE 2.1.
+POSECODE V1 continua disponível para documentos antigos, mas agora também exige o perfil de rig aceito pelo POSECODE 3.0.
 
 ## Como usar
 
