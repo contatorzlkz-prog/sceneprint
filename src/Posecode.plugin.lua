@@ -1668,8 +1668,8 @@ function motionEngine.buildDocument(recipe, skeleton)
         local bodyBob = math.sin(phase * 2) * base.bounce * bounce
 
         if base.gesture == "wave" then
-            rightArmRaise = (base.rightArmRaise or 0) + math.sin(phase * 2) * 3
-            rightElbowBias = base.rightElbowBias or 0
+            rightArmRaise = ((base.rightArmRaise or 0) + math.sin(phase * 2) * 3) * arms
+            rightElbowBias = (base.rightElbowBias or 0) * arms
             handWave = math.sin(phase * 2) * (base.handWave or 0)
         elseif base.gesture == "salute" then
             rightArmRaise = (base.rightArmRaise or 0) * actionPulse * arms
@@ -1689,7 +1689,7 @@ function motionEngine.buildDocument(recipe, skeleton)
         elseif base.gesture == "clap" then
             local clap = math.sin(phase * 2) * (base.clapPulse or 0)
             leftArmRaise = -((base.clapArmRaise or 0) + clap) * arms
-            rightArmRaise = (base.clapArmRaise or 0) + clap
+            rightArmRaise = ((base.clapArmRaise or 0) + clap) * arms
             leftElbowBias = (base.clapElbow or 0) * arms
             rightElbowBias = (base.clapElbow or 0) * arms
             handWave = math.sin(phase * 2) * 3
