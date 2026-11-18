@@ -1165,7 +1165,7 @@ function motionEngine.parsePrompt(prompt)
     end
 
     local moodAliases = {
-        { "tired", { "cansado", "cansada", "com sono", "exausto", "exausta", "tired" } },
+        { "tired", { "cansado", "cansada", "exausto", "exausta", "tired" } },
         { "happy", { "feliz", "alegre", "animado", "animada", "happy", "friendly", "energetic", "energético", "energetica" } },
         { "confident", { "confiante", "seguro", "segura", "confident" } },
         { "angry", { "bravo", "brava", "irritado", "irritada", "furioso", "furiosa", "angry" } },
@@ -3282,6 +3282,7 @@ function motionEngine.run(prompt, forcedRecipe)
     end
 
     stopPreview()
+    selectedRigCache = rig
     if importedSequence and importedSequence.Parent == nil then importedSequence:Destroy() end
     importedData = result.data
     importedSequence = result.clip
