@@ -1,6 +1,10 @@
 # Limites técnicos e compatibilidade
 
-## Importação segura
+## Gerador procedural e importação segura
+
+A aba **Gerar** interpreta uma descrição curta e compõe movimentos a partir de um catálogo local de padrões-base. A primeira versão inclui walk, run, sprint, sneak, tiptoe, march, limp e idle. Modificadores independentes ajustam cadência, intensidade, passada, braços, postura, balanço, direção e interpolação.
+
+As 384.000 combinações são configurações paramétricas, não 384 mil clips salvos no repositório. O clip é sintetizado no momento da solicitação. Referências aprovadas pelo usuário podem ser guardadas nas configurações persistentes do plugin e reaproveitadas em descrições futuras parecidas.
 
 O plugin não interpreta a lógica de scripts Luau arbitrários. Scripts podem conter loops, cálculos, condições, TweenService e eventos sem uma lista fixa de poses; executá-los para reconstruir movimentos seria imprevisível.
 
@@ -95,9 +99,9 @@ O botão **Salvar clip no Studio** preserva o clip em `ServerStorage.RBX_ANIMSAV
 
 Para publicar, abra o clip no Editor de Animação e use **Publish to Roblox**. O ID temporário da prévia não substitui um ID de asset.
 
-## Limites da v2.1
+## Limites da v3.0
 
-- Não converte código arbitrário, TweenService ou lógica condicionada.
+- O gerador não converte código arbitrário, TweenService ou lógica condicionada; ele sintetiza movimentos a partir de descrições e parâmetros conhecidos.
 - Não implementa movimento global da raiz como um canal independente.
 - Não oferece edição independente de tracks/keyframes dentro do plugin.
 - Markers só são gerados na saída KeyframeSequence.
