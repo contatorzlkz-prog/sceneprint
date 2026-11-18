@@ -1538,19 +1538,21 @@ function motionEngine.buildDocument(recipe, skeleton)
     end
 
     for step = 0, MOTION_SEGMENTS do
-        local phase = (math.pi * 2 * step / MOTION_SEGMENTS) * (recipe.direction or 1) + phaseOffset
+        local phaseDirection = base.reverseStride and 1 or (recipe.direction or 1)
+        local phase = (math.pi * 2 * step / MOTION_SEGMENTS) * phaseDirection + phaseOffset
+        local gaitPhase = base.reverseStride and -phase or phase
         local sine = math.sin(phase)
         local cosine = math.cos(phase)
         local progress = step / MOTION_SEGMENTS
         local actionPulse = math.sin(math.pi * progress)
-        local gaitPhase = base.reverseStride and -phase or phase
         local gaitSine = math.sin(gaitPhase)
+        local armPhase = base.reverseStride and -phase or phase
         local rightSwing = gaitSine * legAmplitude * (1 + asymmetry)
         local leftSwing = -gaitSine * legAmplitude * (1 - asymmetry)
         local rightKnee = math.max(0, math.sin(gaitPhase + math.pi * 0.5)) * kneeAmplitude
         local leftKnee = math.max(0, math.sin(gaitPhase - math.pi * 0.5)) * kneeAmplitude
-        local armSwingRight = -sine * armAmplitude
-        local armSwingLeft = sine * armAmplitude
+        local armSwingRight = -math.sin(armPhase) * armAmplitude
+        local armSwingLeft = math.sin(armPhase) * armAmplitude
         local armBendRight = base.armBend + math.max(0, math.sin(phase + math.pi * 0.5)) * base.armBend * 0.42
         local armBendLeft = base.armBend + math.max(0, math.sin(phase - math.pi * 0.5)) * base.armBend * 0.42
         local leftArmRaise = 0
@@ -1604,6 +1606,7 @@ function motionEngine.buildDocument(recipe, skeleton)
         end
 
         local torsoYaw = base.sideways and math.sin(phase) * 12 * (recipe.direction or 1) or 0
+        local lateralStride = base.sideways and sine * base.leg * intensity * stride * 0.34 or 0
         local bodySway = sine * base.sway * intensity
         local bodyRoll = cosine * base.sway * 0.42
         local rightFoot = -rightSwing * 0.18 - (rightKnee + kneeAction) * 0.42
@@ -1619,10 +1622,10 @@ function motionEngine.buildDocument(recipe, skeleton)
             RightUpperArm = { armSwingRight, 0, base.sway * 0.18 + rightArmRaise },
             RightLowerArm = { armBendRight + rightElbowBias, 0, 0 },
             RightHand = { 0, 0, math.sin(phase - math.pi * 0.5) * 2.2 * arms + handWave },
-            LeftUpperLeg = { leftSwing, 0, -asymmetry * 2 },
+            LeftUpperLeg = { leftSwing * (base.sideways and 0.55 or 1), 0, -asymmetry * 2 - lateralStride },
             LeftLowerLeg = { leftKnee + kneeAction, 0, 0 },
             LeftFoot = { leftFoot, 0, 0 },
-            RightUpperLeg = { rightSwing, 0, asymmetry * 2 },
+            RightUpperLeg = { rightSwing * (base.sideways and 0.55 or 1), 0, asymmetry * 2 + lateralStride },
             RightLowerLeg = { rightKnee + kneeAction, 0, 0 },
             RightFoot = { rightFoot, 0, 0 },
         }
