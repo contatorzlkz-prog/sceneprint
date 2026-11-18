@@ -2849,6 +2849,10 @@ local function beginPreview()
         setStatus("Gere uma animação antes de reproduzir.", C.red)
         return
     end
+    if selectedRig() ~= importedRig then
+        setStatus("A prévia só funciona no Mesh Rig 2016 que está selecionado.", C.red)
+        return
+    end
     if not importedRig:IsDescendantOf(Workspace) then
         setStatus("O rig precisa estar no Workspace para a prévia.", C.red)
         return
@@ -3068,6 +3072,10 @@ end
 local function saveSequence()
     if not importedSequence or not importedRig then
         setStatus("Gere uma animação antes de salvar.", C.red)
+        return
+    end
+    if selectedRig() ~= importedRig then
+        setStatus("Selecione novamente o rig que recebeu esta animação antes de salvar.", C.red)
         return
     end
 
@@ -3321,8 +3329,38 @@ local function refreshSelectionHint()
         return
     end
 
+    if not candidate:IsDescendantOf(Workspace) then
+        if previewTrack or previewStepConnection then stopPreview() end
+        importedData = nil
+        importedSequence = nil
+        importedRig = nil
+        motionEngine.lastGeneratedRecipe = nil
+        motionEngine.lastGeneratedPrompt = nil
+        setClipControlsEnabled(false)
+        clearTimeline()
+        setButtonState(variationButton, false, false)
+        setButtonState(saveReferenceButton, false, false)
+        rigInfo.Text = "RIG FORA DO WORKSPACE"
+        rigInfo.TextColor3 = C.red
+        rigDot.BackgroundColor3 = C.red
+        setButtonState(generateButton, false, true)
+        setStatus("Mova o Mesh Rig 2016 para Workspace para gerar a prévia.", C.red)
+        return
+    end
+
     local ok, skeleton = pcall(function() return getSkeleton(candidate) end)
     if not ok then
+        if previewTrack or previewStepConnection then stopPreview() end
+        if importedSequence and importedSequence.Parent == nil then importedSequence:Destroy() end
+        importedData = nil
+        importedSequence = nil
+        importedRig = nil
+        motionEngine.lastGeneratedRecipe = nil
+        motionEngine.lastGeneratedPrompt = nil
+        setClipControlsEnabled(false)
+        clearTimeline()
+        setButtonState(variationButton, false, false)
+        setButtonState(saveReferenceButton, false, false)
         rigInfo.Text = "RIG INCOMPATÍVEL · MESH RIG 2016"
         rigInfo.TextColor3 = C.red
         rigDot.BackgroundColor3 = C.red
@@ -3350,7 +3388,11 @@ promptBox:GetPropertyChangedSignal("Text"):Connect(function()
     setButtonState(variationButton, matches, false)
 end)
 
-generateButton.Activated:Connect(function() motionEngine.run(promptBox.Text) end)
+generateButton.Activated:Connect(function()
+    refreshSelectionHint()
+    if not generateButton.Active then return end
+    motionEngine.run(promptBox.Text)
+end)
 variationButton.Activated:Connect(function()
     local current = motionEngine.lastGeneratedRecipe
     if not current or importedRig ~= selectedRigCache then
