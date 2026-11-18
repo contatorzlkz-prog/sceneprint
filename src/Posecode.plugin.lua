@@ -1225,11 +1225,13 @@ function motionEngine.parsePrompt(prompt)
     end
     result.base = primaryHit.name
 
-    for _, hit in ipairs(hits) do
-        if hit.name ~= result.base and overlayGestures[hit.name] then
-            result.overlayGesture = hit.name
-            result.explicit.overlayGesture = true
-            break
+    if locomotion[result.base] then
+        for _, hit in ipairs(hits) do
+            if hit.name ~= result.base and overlayGestures[hit.name] then
+                result.overlayGesture = hit.name
+                result.explicit.overlayGesture = true
+                break
+            end
         end
     end
 
@@ -1727,7 +1729,7 @@ function motionEngine.buildDocument(recipe, skeleton)
             leftArmRaise = -armLift
             rightArmRaise = armLift
             torsoAction = -(gestureBase.jumpLean or 0) * actionPulse * torso
-            bodyBob = base.bounce * bounce * actionPulse
+            bodyBob = gestureBase.bounce * bounce * actionPulse
         elseif gestureType == "bow" then
             torsoAction = (gestureBase.bowAngle or 0) * actionPulse * torso
         elseif gestureType == "point" then
