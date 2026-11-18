@@ -362,7 +362,7 @@ local speedButton = button(content, "1×", UDim2.new(0.69, 3, 0, 520), UDim2.new
 local loopButton = button(content, "LOOP OFF", UDim2.fromOffset(0, 553), UDim2.new(0.34, -4, 0, 27), false)
 local saveButton = button(content, "SALVAR NO STUDIO", UDim2.new(0.34, 4, 0, 553), UDim2.new(0.66, -4, 0, 27), true)
 saveButton.TextSize = 8
-label(content, "20 BASES · 16,3 M CONFIGURAÇÕES · MESH RIG 2016", UDim2.fromOffset(0, 583), UDim2.new(1, 0, 0, 13), 7, C.muted)
+label(content, "20 BASES · 16,32 M CONFIGURAÇÕES · MESH RIG 2016", UDim2.fromOffset(0, 583), UDim2.new(1, 0, 0, 13), 7, C.muted)
 
 local footer = make("Frame", root, {
     Name = "StatusFooter",
@@ -1018,6 +1018,13 @@ local MOTION_CATALOG = {
         gesture = "shrug", shrugRaise = 25, shrugElbow = 18,
         looped = false, priority = "Action",
     },
+    crawl = {
+        label = "Crawl",
+        aliases = { "crawl", "crawling", "rastejar", "rastejando", "engatinhar", "engatinhando" },
+        leg = 18, knee = 32, arm = 20, armBend = 24,
+        lean = 27, bounce = 0.25, sway = 2.6, head = 4,
+        periodFrames = 54, defaultSpeed = 2, asymmetry = 0.04,
+    },
 }
 
 local MOTION_STYLE_ORDER = {
@@ -1350,7 +1357,7 @@ function motionEngine.renderLibrary()
         child:Destroy()
     end
 
-    libraryHeading.Text = string.format("BIBLIOTECA LOCAL · %d REFERÊNCIAS", #motionEngine.recipes)
+    libraryHeading.Text = string.format("%d / %d REFERÊNCIAS", #motionEngine.recipes, MAX_SAVED_MOTIONS)
     if #motionEngine.recipes == 0 then
         local empty = label(
             libraryList,
