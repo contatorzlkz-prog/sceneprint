@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.0 · Gerador procedural por descrição
+
+- Adiciona uma aba **Gerar** para descrever movimentos em linguagem natural.
+- Cria um motor procedural com 8 padrões-base: walk, run, sprint, sneak, tiptoe, march, limp e idle.
+- Combina 5 velocidades, 5 intensidades, 5 comprimentos de passada, 4 estilos de braço, 4 posturas, 4 níveis de balanço, 2 direções e 3 interpolações: 384.000 combinações paramétricas discretas.
+- Gera tracks POSECODE V2 para as 15 juntas do Mesh Rig 2016, com keyframes alinhados ao FPS.
+- Encaminha o documento gerado ao pipeline existente de validação, prévia e salvamento.
+- Adiciona **Outra variação**, usando uma semente diferente para manter o estilo e variar detalhes.
+- Adiciona biblioteca local de referências aprovadas, persistida por Plugin:GetSetting/SetSetting.
+- Busca receitas previamente aprovadas para reutilizar parâmetros em pedidos semelhantes.
+- Mantém a importação V2, a migração V1 → V2 e o formato POSECODE V2.
+
 ## 2.1 · Perfil exclusivo Mesh Rig 2016
 
 - Direciona o plugin ao perfil estrutural Mesh Rig 2016 (R15).
