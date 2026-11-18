@@ -18,7 +18,8 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 
 local VERSION = "3.0"
-local MOTION_VARIATION_COUNT = 8 * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
+local MOTION_BASE_COUNT = 15
+local MOTION_VARIATION_COUNT = MOTION_BASE_COUNT * 5 * 5 * 5 * 4 * 4 * 4 * 2 * 3
 local MAX_FRAMES = 120
 local MAX_DURATION = 15
 local MAX_SOURCE_LENGTH = 262144
@@ -307,7 +308,7 @@ local libraryList = make("Frame", generatorPage, {
     BackgroundTransparency = 1,
     BorderSizePixel = 0,
 })
-local librarySummary = label(generatorPage, string.format("8 movimentos-base · %s combinações paramétricas.", string.format("%0.0f", MOTION_VARIATION_COUNT)), UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
+local librarySummary = label(generatorPage, string.format("%d movimentos-base · %d mil combinações.", MOTION_BASE_COUNT, math.floor(MOTION_VARIATION_COUNT / 1000)), UDim2.fromOffset(0, 333), UDim2.new(1, 0, 0, 22), 8, C.muted)
 librarySummary.TextWrapped = true
 
 local footer = make("Frame", root, {
@@ -1118,9 +1119,76 @@ local MOTION_CATALOG = {
         lean = 0, bounce = 0.4, sway = 0.7, head = 1.2,
         periodFrames = 60, defaultSpeed = 2, asymmetry = 0,
     },
+    wave = {
+        label = "Wave",
+        aliases = { "wave", "waving", "acenar", "aceno", "acene", "tchau" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0.1, sway = 0.5, head = 1,
+        periodFrames = 60, defaultSpeed = 3, asymmetry = 0,
+        gesture = "wave", rightArmRaise = 58, rightElbowBias = 46, handWave = 17,
+        looped = true, priority = "Action",
+    },
+    salute = {
+        label = "Salute",
+        aliases = { "salute", "saluting", "continencia", "prestar continencia", "saudacao militar" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0, sway = 0.4, head = 1.4,
+        periodFrames = 48, defaultSpeed = 3, asymmetry = 0,
+        gesture = "salute", rightArmRaise = 64, rightElbowBias = 38,
+        looped = false, priority = "Action",
+    },
+    jump = {
+        label = "Jump",
+        aliases = { "jump", "jumping", "pular", "pulando", "salto", "saltando" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 1.8, sway = 0.8, head = 1,
+        periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
+        gesture = "jump", jumpKnee = 44, jumpArmRaise = 28, jumpLean = 8,
+        looped = false, priority = "Action",
+    },
+    bow = {
+        label = "Bow",
+        aliases = { "bow", "bowing", "reverencia", "reverenciar", "curvar o corpo" },
+        leg = 0, knee = 0, arm = 1, armBend = 4,
+        lean = 0, bounce = 0, sway = 0.4, head = 2,
+        periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
+        gesture = "bow", bowAngle = 36,
+        looped = false, priority = "Action",
+    },
+    point = {
+        label = "Point",
+        aliases = { "point", "pointing", "apontar", "apontando", "aponta" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0, sway = 0.5, head = 1,
+        periodFrames = 42, defaultSpeed = 3, asymmetry = 0,
+        gesture = "point", rightArmRaise = 49, rightElbowBias = 6,
+        looped = false, priority = "Action",
+    },
+    clap = {
+        label = "Clap",
+        aliases = { "clap", "clapping", "bater palmas", "aplaudir", "aplaudindo", "palmas" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0.2, sway = 0.5, head = 1,
+        periodFrames = 48, defaultSpeed = 3, asymmetry = 0,
+        gesture = "clap", clapArmRaise = 34, clapPulse = 8, clapElbow = 48,
+        looped = true, priority = "Action",
+    },
+    dance = {
+        label = "Dance",
+        aliases = { "dance", "dancing", "dancar", "dancando", "danca" },
+        leg = 31, knee = 22, arm = 13, armBend = 14,
+        lean = 2, bounce = 2.6, sway = 2.8, head = 1.5,
+        periodFrames = 36, defaultSpeed = 3, asymmetry = 0.06,
+        gesture = "dance", danceArmRaise = 38, handWave = 9,
+        looped = true, priority = "Action",
+    },
 }
 
-local MOTION_STYLE_ORDER = { "sprint", "sneak", "tiptoe", "march", "limp", "idle", "run", "walk" }
+local MOTION_STYLE_ORDER = {
+    "sprint", "run", "march", "sneak", "tiptoe", "limp",
+    "salute", "wave", "jump", "bow", "point", "clap", "dance",
+    "idle", "walk",
+}
 local MOOD_PROFILES = {
     tired = { speed = 2, intensity = 2, stride = 2, arms = 1, torso = 4, bounce = 1 },
     happy = { speed = 4, intensity = 3, stride = 3, arms = 3, torso = 2, bounce = 4 },
@@ -1580,6 +1648,8 @@ function motionEngine.buildDocument(recipe, skeleton)
         local phase = (math.pi * 2 * step / MOTION_SEGMENTS) * (recipe.direction or 1) + phaseOffset
         local sine = math.sin(phase)
         local cosine = math.cos(phase)
+        local progress = step / MOTION_SEGMENTS
+        local actionPulse = math.sin(math.pi * progress)
         local rightSwing = sine * legAmplitude * (1 + asymmetry)
         local leftSwing = -sine * legAmplitude * (1 - asymmetry)
         local rightKnee = math.max(0, math.sin(phase + math.pi * 0.5)) * kneeAmplitude
@@ -1588,27 +1658,67 @@ function motionEngine.buildDocument(recipe, skeleton)
         local armSwingLeft = sine * armAmplitude
         local armBendRight = base.armBend + math.max(0, math.sin(phase + math.pi * 0.5)) * base.armBend * 0.42
         local armBendLeft = base.armBend + math.max(0, math.sin(phase - math.pi * 0.5)) * base.armBend * 0.42
+        local leftArmRaise = 0
+        local rightArmRaise = 0
+        local leftElbowBias = 0
+        local rightElbowBias = 0
+        local handWave = 0
+        local torsoAction = 0
+        local kneeAction = 0
         local bodyBob = math.sin(phase * 2) * base.bounce * bounce
+
+        if base.gesture == "wave" then
+            rightArmRaise = (base.rightArmRaise or 0) + math.sin(phase * 2) * 3
+            rightElbowBias = base.rightElbowBias or 0
+            handWave = math.sin(phase * 2) * (base.handWave or 0)
+        elseif base.gesture == "salute" then
+            rightArmRaise = (base.rightArmRaise or 0) * actionPulse * arms
+            rightElbowBias = (base.rightElbowBias or 0) * actionPulse * arms
+        elseif base.gesture == "jump" then
+            kneeAction = (base.jumpKnee or 0) * actionPulse * intensity * stride
+            local armLift = (base.jumpArmRaise or 0) * actionPulse * arms
+            leftArmRaise = -armLift
+            rightArmRaise = armLift
+            torsoAction = -(base.jumpLean or 0) * actionPulse * torso
+            bodyBob = base.bounce * bounce * actionPulse
+        elseif base.gesture == "bow" then
+            torsoAction = (base.bowAngle or 0) * actionPulse * torso
+        elseif base.gesture == "point" then
+            rightArmRaise = (base.rightArmRaise or 0) * actionPulse * arms
+            rightElbowBias = (base.rightElbowBias or 0) * actionPulse * arms
+        elseif base.gesture == "clap" then
+            local clap = math.sin(phase * 2) * (base.clapPulse or 0)
+            leftArmRaise = -((base.clapArmRaise or 0) + clap) * arms
+            rightArmRaise = (base.clapArmRaise or 0) + clap
+            leftElbowBias = (base.clapElbow or 0) * arms
+            rightElbowBias = (base.clapElbow or 0) * arms
+            handWave = math.sin(phase * 2) * 3
+        elseif base.gesture == "dance" then
+            leftArmRaise = math.max(0, sine) * (base.danceArmRaise or 0) * arms
+            rightArmRaise = math.max(0, -sine) * (base.danceArmRaise or 0) * arms
+            handWave = math.sin(phase * 2) * (base.handWave or 0)
+        end
+
         local bodySway = sine * base.sway * intensity
         local bodyRoll = cosine * base.sway * 0.42
-        local rightFoot = -rightSwing * 0.18 - rightKnee * 0.42
-        local leftFoot = -leftSwing * 0.18 - leftKnee * 0.42
+        local rightFoot = -rightSwing * 0.18 - (rightKnee + kneeAction) * 0.42
+        local leftFoot = -leftSwing * 0.18 - (leftKnee + kneeAction) * 0.42
 
         local rotations = {
             Head = { headDrop - bodyBob * 0.35, -bodySway * 0.08, -bodyRoll * 0.25 },
-            UpperTorso = { -leanAngle + bodyBob, bodySway * 0.18, bodyRoll },
-            LowerTorso = { leanAngle * 0.22, bodySway * 0.12, -bodyRoll * 0.32 },
-            LeftUpperArm = { armSwingLeft, 0, -base.sway * 0.18 },
-            LeftLowerArm = { armBendLeft, 0, 0 },
-            LeftHand = { 0, 0, math.sin(phase + math.pi * 0.5) * 2.2 * arms },
-            RightUpperArm = { armSwingRight, 0, base.sway * 0.18 },
-            RightLowerArm = { armBendRight, 0, 0 },
-            RightHand = { 0, 0, math.sin(phase - math.pi * 0.5) * 2.2 * arms },
+            UpperTorso = { -leanAngle + bodyBob - torsoAction, bodySway * 0.18, bodyRoll },
+            LowerTorso = { leanAngle * 0.22 + torsoAction * 0.18, bodySway * 0.12, -bodyRoll * 0.32 },
+            LeftUpperArm = { armSwingLeft, 0, -base.sway * 0.18 + leftArmRaise },
+            LeftLowerArm = { armBendLeft + leftElbowBias, 0, 0 },
+            LeftHand = { 0, 0, math.sin(phase + math.pi * 0.5) * 2.2 * arms - handWave },
+            RightUpperArm = { armSwingRight, 0, base.sway * 0.18 + rightArmRaise },
+            RightLowerArm = { armBendRight + rightElbowBias, 0, 0 },
+            RightHand = { 0, 0, math.sin(phase - math.pi * 0.5) * 2.2 * arms + handWave },
             LeftUpperLeg = { leftSwing, 0, -asymmetry * 2 },
-            LeftLowerLeg = { leftKnee, 0, 0 },
+            LeftLowerLeg = { leftKnee + kneeAction, 0, 0 },
             LeftFoot = { leftFoot, 0, 0 },
             RightUpperLeg = { rightSwing, 0, asymmetry * 2 },
-            RightLowerLeg = { rightKnee, 0, 0 },
+            RightLowerLeg = { rightKnee + kneeAction, 0, 0 },
             RightFoot = { rightFoot, 0, 0 },
         }
 
@@ -1651,8 +1761,8 @@ function motionEngine.buildDocument(recipe, skeleton)
         timeline = {
             fps = MOTION_FPS,
             duration = duration,
-            looped = true,
-            priority = recipe.base == "idle" and "Idle" or "Movement",
+            looped = base.looped ~= false,
+            priority = base.priority or (recipe.base == "idle" and "Idle" or (base.gesture and "Action" or "Movement")),
             rotationSpace = "character",
             defaultEasing = {
                 style = easing.style,
