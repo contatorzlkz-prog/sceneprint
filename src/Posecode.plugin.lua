@@ -977,16 +977,53 @@ local MOTION_CATALOG = {
         gesture = "dance", danceArmRaise = 38, handWave = 9,
         looped = true, priority = "Action",
     },
-   local MOTION_STYLE_ORDER = {
-    "sprint", "run", "backpedal", "strafe", "crawl", "march",
-    "sneak", "tiptoe", "limp", "salute", "wave", "jump",
-    "bow", "point", "clap", "dance", "stretch", "shrug",
-    "idle", "walk",
+   loccrawl = {
+        label = "Crawl",
+        aliases = { "crawl", "crawling", "rastejar", "rastejando", "engatinhar", "engatinhando" },
+        leg = 18, knee = 32, arm = 20, armBend = 24,
+        lean = 27, bounce = 0.25, sway = 2.6, head = 4,
+        periodFrames = 54, defaultSpeed = 2, asymmetry = 0.04,
+    },
+    strafe = {
+        label = "Strafe",
+        aliases = { "strafe", "strafing", "side step", "sideways walk", "andar de lado", "passo lateral" },
+        leg = 18, knee = 15, arm = 8, armBend = 5,
+        lean = 2, bounce = 0.4, sway = 4, head = 1.2,
+        periodFrames = 36, defaultSpeed = 3, asymmetry = 0,
+        sideways = true,
+    },
+    backpedal = {
+        label = "Backpedal",
+        aliases = { "backpedal", "backpedaling", "walk backwards", "andar de costas", "andar para tras", "recuar andando" },
+        leg = 21, knee = 18, arm = 12, armBend = 10,
+        lean = 7, bounce = 0.6, sway = 2, head = 1.8,
+        periodFrames = 42, defaultSpeed = 3, asymmetry = 0,
+        reverseStride = true, leanDirection = -1,
+    },
+    stretch = {
+        label = "Stretch",
+        aliases = { "stretch", "stretching", "alongar", "alongando", "espreguicar", "espreguicando" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0, sway = 0.4, head = 1,
+        periodFrames = 48, defaultSpeed = 2, asymmetry = 0,
+        gesture = "stretch", stretchRaise = 72, stretchArch = 12,
+        looped = false, priority = "Action",
+    },
+    shrug = {
+        label = "Shrug",
+        aliases = { "shrug", "shrugging", "dar de ombros", "encolher os ombros", "nao sei" },
+        leg = 0, knee = 0, arm = 0, armBend = 0,
+        lean = 0, bounce = 0.1, sway = 0.5, head = 2,
+        periodFrames = 42, defaultSpeed = 3, asymmetry = 0,
+        gesture = "shrug", shrugRaise = 25, shrugElbow = 18,
+        looped = false, priority = "Action",
+    },
 }
 
 local MOTION_STYLE_ORDER = {
-    "sprint", "run", "march", "sneak", "tiptoe", "limp",
-    "salute", "wave", "jump", "bow", "point", "clap", "dance",
+    "sprint", "run", "backpedal", "strafe", "crawl", "march",
+    "sneak", "tiptoe", "limp", "salute", "wave", "jump",
+    "bow", "point", "clap", "dance", "stretch", "shrug",
     "idle", "walk",
 }
 local MOOD_PROFILES = {
@@ -1663,7 +1700,9 @@ function motionEngine.saveCurrentReference()
         motionEngine.renderLibrary()
         setStatus("Referência aprovada e guardada na biblioteca local.", C.green)
     end
-endlocal function isFiniteNumber(value)
+end
+
+local function isFiniteNumber(value)
     return typeof(value) == "number" and value == value and value > -math.huge and value < math.huge
 end
 
