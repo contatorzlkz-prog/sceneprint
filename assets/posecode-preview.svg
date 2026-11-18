@@ -1,40 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="620" viewBox="0 0 960 620" fill="none">
-  <rect width="960" height="620" rx="8" fill="#1E1F21"/>
-  <rect x="1" y="1" width="958" height="618" rx="7" stroke="#414449"/>
-  <text x="32" y="36" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="18" font-weight="700">POSECODE</text>
-  <text x="33" y="52" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" letter-spacing=".8">GERADOR DE ANIMAÇÕES</text>
-  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v3.0</text>
-  <path d="M24 68H936" stroke="#414449"/>
-  <rect x="24" y="82" width="220" height="42" rx="3" fill="#1E1F21"/>
-  <text x="134" y="108" text-anchor="middle" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Importar</text>
-  <rect x="250" y="82" width="220" height="42" rx="3" fill="#303236"/>
-  <path d="M267 103h14M274 96v14M274 96l-4 4M274 96l4 4" stroke="#E8EAED" stroke-width="1.4"/>
-  <text x="292" y="108" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="12" font-weight="600">Gerar</text>
-  <rect x="248" y="121" width="224" height="2" fill="#53779E"/>
-  <rect x="476" y="82" width="220" height="42" rx="3" fill="#1E1F21"/>
-  <path d="M491 103H510M494 98V108M500 94V112M506 100V106" stroke="#969BA2" stroke-width="1.3"/>
-  <text x="520" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Prévia</text>
-  <rect x="702" y="82" width="234" height="42" rx="3" fill="#1E1F21"/>
-  <path d="M716 95h6v6h-6zM727 95h6v6h-6zM716 106h6v6h-6zM727 106h6v6h-6z" stroke="#969BA2" stroke-width="1.2"/>
-  <text x="742" y="108" fill="#969BA2" font-family="Arial,sans-serif" font-size="12">Rig</text>
-  <text x="32" y="165" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="13" font-weight="600">DESCREVA O MOVIMENTO</text>
-  <text x="32" y="189" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">Escreva o movimento que deseja gerar.</text>
-  <rect x="32" y="204" width="896" height="98" rx="4" fill="#18191B" stroke="#414449"/>
-  <text x="52" y="244" fill="#E8EAED" font-family="Arial,sans-serif" font-size="18">walk cansado</text>
-  <text x="52" y="274" fill="#737981" font-family="Arial,sans-serif" font-size="10">Movimento · atitude · ritmo · postura</text>
-  <rect x="32" y="318" width="896" height="42" rx="3" fill="#53779E"/>
-  <text x="480" y="344" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="13" font-weight="700">GERAR ANIMAÇÃO</text>
-  <rect x="32" y="373" width="442" height="36" rx="3" fill="#383B3F"/>
-  <text x="253" y="396" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">OUTRA VARIAÇÃO</text>
-  <rect x="482" y="373" width="446" height="36" rx="3" fill="#383B3F"/>
-  <text x="705" y="396" text-anchor="middle" fill="#E1E3E6" font-family="Arial,sans-serif" font-size="11">GUARDAR REFERÊNCIA</text>
-  <text x="32" y="445" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="10" font-weight="600" letter-spacing=".8">BIBLIOTECA LOCAL · REFERÊNCIAS APROVADAS</text>
-  <rect x="32" y="458" width="896" height="31" rx="3" fill="#303236"/>
-  <text x="48" y="478" fill="#D9DCE0" font-family="Arial,sans-serif" font-size="11">Walk · cansado</text>
-  <rect x="32" y="496" width="896" height="31" rx="3" fill="#303236"/>
-  <text x="48" y="516" fill="#D9DCE0" font-family="Arial,sans-serif" font-size="11">Run · confiante</text>
-  <text x="32" y="556" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">15 movimentos-base · 720 mil combinações paramétricas</text>
-  <path d="M24 582H936" stroke="#414449"/>
-  <circle cx="35" cy="602" r="4" fill="#85AC8B"/>
-  <text x="49" y="606" fill="#AEB2B8" font-family="Arial,sans-serif" font-size="11">Geração procedural · biblioteca local · Mesh Rig 2016</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="700" viewBox="0 0 960 700" fill="none">
+  <rect width="960" height="700" rx="8" fill="#1E1F21"/>
+  <rect x="1" y="1" width="958" height="698" rx="7" stroke="#414449"/>
+  <text x="30" y="37" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="19" font-weight="700">POSECODE</text>
+  <text x="31" y="54" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" letter-spacing=".9">PROCEDURAL MOTION SYSTEM</text>
+  <text x="928" y="39" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="11">v3.1</text>
+  <path d="M24 69H936" stroke="#414449"/>
+  <rect x="24" y="83" width="912" height="42" rx="3" fill="#303236"/>
+  <circle cx="42" cy="104" r="4" fill="#85AC8B"/>
+  <text x="56" y="108" fill="#E1E5E9" font-family="Arial,sans-serif" font-size="12" font-weight="600">Mesh Rig 2016 · 15 MOTOR6D</text>
+  <text x="916" y="108" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">RIG READY</text>
+  <text x="28" y="163" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="12" font-weight="700">DESCRIBE THE MOTION</text>
+  <rect x="24" y="178" width="912" height="86" rx="3" fill="#18191B" stroke="#414449"/>
+  <text x="43" y="216" fill="#E8EAED" font-family="Arial,sans-serif" font-size="20">walk cansado e lento</text>
+  <text x="43" y="243" fill="#737981" font-family="Arial,sans-serif" font-size="10">movement · attitude · rhythm · posture</text>
+  <text x="28" y="292" fill="#969BA2" font-family="Arial,sans-serif" font-size="9" font-weight="600" letter-spacing=".7">QUICK PROMPTS</text>
+  <g font-family="Arial,sans-serif" font-size="10" font-weight="600">
+    <rect x="24" y="305" width="292" height="32" rx="3" fill="#303236"/><text x="170" y="325" fill="#D8DCE1" text-anchor="middle">WALK · TIRED</text>
+    <rect x="334" y="305" width="292" height="32" rx="3" fill="#303236"/><text x="480" y="325" fill="#D8DCE1" text-anchor="middle">RUN · PROUD</text>
+    <rect x="644" y="305" width="292" height="32" rx="3" fill="#303236"/><text x="790" y="325" fill="#D8DCE1" text-anchor="middle">SNEAK</text>
+    <rect x="24" y="345" width="292" height="32" rx="3" fill="#303236"/><text x="170" y="365" fill="#D8DCE1" text-anchor="middle">WAVE</text>
+    <rect x="334" y="345" width="292" height="32" rx="3" fill="#303236"/><text x="480" y="365" fill="#D8DCE1" text-anchor="middle">JUMP</text>
+    <rect x="644" y="345" width="292" height="32" rx="3" fill="#303236"/><text x="790" y="365" fill="#D8DCE1" text-anchor="middle">DANCE</text>
+  </g>
+  <g>
+    <rect x="24" y="402" width="274" height="66" rx="4" fill="#252A30" stroke="#5A84A4"/>
+    <circle cx="42" cy="418" r="3" fill="#5A84A4"/>
+    <text x="53" y="422" fill="#E8EAED" font-family="Arial,sans-serif" font-size="11" font-weight="700">MOTION</text>
+    <text x="40" y="448" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">base cycle</text>
+    <path d="M298 435H334" stroke="#5A84A4" stroke-width="2"/>
+    <rect x="334" y="402" width="292" height="66" rx="4" fill="#252D2B" stroke="#5E978B"/>
+    <circle cx="352" cy="418" r="3" fill="#5E978B"/>
+    <text x="363" y="422" fill="#E8EAED" font-family="Arial,sans-serif" font-size="11" font-weight="700">BLEND</text>
+    <text x="350" y="448" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">style layers · rhythm · intensity</text>
+    <path d="M626 435H662" stroke="#5E978B" stroke-width="2"/>
+    <rect x="662" y="402" width="274" height="66" rx="4" fill="#252A30" stroke="#53779E"/>
+    <circle cx="680" cy="418" r="3" fill="#53779E"/>
+    <text x="691" y="422" fill="#E8EAED" font-family="Arial,sans-serif" font-size="11" font-weight="700">POSE</text>
+    <text x="678" y="448" fill="#969BA2" font-family="Arial,sans-serif" font-size="10">15 joint channels</text>
+  </g>
+  <rect x="24" y="488" width="912" height="42" rx="3" fill="#53779E"/>
+  <text x="480" y="514" text-anchor="middle" fill="#FFFFFF" font-family="Arial,sans-serif" font-size="13" font-weight="700">GENERATE ANIMATION</text>
+  <rect x="24" y="540" width="448" height="34" rx="3" fill="#303236"/>
+  <text x="248" y="562" text-anchor="middle" fill="#D8DCE1" font-family="Arial,sans-serif" font-size="10" font-weight="600">ANOTHER VARIATION</text>
+  <rect x="482" y="540" width="454" height="34" rx="3" fill="#303236"/>
+  <text x="709" y="562" text-anchor="middle" fill="#D8DCE1" font-family="Arial,sans-serif" font-size="10" font-weight="600">SAVE REFERENCE</text>
+  <text x="28" y="605" fill="#ECEDEF" font-family="Arial,sans-serif" font-size="10" font-weight="700" letter-spacing=".7">LOCAL MOTION LIBRARY</text>
+  <text x="928" y="605" text-anchor="end" fill="#969BA2" font-family="Arial,sans-serif" font-size="9">0 / 48</text>
+  <rect x="24" y="617" width="912" height="2" rx="1" fill="#414449"/>
+  <rect x="24" y="617" width="0" height="2" fill="#53779E"/>
+  <text x="28" y="654" fill="#969BA2" font-family="Arial,sans-serif" font-size="9">20 MOTION BASES · 16.32M PARAMETER COMBINATIONS · MESH RIG 2016</text>
+  <path d="M24 674H936" stroke="#414449"/>
 </svg>
